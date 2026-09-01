@@ -9,32 +9,56 @@ export type BillingCycle = 'monthly' | 'annual' | 'quarterly' | 'weekly';
 
 export type CurrencyCode = 'EUR' | 'GBP' | 'USD' | 'CAD' | 'AUD' | 'JPY';
 
+export type UserRole = 'ADMIN' | 'MEMBER' | 'BACKUP_ADMIN';
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  avatarUrl?: string;
+}
+
 export interface CurrencyConfig {
   code: CurrencyCode;
   symbol: string;
-  rateAgainstEUR: number; // For live currency toggling relative to EUR base
+  rateAgainstEUR: number;
   label: string;
 }
 
 export interface ExpenseItem {
   id: string;
   name: string;
-  amount: number;             // Amount in the specified currency
+  amount: number;
   currency: CurrencyCode;
   billingCycle: BillingCycle;
   category: ExpenseCategory;
-  icon: string;               // Icon identifier
-  color: string;              // Hex color or accent marker
-  renewalDay: number;         // Day of month (1-31)
-  nextRenewalDate: string;    // ISO YYYY-MM-DD
-  paymentMethod: string;      // e.g. "Direct Debit", "SEPA Debit", "Visa", "Mastercard", "Apple Pay"
-  isActive: boolean;          // true = active, false = paused/cancelled
+  icon: string;
+  color: string;
+  renewalDay: number;
+  nextRenewalDate: string;
+  paymentMethod: string;
+  isActive: boolean;
   notes?: string;
-  contractEndDate?: string;   // Contract end date
+  contractEndDate?: string;
   usageRating?: 'high' | 'medium' | 'low';
   isPreset?: boolean;
+  createdById?: string;
+  createdBy?: {
+    id: string;
+    name: string;
+    role: UserRole;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DatabaseBackupRecord {
+  id: string;
+  createdById?: string;
+  recordCount: number;
+  notes?: string;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface CategoryInfo {

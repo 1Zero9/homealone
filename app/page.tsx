@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { ExpenseItem, CurrencyCode, PresetItem } from '@/src/types/expense';
-import { loadExpenses, saveExpenses, loadCurrency, saveCurrency, resetToDefaults } from '@/src/services/storage';
-import { fetchExpensesFromCloud, syncExpenseToCloud, deleteExpenseFromCloud, isCloudSyncConfigured } from '@/src/services/supabase';
+import { useState, useEffect, useCallback } from 'react';
+import type { ExpenseItem, CurrencyCode, PresetItem, UserProfile } from '@/src/types/expense';
+import { loadCurrency, saveCurrency, resetToDefaults } from '@/src/services/storage';
 import { calculateSpendingSummary } from '@/src/utils/calculations';
 import { Navbar } from '@/src/components/Navbar';
 import { DashboardStats } from '@/src/components/DashboardStats';
@@ -16,131 +15,192 @@ import { OptimizationInsights } from '@/src/components/OptimizationInsights';
 import { ExpenseModal } from '@/src/components/ExpenseModal';
 import { PresetsModal } from '@/src/components/PresetsModal';
 import { ExportImportModal } from '@/src/components/ExportImportModal';
+import { AdminBackupModal } from '@/src/components/AdminBackupModal';
 
 export default function HomeAlonePage() {
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [activeTab, setActiveTab] = useState<'all' | 'ai-tech' | 'utilities' | 'calendar' | 'insights'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Users
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isPresetsModalOpen, setIsPresetsModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseItem | null>(null);
   const [initialPresetId, setInitialPresetId] = useState<string | null>(null);
 
-  // Initial load from local or cloud
-  useEffect(() => {
-    const localExpenses = loadExpenses();
-    const localCurrency = loadCurrency();
-    setExpenses(localExpenses);
-    setCurrency(localCurrency);
-    setIsLoaded(true);
-
-    // If cloud sync is configured, check for latest remote records
-    if (isCloudSyncConfigured) {
-      fetchExpensesFromCloud().then((cloudItems) => {
-        if (cloudItems && cloudItems.length > 0) {
-          setExpenses(cloudItems);
-          saveExpenses(cloudItems);
+  // Fetch users & expenses from Prisma PostgreSQL API
+  const fetchDatabaseData = useCallback(async () => {
+    try {
+      // 1. Fetch Users
+      const userRes = await fetch('/api/users');
+      const userData = await userRes.json();
+      if (userData.status === 'ok' && Array.isArray(userData.users)) {
+        setUsers(userData.users);
+        if (!currentUser && userData.users.length > 0) {
+          setCurrentUser(userData.users[0]);
         }
-      });
-    }
-  }, []);
+      }
 
-  // Save changes locally
-  useEffect(() => {
-    if (isLoaded) {
-      saveExpenses(expenses);
+      // 2. Fetch Expenses from PostgreSQL
+      const expRes = await fetch('/api/expenses');
+      const expData = await expRes.json();
+      if (expData.status === 'ok' && Array.isArray(expData.expenses)) {
+        setExpenses(expData.expenses);
+      }
+    } catch (err) {
+      console.error('Failed to load from database:', err);
     }
-  }, [expenses, isLoaded]);
+  }, [currentUser]);
 
   useEffect(() => {
-    if (isLoaded) {
-      saveCurrency(currency);
-    }
-  }, [currency, isLoaded]);
+    setCurrency(loadCurrency());
+    fetchDatabaseData();
+  }, [fetchDatabaseData]);
+
+  useEffect(() => {
+    saveCurrency(currency);
+  }, [currency]);
 
   // Compute spend analytics summary
   const summary = calculateSpendingSummary(expenses, currency);
 
-  // Toggle active/pause status
-  const handleToggleActive = (id: string) => {
-    setExpenses((prev) => {
-      const updated = prev.map((item) => {
-        if (item.id === id) {
-          const itemUpdated = { ...item, isActive: !item.isActive, updatedAt: new Date().toISOString() };
-          syncExpenseToCloud(itemUpdated);
-          return itemUpdated;
-        }
-        return item;
+  // Toggle active/pause status with PostgreSQL sync
+  const handleToggleActive = async (id: string) => {
+    const item = expenses.find((e) => e.id === id);
+    if (!item) return;
+
+    const updatedActive = !item.isActive;
+    // Optimistic update
+    setExpenses((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, isActive: updatedActive } : e))
+    );
+
+    try {
+      await fetch('/api/expenses', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...item, isActive: updatedActive }),
       });
-      return updated;
-    });
+    } catch (err) {
+      console.error('Failed to update status in DB:', err);
+      fetchDatabaseData();
+    }
   };
 
-  // Save new or edited expense
-  const handleSaveExpense = (
+  // Save new or edited expense with PostgreSQL sync
+  const handleSaveExpense = async (
     expenseData: Omit<ExpenseItem, 'id' | 'createdAt' | 'updatedAt'>,
     existingId?: string
   ) => {
     if (existingId) {
+      // Optimistic update
       setExpenses((prev) =>
-        prev.map((item) => {
-          if (item.id === existingId) {
-            const updated = { ...item, ...expenseData, updatedAt: new Date().toISOString() };
-            syncExpenseToCloud(updated);
-            return updated;
-          }
-          return item;
-        })
+        prev.map((item) =>
+          item.id === existingId
+            ? { ...item, ...expenseData, updatedAt: new Date().toISOString() }
+            : item
+        )
       );
+
+      try {
+        await fetch('/api/expenses', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...expenseData, id: existingId }),
+        });
+      } catch (err) {
+        console.error('Failed to update expense in DB:', err);
+        fetchDatabaseData();
+      }
     } else {
+      const tempId = `exp-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
       const newItem: ExpenseItem = {
         ...expenseData,
-        id: `exp-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+        id: tempId,
+        createdById: currentUser?.id,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      syncExpenseToCloud(newItem);
+
+      // Optimistic update
       setExpenses((prev) => [newItem, ...prev]);
+
+      try {
+        const res = await fetch('/api/expenses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...expenseData, createdById: currentUser?.id }),
+        });
+        const data = await res.json();
+        if (data.status === 'ok' && data.expense) {
+          setExpenses((prev) =>
+            prev.map((e) => (e.id === tempId ? data.expense : e))
+          );
+        }
+      } catch (err) {
+        console.error('Failed to create expense in DB:', err);
+        fetchDatabaseData();
+      }
     }
   };
 
   // Duplicate an expense
-  const handleDuplicateExpense = (item: ExpenseItem) => {
-    const duplicated: ExpenseItem = {
+  const handleDuplicateExpense = async (item: ExpenseItem) => {
+    const duplicatedData = {
       ...item,
-      id: `exp-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       name: `${item.name} (Copy)`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdById: currentUser?.id,
     };
-    syncExpenseToCloud(duplicated);
-    setExpenses((prev) => [duplicated, ...prev]);
+
+    try {
+      const res = await fetch('/api/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(duplicatedData),
+      });
+      const data = await res.json();
+      if (data.status === 'ok' && data.expense) {
+        setExpenses((prev) => [data.expense, ...prev]);
+      }
+    } catch (err) {
+      console.error('Failed to duplicate expense in DB:', err);
+    }
   };
 
   // Delete an expense
-  const handleDeleteExpense = (id: string) => {
+  const handleDeleteExpense = async (id: string) => {
     const item = expenses.find((e) => e.id === id);
-    if (window.confirm(`Remove "${item?.name || 'this record'}"?`)) {
-      deleteExpenseFromCloud(id);
-      setExpenses((prev) => prev.filter((e) => e.id !== id));
+    if (!window.confirm(`Remove "${item?.name || 'this record'}"?`)) return;
+
+    // Optimistic delete
+    setExpenses((prev) => prev.filter((e) => e.id !== id));
+
+    try {
+      await fetch(`/api/expenses?id=${id}`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.error('Failed to delete expense from DB:', err);
+      fetchDatabaseData();
     }
   };
 
   // Add from catalog preset
-  const handleAddFromPreset = (preset: PresetItem) => {
+  const handleAddFromPreset = async (preset: PresetItem) => {
     const now = new Date();
     const nextRenewalDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
 
-    const newItem: ExpenseItem = {
-      id: `exp-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+    const presetExpense = {
       name: preset.name,
       amount: preset.defaultAmount,
-      currency: 'EUR',
+      currency: 'EUR' as CurrencyCode,
       billingCycle: preset.defaultCycle,
       category: preset.category,
       icon: preset.icon,
@@ -150,21 +210,32 @@ export default function HomeAlonePage() {
       paymentMethod: preset.defaultPaymentMethod,
       isActive: true,
       notes: preset.description,
-      usageRating: 'high',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      usageRating: 'high' as const,
+      createdById: currentUser?.id,
     };
 
-    syncExpenseToCloud(newItem);
-    setExpenses((prev) => [newItem, ...prev]);
+    try {
+      const res = await fetch('/api/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(presetExpense),
+      });
+      const data = await res.json();
+      if (data.status === 'ok' && data.expense) {
+        setExpenses((prev) => [data.expense, ...prev]);
+      }
+    } catch (err) {
+      console.error('Failed to add preset to DB:', err);
+    }
   };
 
   // Reset sample data
-  const handleResetData = () => {
+  const handleResetData = async () => {
     if (window.confirm('Reset all expense records to the default sample dataset?')) {
       const sample = resetToDefaults();
       setExpenses(sample);
       setSelectedCategory(null);
+      fetchDatabaseData();
     }
   };
 
@@ -189,7 +260,11 @@ export default function HomeAlonePage() {
         }}
         onOpenPresetsModal={() => setIsPresetsModalOpen(true)}
         onOpenExportModal={() => setIsExportModalOpen(true)}
+        onOpenAdminModal={() => setIsAdminModalOpen(true)}
         onResetData={handleResetData}
+        currentUser={currentUser}
+        users={users}
+        onSelectUser={setCurrentUser}
       />
 
       {/* Main Container Content */}
@@ -323,7 +398,7 @@ export default function HomeAlonePage() {
             Home Alone — Simple records. Clearer days.
           </div>
           <div>
-            Next.js App Router • Multi-device cloud sync enabled
+            Prisma PostgreSQL connected • Logged in as <strong>{currentUser?.name || 'Stephen'}</strong> ({currentUser?.role || 'ADMIN'})
           </div>
         </div>
       </footer>
@@ -356,6 +431,15 @@ export default function HomeAlonePage() {
         expenses={expenses}
         currency={currency}
         onDataUpdated={setExpenses}
+      />
+
+      {/* Admin Backup & Database Modal */}
+      <AdminBackupModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        currentUser={currentUser}
+        users={users}
+        onDataRestored={fetchDatabaseData}
       />
     </div>
   );

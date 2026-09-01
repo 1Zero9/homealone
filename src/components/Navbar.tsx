@@ -1,8 +1,8 @@
 import React from 'react';
-import type { CurrencyCode } from '../types/expense';
+import type { CurrencyCode, UserProfile } from '../types/expense';
 import { CURRENCY_LIST } from '../utils/currencies';
 import { formatCurrency } from '../utils/formatters';
-import { Plus, Download, Sparkles, RefreshCw } from 'lucide-react';
+import { Plus, Download, Sparkles, RefreshCw, Shield, User } from 'lucide-react';
 
 interface NavbarProps {
   currentCurrency: CurrencyCode;
@@ -13,7 +13,11 @@ interface NavbarProps {
   onOpenAddModal: () => void;
   onOpenPresetsModal: () => void;
   onOpenExportModal: () => void;
+  onOpenAdminModal: () => void;
   onResetData: () => void;
+  currentUser: UserProfile | null;
+  users: UserProfile[];
+  onSelectUser: (user: UserProfile) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -25,7 +29,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAddModal,
   onOpenPresetsModal,
   onOpenExportModal,
+  onOpenAdminModal,
   onResetData,
+  currentUser,
+  users,
+  onSelectUser,
 }) => {
   return (
     <header style={{
@@ -51,7 +59,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', cursor: 'pointer' }}
             onClick={() => onTabChange('all')}
           >
-            {/* Logo Mark: Pure and uncontained */}
             <img
               src="/home-alone-logo-mark.png"
               alt="Home Alone logo"
@@ -147,8 +154,51 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        {/* Actions & Currency Switcher */}
+        {/* User Switcher, Actions & Currency */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          {/* Household User Switcher Dropdown */}
+          {users.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', backgroundColor: 'var(--ha-white)', border: '1px solid var(--ha-line)', borderRadius: 'var(--ha-radius-md)', padding: '0.25rem 0.6rem' }}>
+              <User size={14} color="var(--ha-blue)" />
+              <select
+                value={currentUser?.id || ''}
+                onChange={(e) => {
+                  const targetUser = users.find((u) => u.id === e.target.value);
+                  if (targetUser) onSelectUser(targetUser);
+                }}
+                style={{
+                  backgroundColor: 'transparent',
+                  color: 'var(--ha-ink)',
+                  border: 'none',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  outline: 'none',
+                }}
+                title="Switch active household profile"
+              >
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} ({u.role.replace('_', ' ')})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Admin Backup Panel Trigger (for Admin / Backup Admin) */}
+          {(currentUser?.role === 'ADMIN' || currentUser?.role === 'BACKUP_ADMIN') && (
+            <button
+              onClick={onOpenAdminModal}
+              className="btn btn-secondary"
+              style={{ fontSize: '0.82rem', padding: '0.55rem 0.75rem' }}
+              title="Admin PostgreSQL Database & Backup Panel"
+            >
+              <Shield size={14} color="var(--ha-blue)" />
+              <span className="hide-mobile">Admin</span>
+            </button>
+          )}
+
           {/* Currency Dropdown */}
           <select
             value={currentCurrency}
