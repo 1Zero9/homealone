@@ -14,17 +14,19 @@ import { EducationSection } from '@/src/components/EducationSection';
 import { UpcomingRenewals } from '@/src/components/UpcomingRenewals';
 import { OptimizationInsights } from '@/src/components/OptimizationInsights';
 import { AdminSection } from '@/src/components/AdminSection';
+import { LoginScreen } from '@/src/components/LoginScreen';
 import { ExpenseModal } from '@/src/components/ExpenseModal';
 import { PresetsModal } from '@/src/components/PresetsModal';
 import { ExportImportModal } from '@/src/components/ExportImportModal';
 
 export default function HomeAlonePage() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = checking
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [activeTab, setActiveTab] = useState<'all' | 'ai-tech' | 'utilities' | 'education' | 'calendar' | 'insights' | 'admin'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Users
+  // Users & Auth
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
@@ -44,9 +46,6 @@ export default function HomeAlonePage() {
       const userData = await userRes.json();
       if (userData.status === 'ok' && Array.isArray(userData.users)) {
         setUsers(userData.users);
-        if (!currentUser && userData.users.length > 0) {
-          setCurrentUser(userData.users[0]);
-        }
       }
 
       // 2. Fetch Expenses from PostgreSQL
@@ -58,16 +57,45 @@ export default function HomeAlonePage() {
     } catch (err) {
       console.error('Failed to load from database:', err);
     }
-  }, [currentUser]);
+  }, []);
 
+  // Check auth on load
   useEffect(() => {
     setCurrency(loadCurrency());
-    fetchDatabaseData();
+
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.status === 'authenticated' && data.user) {
+          setIsAuthenticated(true);
+          setCurrentUser(data.user);
+          fetchDatabaseData();
+        } else {
+          setIsAuthenticated(false);
+        }
+      })
+      .catch(() => {
+        setIsAuthenticated(false);
+      });
   }, [fetchDatabaseData]);
 
   useEffect(() => {
     saveCurrency(currency);
   }, [currency]);
+
+  const handleLoginSuccess = (user: UserProfile) => {
+    setIsAuthenticated(true);
+    setCurrentUser(user);
+    fetchDatabaseData();
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {}
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+  };
 
   // Compute spend analytics summary
   const summary = calculateSpendingSummary(expenses, currency);
@@ -232,13 +260,30 @@ export default function HomeAlonePage() {
 
   // Reset sample data
   const handleResetData = async () => {
-    if (window.confirm('Reset all expense records to the default sample dataset?')) {
+    if (window.confirm('Reset all expense records?')) {
       const sample = resetToDefaults();
       setExpenses(sample);
       setSelectedCategory(null);
       fetchDatabaseData();
     }
   };
+
+  // Show loading spinner while checking auth
+  if (isAuthenticated === null) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--ha-paper)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <img src="/home-alone-logo-mark.png" alt="Home Alone" style={{ height: '40px', width: '40px', objectFit: 'contain', margin: '0 auto 0.75rem' }} />
+          <p style={{ color: 'var(--ha-muted)', fontSize: '0.85rem' }}>Loading Home Alone...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If unauthenticated, show Logon Screen
+  if (!isAuthenticated) {
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--ha-paper)' }}>
@@ -264,6 +309,7 @@ export default function HomeAlonePage() {
         onOpenPresetsModal={() => setIsPresetsModalOpen(true)}
         onOpenExportModal={() => setIsExportModalOpen(true)}
         onResetData={handleResetData}
+        onLogout={handleLogout}
         currentUser={currentUser}
         users={users}
         onSelectUser={setCurrentUser}
@@ -442,7 +488,7 @@ export default function HomeAlonePage() {
             Home Alone — Simple records. Clearer days.
           </div>
           <div>
-            Prisma PostgreSQL connected • Logged in as <strong>{currentUser?.name || 'Stephen'}</strong> ({currentUser?.role || 'ADMIN'})
+            Authenticated as <strong>{currentUser?.name || 'Stephen'}</strong> ({currentUser?.role || 'ADMIN'})
           </div>
         </div>
       </footer>

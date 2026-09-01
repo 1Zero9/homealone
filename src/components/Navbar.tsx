@@ -2,7 +2,7 @@ import React from 'react';
 import type { CurrencyCode, UserProfile } from '../types/expense';
 import { CURRENCY_LIST } from '../utils/currencies';
 import { formatCurrency } from '../utils/formatters';
-import { Plus, Download, Sparkles, RefreshCw, User } from 'lucide-react';
+import { Plus, Download, Sparkles, RefreshCw, User, LogOut } from 'lucide-react';
 
 interface NavbarProps {
   currentCurrency: CurrencyCode;
@@ -14,6 +14,7 @@ interface NavbarProps {
   onOpenPresetsModal: () => void;
   onOpenExportModal: () => void;
   onResetData: () => void;
+  onLogout: () => void;
   currentUser: UserProfile | null;
   users: UserProfile[];
   onSelectUser: (user: UserProfile) => void;
@@ -29,6 +30,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenPresetsModal,
   onOpenExportModal,
   onResetData,
+  onLogout,
   currentUser,
   users,
   onSelectUser,
@@ -155,7 +157,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        {/* User Switcher, Actions & Currency */}
+        {/* User Switcher, Actions, Currency & Logout */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           {/* Household User Profile Switcher */}
           {users.length > 0 && (
@@ -245,7 +247,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={onResetData}
             className="btn btn-ghost"
             style={{ fontSize: '0.85rem', padding: '0.55rem 0.75rem' }}
-            title="Reset to default sample records"
+            title="Reset data"
           >
             <RefreshCw size={14} />
           </button>
@@ -258,6 +260,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <Plus size={15} />
             <span>Add expense</span>
+          </button>
+
+          {/* Sign Out Action */}
+          <button
+            onClick={onLogout}
+            className="btn btn-ghost"
+            style={{ fontSize: '0.85rem', padding: '0.55rem 0.65rem' }}
+            title="Sign out of Home Alone"
+          >
+            <LogOut size={15} />
           </button>
         </div>
       </div>
