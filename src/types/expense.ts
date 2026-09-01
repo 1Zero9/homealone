@@ -3,9 +3,10 @@ export type ExpenseCategory =
   | 'ai-tech'        // ChatGPT Plus, Claude Pro, Cursor, Midjourney, Copilot, Cloud
   | 'utilities'      // Electricity, Gas/Heating, Water, Broadband, Mobile
   | 'housing'        // Rent/Mortgage, Property Tax, Insurance, TV Licence
-  | 'lifestyle';     // Gym, Health, Subscriptions, Meal Kits
+  | 'education'      // College Tuition, School Fees, Uniforms, Books, Lunches
+  | 'lifestyle';     // Sports Club, Gym, Coaching, Activities, Health
 
-export type BillingCycle = 'monthly' | 'annual' | 'quarterly' | 'weekly';
+export type BillingCycle = 'monthly' | 'annual' | 'quarterly' | 'weekly' | 'termly';
 
 export type CurrencyCode = 'EUR' | 'GBP' | 'USD' | 'CAD' | 'AUD' | 'JPY';
 
@@ -17,6 +18,11 @@ export interface UserProfile {
   email: string;
   role: UserRole;
   avatarUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  _count?: {
+    expenses: number;
+  };
 }
 
 export interface CurrencyConfig {
@@ -103,5 +109,6 @@ export interface SpendingSummary {
   utilitiesMonthly: number;
   streamingMonthly: number;
   housingMonthly: number;
+  educationMonthly: number;
   lifestyleMonthly: number;
 }

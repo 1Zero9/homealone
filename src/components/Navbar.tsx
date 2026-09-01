@@ -2,18 +2,17 @@ import React from 'react';
 import type { CurrencyCode, UserProfile } from '../types/expense';
 import { CURRENCY_LIST } from '../utils/currencies';
 import { formatCurrency } from '../utils/formatters';
-import { Plus, Download, Sparkles, RefreshCw, Shield, User } from 'lucide-react';
+import { Plus, Download, Sparkles, RefreshCw, User } from 'lucide-react';
 
 interface NavbarProps {
   currentCurrency: CurrencyCode;
   onCurrencyChange: (currency: CurrencyCode) => void;
   monthlyTotal: number;
-  activeTab: 'all' | 'ai-tech' | 'utilities' | 'calendar' | 'insights';
-  onTabChange: (tab: 'all' | 'ai-tech' | 'utilities' | 'calendar' | 'insights') => void;
+  activeTab: 'all' | 'ai-tech' | 'utilities' | 'education' | 'calendar' | 'insights' | 'admin';
+  onTabChange: (tab: 'all' | 'ai-tech' | 'utilities' | 'education' | 'calendar' | 'insights' | 'admin') => void;
   onOpenAddModal: () => void;
   onOpenPresetsModal: () => void;
   onOpenExportModal: () => void;
-  onOpenAdminModal: () => void;
   onResetData: () => void;
   currentUser: UserProfile | null;
   users: UserProfile[];
@@ -29,7 +28,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAddModal,
   onOpenPresetsModal,
   onOpenExportModal,
-  onOpenAdminModal,
   onResetData,
   currentUser,
   users,
@@ -127,9 +125,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           {[
             { id: 'all', label: 'All expenses' },
             { id: 'utilities', label: 'Utilities & bills' },
+            { id: 'education', label: 'Colleges & sports' },
             { id: 'ai-tech', label: 'AI & tech' },
             { id: 'calendar', label: 'Schedule' },
             { id: 'insights', label: 'Optimization' },
+            { id: 'admin', label: 'Admin & users' },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -146,6 +146,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   transition: 'all 0.12s ease',
                   backgroundColor: isActive ? 'var(--ha-blue)' : 'transparent',
                   color: isActive ? 'var(--ha-white)' : 'var(--ha-muted)',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {tab.label}
@@ -156,9 +157,17 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* User Switcher, Actions & Currency */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          {/* Household User Switcher Dropdown */}
+          {/* Household User Profile Switcher */}
           {users.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', backgroundColor: 'var(--ha-white)', border: '1px solid var(--ha-line)', borderRadius: 'var(--ha-radius-md)', padding: '0.25rem 0.6rem' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              backgroundColor: 'var(--ha-white)',
+              border: '1px solid var(--ha-line)',
+              borderRadius: 'var(--ha-radius-md)',
+              padding: '0.35rem 0.65rem',
+            }}>
               <User size={14} color="var(--ha-blue)" />
               <select
                 value={currentUser?.id || ''}
@@ -184,19 +193,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 ))}
               </select>
             </div>
-          )}
-
-          {/* Admin Backup Panel Trigger (for Admin / Backup Admin) */}
-          {(currentUser?.role === 'ADMIN' || currentUser?.role === 'BACKUP_ADMIN') && (
-            <button
-              onClick={onOpenAdminModal}
-              className="btn btn-secondary"
-              style={{ fontSize: '0.82rem', padding: '0.55rem 0.75rem' }}
-              title="Admin PostgreSQL Database & Backup Panel"
-            >
-              <Shield size={14} color="var(--ha-blue)" />
-              <span className="hide-mobile">Admin</span>
-            </button>
           )}
 
           {/* Currency Dropdown */}

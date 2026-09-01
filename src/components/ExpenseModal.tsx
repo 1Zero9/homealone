@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { ExpenseItem, ExpenseCategory, BillingCycle, CurrencyCode } from '../types/expense';
+import type { ExpenseItem, ExpenseCategory, BillingCycle, CurrencyCode, UserProfile } from '../types/expense';
 import { CATEGORY_LIST, CATEGORIES } from '../data/categories';
 import { PRESETS } from '../data/presets';
 import { CURRENCIES } from '../utils/currencies';
@@ -11,6 +11,9 @@ interface ExpenseModalProps {
   onSave: (expense: Omit<ExpenseItem, 'id' | 'createdAt' | 'updatedAt'>, existingId?: string) => void;
   editingExpense?: ExpenseItem | null;
   initialPresetId?: string | null;
+  initialCategory?: string | null;
+  users?: UserProfile[];
+  currentUserId?: string;
 }
 
 export const ExpenseModal: React.FC<ExpenseModalProps> = ({
@@ -19,6 +22,9 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   onSave,
   editingExpense,
   initialPresetId,
+  initialCategory,
+  users = [],
+  currentUserId,
 }) => {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState<number | string>('');
@@ -27,6 +33,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   const [category, setCategory] = useState<ExpenseCategory>('utilities');
   const [renewalDay, setRenewalDay] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState('SEPA Direct Debit');
+  const [assignedUserId, setAssignedUserId] = useState<string>('');
   const [notes, setNotes] = useState('');
   const [contractEndDate, setContractEndDate] = useState('');
   const [usageRating, setUsageRating] = useState<'high' | 'medium' | 'low'>('high');
@@ -40,6 +47,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setCategory(editingExpense.category);
       setRenewalDay(editingExpense.renewalDay || 1);
       setPaymentMethod(editingExpense.paymentMethod || 'SEPA Direct Debit');
+      setAssignedUserId(editingExpense.createdById || currentUserId || '');
       setNotes(editingExpense.notes || '');
       setContractEndDate(editingExpense.contractEndDate || '');
       setUsageRating(editingExpense.usageRating || 'high');
@@ -53,6 +61,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         setCategory(preset.category);
         setRenewalDay(1);
         setPaymentMethod(preset.defaultPaymentMethod);
+        setAssignedUserId(currentUserId || '');
         setNotes(preset.description || '');
       }
     } else {
@@ -60,14 +69,15 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setAmount('');
       setCurrency('EUR');
       setBillingCycle('monthly');
-      setCategory('utilities');
+      setCategory((initialCategory as ExpenseCategory) || 'utilities');
       setRenewalDay(1);
       setPaymentMethod('SEPA Direct Debit');
+      setAssignedUserId(currentUserId || '');
       setNotes('');
       setContractEndDate('');
       setUsageRating('high');
     }
-  }, [editingExpense, initialPresetId, isOpen]);
+  }, [editingExpense, initialPresetId, initialCategory, currentUserId, isOpen]);
 
   if (!isOpen) return null;
 
@@ -109,6 +119,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         notes: notes.trim(),
         contractEndDate: contractEndDate || undefined,
         usageRating,
+        createdById: assignedUserId || currentUserId,
       },
       editingExpense?.id
     );
@@ -133,7 +144,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               {editingExpense ? 'Edit expense' : 'Add expense'}
             </h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
-              Record household or subscription spend
+              Record household bill, subscription, college, school or sports cost
             </p>
           </div>
 
@@ -150,7 +161,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 Quick autofill
               </label>
               <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
-                {PRESETS.filter((p) => p.popular).slice(0, 6).map((preset) => (
+                {PRESETS.filter((p) => p.popular).slice(0, 7).map((preset) => (
                   <button
                     key={preset.id}
                     type="button"
@@ -178,7 +189,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             </div>
           )}
 
-          {/* Form Rule 1: Amount first & largest input with visible currency prefix */}
+          {/* Amount first & largest input with visible currency prefix */}
           <div>
             <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
               Amount *
@@ -213,12 +224,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
-                Expense description / service name *
+                Description / Item Name *
               </label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Netflix, Electricity, ChatGPT"
+                placeholder="e.g. College Tuition, Netflix, Electricity, GAA Club"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="ha-input"
@@ -235,6 +246,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 className="ha-input"
               >
                 <option value="monthly">Monthly</option>
+                <option value="termly">Termly (3 terms/year)</option>
                 <option value="annual">Annual</option>
                 <option value="quarterly">Quarterly</option>
                 <option value="weekly">Weekly</option>
@@ -242,7 +254,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             </div>
           </div>
 
-          {/* Form Rule 3: Category as a compact grid of labelled rectangular controls */}
+          {/* Category selection */}
           <div>
             <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.4rem' }}>
               Category
@@ -285,11 +297,31 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             </div>
           </div>
 
-          {/* Renewal Day & Payment Method */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '1rem' }}>
+          {/* Member Assignment & Renewal Day */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '1rem' }}>
+            {users.length > 0 && (
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
+                  Assigned Household Member
+                </label>
+                <select
+                  value={assignedUserId}
+                  onChange={(e) => setAssignedUserId(e.target.value)}
+                  className="ha-input"
+                >
+                  <option value="">Household (Shared)</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.role.replace('_', ' ')})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div>
               <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
-                Renewal day (1–31)
+                Renewal / Debit Day (1–31)
               </label>
               <input
                 type="number"
@@ -300,34 +332,20 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 className="ha-input tabular-nums"
               />
             </div>
+          </div>
 
+          {/* Payment Method & Contract End Date */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
                 Payment method
               </label>
               <input
                 type="text"
-                placeholder="e.g. SEPA Direct Debit, Visa, Apple Pay"
+                placeholder="e.g. SEPA Direct Debit, Credit Card, Cash"
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className="ha-input"
-              />
-            </div>
-          </div>
-
-          {/* Optional Notes & Contract Date (Form Rule: Visually secondary) */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '1rem' }}>
-            <div>
-              <label style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', display: 'block', marginBottom: '0.35rem' }}>
-                Notes (optional)
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. 500Mbps fiber plan, 2 devices"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="ha-input"
-                style={{ fontSize: '0.82rem' }}
               />
             </div>
 
@@ -343,6 +361,21 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 style={{ fontSize: '0.82rem' }}
               />
             </div>
+          </div>
+
+          {/* Optional Notes */}
+          <div>
+            <label style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', display: 'block', marginBottom: '0.35rem' }}>
+              Notes (optional)
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Semester 1 fee, Year 2 college student contribution, Friday coaching"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="ha-input"
+              style={{ fontSize: '0.82rem' }}
+            />
           </div>
 
           {/* Actions */}

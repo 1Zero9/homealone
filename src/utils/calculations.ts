@@ -13,6 +13,8 @@ export function getMonthlyEquivalent(amount: number, cycle: ExpenseItem['billing
       return amount;
     case 'quarterly':
       return amount / 3;
+    case 'termly':
+      return (amount * 3) / 12; // 3 terms a year
     case 'annual':
       return amount / 12;
     default:
@@ -61,6 +63,7 @@ export function calculateSpendingSummary(
     'ai-tech': 0,
     utilities: 0,
     housing: 0,
+    education: 0,
     lifestyle: 0,
   };
 
@@ -72,7 +75,9 @@ export function calculateSpendingSummary(
     if (item.isActive) {
       activeCount += 1;
       monthlyTotal += monthlyAmount;
-      categoryTotals[item.category] = (categoryTotals[item.category] || 0) + monthlyAmount;
+      if (item.category in categoryTotals) {
+        categoryTotals[item.category] = (categoryTotals[item.category] || 0) + monthlyAmount;
+      }
     } else {
       pausedCount += 1;
       pausedMonthlySavings += monthlyAmount;
@@ -114,6 +119,7 @@ export function calculateSpendingSummary(
     utilitiesMonthly: categoryTotals['utilities'],
     streamingMonthly: categoryTotals['entertainment'],
     housingMonthly: categoryTotals['housing'],
+    educationMonthly: categoryTotals['education'],
     lifestyleMonthly: categoryTotals['lifestyle'],
   };
 }

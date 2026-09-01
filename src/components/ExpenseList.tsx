@@ -3,7 +3,7 @@ import type { ExpenseItem, CurrencyCode } from '../types/expense';
 import { CATEGORIES, CATEGORY_LIST } from '../data/categories';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle } from '../utils/formatters';
-import { Search, ArrowUpDown, Edit2, Trash2, Copy } from 'lucide-react';
+import { Search, ArrowUpDown, Edit2, Trash2, Copy, User } from 'lucide-react';
 
 interface ExpenseListProps {
   expenses: ExpenseItem[];
@@ -40,7 +40,8 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
       const matchNotes = item.notes?.toLowerCase().includes(q);
       const matchMethod = item.paymentMethod.toLowerCase().includes(q);
       const matchCategory = CATEGORIES[item.category]?.name.toLowerCase().includes(q);
-      if (!matchName && !matchNotes && !matchMethod && !matchCategory) {
+      const matchUser = item.createdBy?.name.toLowerCase().includes(q);
+      if (!matchName && !matchNotes && !matchMethod && !matchCategory && !matchUser) {
         return false;
       }
     }
@@ -95,14 +96,14 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
             <Search size={15} color="var(--ha-muted)" style={{ position: 'absolute', left: '0.75rem', pointerEvents: 'none' }} />
             <input
               type="text"
-              placeholder="Filter expenses..."
+              placeholder="Filter expenses, college, sports..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="ha-input"
               style={{
                 paddingLeft: '2.2rem',
                 paddingRight: searchQuery ? '2rem' : '0.85rem',
-                width: '210px',
+                width: '230px',
                 fontSize: '0.85rem',
               }}
             />
@@ -276,6 +277,12 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                       <span className="ha-badge ha-badge-neutral" style={{ fontSize: '0.7rem' }}>
                         {cat.name}
                       </span>
+                      {item.createdBy && (
+                        <span className="ha-badge ha-badge-blue" style={{ fontSize: '0.68rem', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                          <User size={10} />
+                          <span>{item.createdBy.name.split(' ')[0]}</span>
+                        </span>
+                      )}
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.75rem', color: 'var(--ha-muted)', marginTop: '2px' }}>

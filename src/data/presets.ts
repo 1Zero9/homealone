@@ -1,7 +1,107 @@
 import type { PresetItem } from '../types/expense';
 
 export const PRESETS: PresetItem[] = [
-  // Streaming & Media
+  // 1. Education, Schooling & College
+  {
+    id: 'college-tuition',
+    name: 'College / University Tuition',
+    defaultAmount: 250.00,
+    category: 'education',
+    defaultCycle: 'monthly',
+    color: '#3155D9',
+    icon: 'GraduationCap',
+    description: 'Higher education student contribution / tuition fee installment',
+    defaultPaymentMethod: 'SEPA Direct Debit',
+    popular: true,
+  },
+  {
+    id: 'school-fees-transport',
+    name: 'School Fees & Bus Transport',
+    defaultAmount: 120.00,
+    category: 'education',
+    defaultCycle: 'monthly',
+    color: '#3155D9',
+    icon: 'BookOpen',
+    description: 'Monthly school fee contribution, bus pass & learning materials',
+    defaultPaymentMethod: 'SEPA Direct Debit',
+    popular: true,
+  },
+  {
+    id: 'school-lunches',
+    name: 'School Lunches & Meals',
+    defaultAmount: 70.00,
+    category: 'education',
+    defaultCycle: 'monthly',
+    color: '#3155D9',
+    icon: 'Utensils',
+    description: 'School canteen & hot lunch program subscription',
+    defaultPaymentMethod: 'Debit Card',
+    popular: true,
+  },
+  {
+    id: 'music-lessons',
+    name: 'Music & Instrument Tuition',
+    defaultAmount: 80.00,
+    category: 'education',
+    defaultCycle: 'monthly',
+    color: '#202124',
+    icon: 'Music',
+    description: 'Weekly piano, guitar or violin lessons',
+    defaultPaymentMethod: 'Direct Debit',
+    popular: false,
+  },
+
+  // 2. Sports & Activities
+  {
+    id: 'youth-sports-club',
+    name: 'Youth Sports Club & Coaching',
+    defaultAmount: 45.00,
+    category: 'lifestyle',
+    defaultCycle: 'monthly',
+    color: '#202124',
+    icon: 'Trophy',
+    description: 'Football, GAA, rugby, or basketball club coaching & membership',
+    defaultPaymentMethod: 'SEPA Direct Debit',
+    popular: true,
+  },
+  {
+    id: 'swimming-lessons',
+    name: 'Swimming Lessons & Pool Pass',
+    defaultAmount: 40.00,
+    category: 'lifestyle',
+    defaultCycle: 'monthly',
+    color: '#3155D9',
+    icon: 'Waves',
+    description: 'Weekly swimming academy lessons and public pool family pass',
+    defaultPaymentMethod: 'Direct Debit',
+    popular: true,
+  },
+  {
+    id: 'tennis-club',
+    name: 'Tennis & Racket Club',
+    defaultAmount: 55.00,
+    category: 'lifestyle',
+    defaultCycle: 'monthly',
+    color: '#202124',
+    icon: 'Activity',
+    description: 'Tennis court booking access, league fees & coaching',
+    defaultPaymentMethod: 'Direct Debit',
+    popular: false,
+  },
+  {
+    id: 'gym-membership',
+    name: 'Gym & Fitness Membership',
+    defaultAmount: 34.99,
+    category: 'lifestyle',
+    defaultCycle: 'monthly',
+    color: '#676B73',
+    icon: 'Dumbbell',
+    description: 'Full gym and fitness facility access',
+    defaultPaymentMethod: 'SEPA Direct Debit',
+    popular: true,
+  },
+
+  // 3. Streaming & Media
   {
     id: 'netflix',
     name: 'Netflix (Standard)',
@@ -28,13 +128,13 @@ export const PRESETS: PresetItem[] = [
   },
   {
     id: 'spotify',
-    name: 'Spotify Premium',
-    defaultAmount: 10.99,
+    name: 'Spotify Premium (Family)',
+    defaultAmount: 17.99,
     category: 'entertainment',
     defaultCycle: 'monthly',
     color: '#3155D9',
     icon: 'Music',
-    description: 'Ad-free music listening, offline downloads, high bitrate',
+    description: 'Up to 6 ad-free accounts for family members living together',
     defaultPaymentMethod: 'Visa Debit',
     popular: true,
   },
@@ -74,20 +174,8 @@ export const PRESETS: PresetItem[] = [
     defaultPaymentMethod: 'Visa Debit',
     popular: true,
   },
-  {
-    id: 'amazon-prime',
-    name: 'Amazon Prime',
-    defaultAmount: 6.99,
-    category: 'entertainment',
-    defaultCycle: 'monthly',
-    color: '#3155D9',
-    icon: 'Package',
-    description: 'Prime Video, free delivery, and Prime Music',
-    defaultPaymentMethod: 'Credit Card',
-    popular: true,
-  },
 
-  // AI & Tech Tools
+  // 4. AI & Tech Tools
   {
     id: 'chatgpt-plus',
     name: 'ChatGPT Plus (OpenAI)',
@@ -149,18 +237,6 @@ export const PRESETS: PresetItem[] = [
     popular: true,
   },
   {
-    id: 'perplexity-pro',
-    name: 'Perplexity Pro',
-    defaultAmount: 22.99,
-    category: 'ai-tech',
-    defaultCycle: 'monthly',
-    color: '#3155D9',
-    icon: 'Search',
-    description: 'Pro search with citation sources, model switcher, file analysis',
-    defaultPaymentMethod: 'Credit Card',
-    popular: false,
-  },
-  {
     id: 'icloud-storage',
     name: 'iCloud+ (200GB)',
     defaultAmount: 2.99,
@@ -172,20 +248,8 @@ export const PRESETS: PresetItem[] = [
     defaultPaymentMethod: 'Apple Pay',
     popular: true,
   },
-  {
-    id: 'google-one',
-    name: 'Google One (2TB)',
-    defaultAmount: 9.99,
-    category: 'ai-tech',
-    defaultCycle: 'monthly',
-    color: '#202124',
-    icon: 'Database',
-    description: '2TB Google Drive, Photos, Gmail cloud storage',
-    defaultPaymentMethod: 'SEPA Debit',
-    popular: false,
-  },
 
-  // Home Utilities
+  // 5. Home Utilities
   {
     id: 'electricity-gas',
     name: 'Electricity & Gas Dual Fuel',
@@ -197,18 +261,6 @@ export const PRESETS: PresetItem[] = [
     description: 'Home power and heating regular monthly direct debit',
     defaultPaymentMethod: 'SEPA Direct Debit',
     popular: true,
-  },
-  {
-    id: 'electricity-only',
-    name: 'Electricity Supply',
-    defaultAmount: 90.00,
-    category: 'utilities',
-    defaultCycle: 'monthly',
-    color: '#3155D9',
-    icon: 'Zap',
-    description: 'Monthly electricity supply and standing charge',
-    defaultPaymentMethod: 'SEPA Direct Debit',
-    popular: false,
   },
   {
     id: 'broadband-fiber',
@@ -247,7 +299,7 @@ export const PRESETS: PresetItem[] = [
     popular: true,
   },
 
-  // Housing & Living
+  // 6. Housing & Living
   {
     id: 'municipal-tax',
     name: 'Municipal & Property Tax',
@@ -271,31 +323,5 @@ export const PRESETS: PresetItem[] = [
     description: 'Property structure and personal contents insurance policy',
     defaultPaymentMethod: 'SEPA Direct Debit',
     popular: true,
-  },
-
-  // Lifestyle & Wellness
-  {
-    id: 'gym-membership',
-    name: 'Gym Membership',
-    defaultAmount: 34.99,
-    category: 'lifestyle',
-    defaultCycle: 'monthly',
-    color: '#676B73',
-    icon: 'Dumbbell',
-    description: 'Full gym and fitness facility monthly access',
-    defaultPaymentMethod: 'SEPA Direct Debit',
-    popular: true,
-  },
-  {
-    id: 'headspace',
-    name: 'Headspace / Meditation',
-    defaultAmount: 59.99,
-    category: 'lifestyle',
-    defaultCycle: 'annual',
-    color: '#676B73',
-    icon: 'HeartHandshake',
-    description: 'Guided mindfulness and sleep courses',
-    defaultPaymentMethod: 'Apple Pay',
-    popular: false,
   },
 ];

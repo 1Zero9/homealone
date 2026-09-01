@@ -10,17 +10,18 @@ import { CategoryBreakdownChart } from '@/src/components/CategoryBreakdownChart'
 import { ExpenseList } from '@/src/components/ExpenseList';
 import { AiTechSection } from '@/src/components/AiTechSection';
 import { UtilitiesSection } from '@/src/components/UtilitiesSection';
+import { EducationSection } from '@/src/components/EducationSection';
 import { UpcomingRenewals } from '@/src/components/UpcomingRenewals';
 import { OptimizationInsights } from '@/src/components/OptimizationInsights';
+import { AdminSection } from '@/src/components/AdminSection';
 import { ExpenseModal } from '@/src/components/ExpenseModal';
 import { PresetsModal } from '@/src/components/PresetsModal';
 import { ExportImportModal } from '@/src/components/ExportImportModal';
-import { AdminBackupModal } from '@/src/components/AdminBackupModal';
 
 export default function HomeAlonePage() {
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
-  const [activeTab, setActiveTab] = useState<'all' | 'ai-tech' | 'utilities' | 'calendar' | 'insights'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'ai-tech' | 'utilities' | 'education' | 'calendar' | 'insights' | 'admin'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // Users
@@ -31,9 +32,9 @@ export default function HomeAlonePage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isPresetsModalOpen, setIsPresetsModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseItem | null>(null);
   const [initialPresetId, setInitialPresetId] = useState<string | null>(null);
+  const [initialCategory, setInitialCategory] = useState<string | null>(null);
 
   // Fetch users & expenses from Prisma PostgreSQL API
   const fetchDatabaseData = useCallback(async () => {
@@ -124,7 +125,7 @@ export default function HomeAlonePage() {
       const newItem: ExpenseItem = {
         ...expenseData,
         id: tempId,
-        createdById: currentUser?.id,
+        createdById: expenseData.createdById || currentUser?.id,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -136,7 +137,7 @@ export default function HomeAlonePage() {
         const res = await fetch('/api/expenses', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...expenseData, createdById: currentUser?.id }),
+          body: JSON.stringify({ ...expenseData, createdById: expenseData.createdById || currentUser?.id }),
         });
         const data = await res.json();
         if (data.status === 'ok' && data.expense) {
@@ -251,16 +252,17 @@ export default function HomeAlonePage() {
           setActiveTab(tab);
           if (tab === 'ai-tech') setSelectedCategory('ai-tech');
           else if (tab === 'utilities') setSelectedCategory('utilities');
+          else if (tab === 'education') setSelectedCategory('education');
           else setSelectedCategory(null);
         }}
         onOpenAddModal={() => {
           setEditingExpense(null);
           setInitialPresetId(null);
+          setInitialCategory(null);
           setIsAddModalOpen(true);
         }}
         onOpenPresetsModal={() => setIsPresetsModalOpen(true)}
         onOpenExportModal={() => setIsExportModalOpen(true)}
-        onOpenAdminModal={() => setIsAdminModalOpen(true)}
         onResetData={handleResetData}
         currentUser={currentUser}
         users={users}
@@ -282,6 +284,7 @@ export default function HomeAlonePage() {
           onFilterCategory={(cat) => {
             if (cat === 'ai-tech') setActiveTab('ai-tech');
             else if (cat === 'utilities') setActiveTab('utilities');
+            else if (cat === 'education') setActiveTab('education');
             else {
               setSelectedCategory(cat);
               setActiveTab('all');
@@ -309,6 +312,8 @@ export default function HomeAlonePage() {
               onToggleActive={handleToggleActive}
               onEditExpense={(item) => {
                 setEditingExpense(item);
+                setInitialCategory(null);
+                setInitialPresetId(null);
                 setIsAddModalOpen(true);
               }}
               onDuplicateExpense={handleDuplicateExpense}
@@ -316,6 +321,7 @@ export default function HomeAlonePage() {
               onOpenAddModal={() => {
                 setEditingExpense(null);
                 setInitialPresetId(null);
+                setInitialCategory(null);
                 setIsAddModalOpen(true);
               }}
               onOpenPresetsModal={() => setIsPresetsModalOpen(true)}
@@ -334,6 +340,29 @@ export default function HomeAlonePage() {
             onOpenAddModal={() => {
               setEditingExpense(null);
               setInitialPresetId(null);
+              setInitialCategory('utilities');
+              setIsAddModalOpen(true);
+            }}
+            onOpenAddPreset={(presetId) => {
+              setEditingExpense(null);
+              setInitialPresetId(presetId);
+              setIsAddModalOpen(true);
+            }}
+          />
+        )}
+
+        {activeTab === 'education' && (
+          <EducationSection
+            expenses={expenses}
+            currency={currency}
+            onEditExpense={(item) => {
+              setEditingExpense(item);
+              setIsAddModalOpen(true);
+            }}
+            onOpenAddModal={(cat) => {
+              setEditingExpense(null);
+              setInitialPresetId(null);
+              setInitialCategory(cat || 'education');
               setIsAddModalOpen(true);
             }}
             onOpenAddPreset={(presetId) => {
@@ -361,6 +390,7 @@ export default function HomeAlonePage() {
             onOpenAddModal={() => {
               setEditingExpense(null);
               setInitialPresetId(null);
+              setInitialCategory('ai-tech');
               setIsAddModalOpen(true);
             }}
           />
@@ -381,6 +411,20 @@ export default function HomeAlonePage() {
           <OptimizationInsights
             expenses={expenses}
             currency={currency}
+          />
+        )}
+
+        {activeTab === 'admin' && (
+          <AdminSection
+            users={users}
+            currentUser={currentUser}
+            onRefreshUsers={fetchDatabaseData}
+            onOpenAddModalWithCategory={(cat) => {
+              setEditingExpense(null);
+              setInitialPresetId(null);
+              setInitialCategory(cat);
+              setIsAddModalOpen(true);
+            }}
           />
         )}
       </main>
@@ -410,10 +454,14 @@ export default function HomeAlonePage() {
           setIsAddModalOpen(false);
           setEditingExpense(null);
           setInitialPresetId(null);
+          setInitialCategory(null);
         }}
         onSave={handleSaveExpense}
         editingExpense={editingExpense}
         initialPresetId={initialPresetId}
+        initialCategory={initialCategory}
+        users={users}
+        currentUserId={currentUser?.id}
       />
 
       {/* Popular Presets Modal */}
@@ -431,15 +479,6 @@ export default function HomeAlonePage() {
         expenses={expenses}
         currency={currency}
         onDataUpdated={setExpenses}
-      />
-
-      {/* Admin Backup & Database Modal */}
-      <AdminBackupModal
-        isOpen={isAdminModalOpen}
-        onClose={() => setIsAdminModalOpen(false)}
-        currentUser={currentUser}
-        users={users}
-        onDataRestored={fetchDatabaseData}
       />
     </div>
   );
