@@ -337,9 +337,15 @@ input:checked + .slider:before {
   font-variant-numeric: tabular-nums;
 }
 
-/* Responsive Utilities */
+/* Mobile & Responsive Utilities */
 @media (max-width: 768px) {
   .hide-mobile {
     display: none !important;
+  }
+  
+  .ha-ledger-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
   }
 }

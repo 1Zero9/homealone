@@ -1,24 +1,28 @@
-import { useState, useEffect } from 'react';
-import type { ExpenseItem, CurrencyCode, PresetItem } from './types/expense';
-import { loadExpenses, saveExpenses, loadCurrency, saveCurrency, resetToDefaults } from './services/storage';
-import { calculateSpendingSummary } from './utils/calculations';
-import { Navbar } from './components/Navbar';
-import { DashboardStats } from './components/DashboardStats';
-import { CategoryBreakdownChart } from './components/CategoryBreakdownChart';
-import { ExpenseList } from './components/ExpenseList';
-import { AiTechSection } from './components/AiTechSection';
-import { UtilitiesSection } from './components/UtilitiesSection';
-import { UpcomingRenewals } from './components/UpcomingRenewals';
-import { OptimizationInsights } from './components/OptimizationInsights';
-import { ExpenseModal } from './components/ExpenseModal';
-import { PresetsModal } from './components/PresetsModal';
-import { ExportImportModal } from './components/ExportImportModal';
+'use client';
 
-export function App() {
-  const [expenses, setExpenses] = useState<ExpenseItem[]>(() => loadExpenses());
-  const [currency, setCurrency] = useState<CurrencyCode>(() => loadCurrency());
+import { useState, useEffect } from 'react';
+import type { ExpenseItem, CurrencyCode, PresetItem } from '@/src/types/expense';
+import { loadExpenses, saveExpenses, loadCurrency, saveCurrency, resetToDefaults } from '@/src/services/storage';
+import { fetchExpensesFromCloud, syncExpenseToCloud, deleteExpenseFromCloud, isCloudSyncConfigured } from '@/src/services/supabase';
+import { calculateSpendingSummary } from '@/src/utils/calculations';
+import { Navbar } from '@/src/components/Navbar';
+import { DashboardStats } from '@/src/components/DashboardStats';
+import { CategoryBreakdownChart } from '@/src/components/CategoryBreakdownChart';
+import { ExpenseList } from '@/src/components/ExpenseList';
+import { AiTechSection } from '@/src/components/AiTechSection';
+import { UtilitiesSection } from '@/src/components/UtilitiesSection';
+import { UpcomingRenewals } from '@/src/components/UpcomingRenewals';
+import { OptimizationInsights } from '@/src/components/OptimizationInsights';
+import { ExpenseModal } from '@/src/components/ExpenseModal';
+import { PresetsModal } from '@/src/components/PresetsModal';
+import { ExportImportModal } from '@/src/components/ExportImportModal';
+
+export default function HomeAlonePage() {
+  const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
+  const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [activeTab, setActiveTab] = useState<'all' | 'ai-tech' | 'utilities' | 'calendar' | 'insights'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -27,25 +31,54 @@ export function App() {
   const [editingExpense, setEditingExpense] = useState<ExpenseItem | null>(null);
   const [initialPresetId, setInitialPresetId] = useState<string | null>(null);
 
-  // Sync with storage
+  // Initial load from local or cloud
   useEffect(() => {
-    saveExpenses(expenses);
-  }, [expenses]);
+    const localExpenses = loadExpenses();
+    const localCurrency = loadCurrency();
+    setExpenses(localExpenses);
+    setCurrency(localCurrency);
+    setIsLoaded(true);
+
+    // If cloud sync is configured, check for latest remote records
+    if (isCloudSyncConfigured) {
+      fetchExpensesFromCloud().then((cloudItems) => {
+        if (cloudItems && cloudItems.length > 0) {
+          setExpenses(cloudItems);
+          saveExpenses(cloudItems);
+        }
+      });
+    }
+  }, []);
+
+  // Save changes locally
+  useEffect(() => {
+    if (isLoaded) {
+      saveExpenses(expenses);
+    }
+  }, [expenses, isLoaded]);
 
   useEffect(() => {
-    saveCurrency(currency);
-  }, [currency]);
+    if (isLoaded) {
+      saveCurrency(currency);
+    }
+  }, [currency, isLoaded]);
 
   // Compute spend analytics summary
   const summary = calculateSpendingSummary(expenses, currency);
 
   // Toggle active/pause status
   const handleToggleActive = (id: string) => {
-    setExpenses((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, isActive: !item.isActive, updatedAt: new Date().toISOString() } : item
-      )
-    );
+    setExpenses((prev) => {
+      const updated = prev.map((item) => {
+        if (item.id === id) {
+          const itemUpdated = { ...item, isActive: !item.isActive, updatedAt: new Date().toISOString() };
+          syncExpenseToCloud(itemUpdated);
+          return itemUpdated;
+        }
+        return item;
+      });
+      return updated;
+    });
   };
 
   // Save new or edited expense
@@ -55,11 +88,14 @@ export function App() {
   ) => {
     if (existingId) {
       setExpenses((prev) =>
-        prev.map((item) =>
-          item.id === existingId
-            ? { ...item, ...expenseData, updatedAt: new Date().toISOString() }
-            : item
-        )
+        prev.map((item) => {
+          if (item.id === existingId) {
+            const updated = { ...item, ...expenseData, updatedAt: new Date().toISOString() };
+            syncExpenseToCloud(updated);
+            return updated;
+          }
+          return item;
+        })
       );
     } else {
       const newItem: ExpenseItem = {
@@ -68,6 +104,7 @@ export function App() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+      syncExpenseToCloud(newItem);
       setExpenses((prev) => [newItem, ...prev]);
     }
   };
@@ -81,6 +118,7 @@ export function App() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+    syncExpenseToCloud(duplicated);
     setExpenses((prev) => [duplicated, ...prev]);
   };
 
@@ -88,6 +126,7 @@ export function App() {
   const handleDeleteExpense = (id: string) => {
     const item = expenses.find((e) => e.id === id);
     if (window.confirm(`Remove "${item?.name || 'this record'}"?`)) {
+      deleteExpenseFromCloud(id);
       setExpenses((prev) => prev.filter((e) => e.id !== id));
     }
   };
@@ -116,6 +155,7 @@ export function App() {
       updatedAt: new Date().toISOString(),
     };
 
+    syncExpenseToCloud(newItem);
     setExpenses((prev) => [newItem, ...prev]);
   };
 
@@ -283,7 +323,7 @@ export function App() {
             Home Alone — Simple records. Clearer days.
           </div>
           <div>
-            Local storage in your browser
+            Next.js App Router • Multi-device cloud sync enabled
           </div>
         </div>
       </footer>
@@ -320,5 +360,3 @@ export function App() {
     </div>
   );
 }
-
-export default App;
