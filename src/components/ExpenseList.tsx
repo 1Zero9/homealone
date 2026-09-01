@@ -3,7 +3,7 @@ import type { ExpenseItem, CurrencyCode } from '../types/expense';
 import { CATEGORIES, CATEGORY_LIST } from '../data/categories';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle } from '../utils/formatters';
-import { Search, ArrowUpDown, Edit2, Trash2, Copy, User } from 'lucide-react';
+import { Search, ArrowUpDown, Edit2, Trash2, Copy, User, Plus, Sparkles } from 'lucide-react';
 
 interface ExpenseListProps {
   expenses: ExpenseItem[];
@@ -27,6 +27,8 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   onEditExpense,
   onDuplicateExpense,
   onDeleteExpense,
+  onOpenAddModal,
+  onOpenPresetsModal,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
@@ -234,10 +236,52 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
       </div>
 
       {/* Ledger Table Rows */}
-      {sortedItems.length === 0 ? (
+      {expenses.length === 0 ? (
+        <div style={{ padding: '3.5rem 2rem', textAlign: 'center', color: 'var(--ha-muted)' }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            backgroundColor: 'var(--ha-blue-light)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 1rem',
+          }}>
+            <Sparkles size={24} color="var(--ha-blue)" />
+          </div>
+
+          <h4 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--ha-ink)', marginBottom: '0.35rem' }}>
+            Your household ledger is clean and ready
+          </h4>
+          <p style={{ fontSize: '0.85rem', color: 'var(--ha-muted)', maxWidth: '480px', margin: '0 auto 1.5rem', lineHeight: 1.5 }}>
+            No test data is present. Start adding your real home utility bills, subscriptions, college fees, and sports memberships.
+          </p>
+
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={onOpenAddModal}
+              className="btn btn-primary"
+              style={{ fontSize: '0.85rem' }}
+            >
+              <Plus size={15} />
+              <span>+ Add first expense</span>
+            </button>
+
+            <button
+              onClick={onOpenPresetsModal}
+              className="btn btn-secondary"
+              style={{ fontSize: '0.85rem' }}
+            >
+              <Sparkles size={15} color="var(--ha-blue)" />
+              <span>Browse 1-Click Catalog</span>
+            </button>
+          </div>
+        </div>
+      ) : sortedItems.length === 0 ? (
         <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--ha-muted)' }}>
           <p style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
-            Nothing recorded under current filters.
+            No records matched current search filters.
           </p>
           <button
             onClick={() => { setSearchQuery(''); onSelectCategory(null); setStatusFilter('all'); }}

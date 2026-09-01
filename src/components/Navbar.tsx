@@ -2,7 +2,7 @@ import React from 'react';
 import type { CurrencyCode, UserProfile } from '../types/expense';
 import { CURRENCY_LIST } from '../utils/currencies';
 import { formatCurrency } from '../utils/formatters';
-import { Plus, Download, Sparkles, RefreshCw, User, LogOut } from 'lucide-react';
+import { Plus, Download, Sparkles, LogOut, ChevronDown } from 'lucide-react';
 
 interface NavbarProps {
   currentCurrency: CurrencyCode;
@@ -29,7 +29,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAddModal,
   onOpenPresetsModal,
   onOpenExportModal,
-  onResetData,
   onLogout,
   currentUser,
   users,
@@ -157,46 +156,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        {/* User Switcher, Actions, Currency & Logout */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          {/* Household User Profile Switcher */}
-          {users.length > 0 && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              backgroundColor: 'var(--ha-white)',
-              border: '1px solid var(--ha-line)',
-              borderRadius: 'var(--ha-radius-md)',
-              padding: '0.35rem 0.65rem',
-            }}>
-              <User size={14} color="var(--ha-blue)" />
-              <select
-                value={currentUser?.id || ''}
-                onChange={(e) => {
-                  const targetUser = users.find((u) => u.id === e.target.value);
-                  if (targetUser) onSelectUser(targetUser);
-                }}
-                style={{
-                  backgroundColor: 'transparent',
-                  color: 'var(--ha-ink)',
-                  border: 'none',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  outline: 'none',
-                }}
-                title="Switch active household profile"
-              >
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} ({u.role.replace('_', ' ')})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
+        {/* Right Actions: Currency, Catalog, Export, Add Expense, User & Log Out */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
           {/* Currency Dropdown */}
           <select
             value={currentCurrency}
@@ -229,7 +190,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             title="Browse standard subscription and utility presets"
           >
             <Sparkles size={15} color="var(--ha-blue)" />
-            <span className="hide-mobile">Catalog</span>
+            <span>Catalog</span>
           </button>
 
           {/* Export / Backup */}
@@ -237,19 +198,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={onOpenExportModal}
             className="btn btn-secondary"
             style={{ fontSize: '0.85rem', padding: '0.55rem 0.75rem' }}
-            title="Export CSV or JSON backup"
+            title="Export CSV spreadsheet or JSON backup"
           >
             <Download size={15} />
-          </button>
-
-          {/* Reset data */}
-          <button
-            onClick={onResetData}
-            className="btn btn-ghost"
-            style={{ fontSize: '0.85rem', padding: '0.55rem 0.75rem' }}
-            title="Reset data"
-          >
-            <RefreshCw size={14} />
+            <span className="hide-mobile">Export</span>
           </button>
 
           {/* Primary Add Expense Action */}
@@ -262,14 +214,79 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>Add expense</span>
           </button>
 
-          {/* Sign Out Action */}
+          {/* User Account Chip & Switcher */}
+          {currentUser && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: 'var(--ha-white)',
+              border: '1px solid var(--ha-line)',
+              borderRadius: 'var(--ha-radius-md)',
+              padding: '0.25rem 0.5rem',
+              gap: '0.4rem',
+            }}>
+              <div style={{
+                width: '26px',
+                height: '26px',
+                borderRadius: 'var(--ha-radius-sm)',
+                backgroundColor: currentUser.role === 'ADMIN' ? 'var(--ha-blue-light)' : currentUser.role === 'BACKUP_ADMIN' ? 'var(--ha-red-tint)' : '#e7e8ea',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                color: currentUser.role === 'ADMIN' ? 'var(--ha-blue)' : currentUser.role === 'BACKUP_ADMIN' ? 'var(--ha-red)' : 'var(--ha-ink)',
+              }}>
+                {currentUser.name.charAt(0).toUpperCase()}
+              </div>
+
+              {users.length > 1 ? (
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <select
+                    value={currentUser.id}
+                    onChange={(e) => {
+                      const targetUser = users.find((u) => u.id === e.target.value);
+                      if (targetUser) onSelectUser(targetUser);
+                    }}
+                    style={{
+                      appearance: 'none',
+                      WebkitAppearance: 'none',
+                      backgroundColor: 'transparent',
+                      color: 'var(--ha-ink)',
+                      border: 'none',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      outline: 'none',
+                      paddingRight: '1.2rem',
+                    }}
+                    title="Switch household user"
+                  >
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={12} color="var(--ha-muted)" style={{ position: 'absolute', right: 0, pointerEvents: 'none' }} />
+                </div>
+              ) : (
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                  {currentUser.name}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Prominent Log Out Button */}
           <button
             onClick={onLogout}
-            className="btn btn-ghost"
-            style={{ fontSize: '0.85rem', padding: '0.55rem 0.65rem' }}
+            className="btn btn-destructive"
+            style={{ fontSize: '0.82rem', padding: '0.55rem 0.85rem' }}
             title="Sign out of Home Alone"
           >
-            <LogOut size={15} />
+            <LogOut size={14} />
+            <span>Log out</span>
           </button>
         </div>
       </div>
