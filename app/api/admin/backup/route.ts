@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
+import { getErrorMessage } from '@/src/lib/errors';
+import { requireAdmin } from '@/src/lib/auth';
+import { Prisma } from '@prisma/client';
 
 export async function GET() {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const backups = await prisma.databaseBackup.findMany({
       orderBy: { createdAt: 'desc' },
@@ -12,24 +18,29 @@ export async function GET() {
       status: 'ok',
       backups,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to fetch backups:', error);
     return NextResponse.json(
-      { status: 'error', message: error.message || 'Database error' },
+      { status: 'error', message: getErrorMessage(error, 'Database error') },
       { status: 500 }
     );
   }
 }
 
 export async function POST(request: Request) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await request.json().catch(() => ({}));
-    const allExpenses = await prisma.expense.findMany();
+    const allExpenses = await prisma.expense.findMany({
+      where: { householdId: auth.user.householdId },
+    });
 
     const backup = await prisma.databaseBackup.create({
       data: {
-        createdById: body.createdById || null,
-        payloadJson: allExpenses as any,
+        createdById: auth.user.id,
+        payloadJson: allExpenses as unknown as Prisma.InputJsonValue,
         recordCount: allExpenses.length,
         notes: body.notes || `Snapshot created on ${new Date().toLocaleString()}`,
       },
@@ -39,16 +50,19 @@ export async function POST(request: Request) {
       status: 'ok',
       backup,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to create backup:', error);
     return NextResponse.json(
-      { status: 'error', message: error.message || 'Backup failed' },
+      { status: 'error', message: getErrorMessage(error, 'Backup failed') },
       { status: 500 }
     );
   }
 }
 
 export async function PUT(request: Request) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await request.json();
     if (!body.backupId) {
@@ -69,40 +83,51 @@ export async function PUT(request: Request) {
       );
     }
 
-    const records = backup.payloadJson as any[];
-    if (Array.isArray(records)) {
-      // Clear and re-populate
-      await prisma.expense.deleteMany();
+    if (!Array.isArray(backup.payloadJson)) {
+      return NextResponse.json(
+        { status: 'error', message: 'Backup payload is invalid' },
+        { status: 400 }
+      );
+    }
+    const records = backup.payloadJson as Prisma.JsonArray as Record<string, unknown>[];
+
+    // Only ever restore records into the admin's own household, and only
+    // replace that household's expenses — never touch other households.
+    await prisma.$transaction(async (tx) => {
+      await tx.expense.deleteMany({ where: { householdId: auth.user.householdId } });
       for (const item of records) {
-        await prisma.expense.create({
+        await tx.expense.create({
           data: {
-            name: item.name,
-            amount: Number(item.amount),
-            currency: item.currency || 'EUR',
-            billingCycle: item.billingCycle || 'monthly',
-            category: item.category || 'utilities',
-            icon: item.icon || 'Zap',
-            color: item.color || '#3155D9',
+            name: String(item.name || 'Untitled'),
+            amount: Number(item.amount) || 0,
+            currency: (item.currency as string) || 'EUR',
+            billingCycle: (item.billingCycle as string) || 'monthly',
+            category: (item.category as string) || 'utilities',
+            icon: (item.icon as string) || 'Zap',
+            color: (item.color as string) || '#3155D9',
             renewalDay: Number(item.renewalDay) || 1,
-            nextRenewalDate: item.nextRenewalDate,
-            paymentMethod: item.paymentMethod || 'SEPA Direct Debit',
+            nextRenewalDate: (item.nextRenewalDate as string) || new Date().toISOString().split('T')[0],
+            isPaidThisCycle: Boolean(item.isPaidThisCycle),
+            paymentMethod: (item.paymentMethod as string) || 'SEPA Direct Debit',
             isActive: Boolean(item.isActive),
-            notes: item.notes || null,
-            contractEndDate: item.contractEndDate || null,
-            usageRating: item.usageRating || 'high',
+            notes: (item.notes as string) || null,
+            contractEndDate: (item.contractEndDate as string) || null,
+            usageRating: (item.usageRating as string) || 'high',
+            householdId: auth.user.householdId,
+            createdById: auth.user.id,
           },
         });
       }
-    }
+    });
 
     return NextResponse.json({
       status: 'ok',
       restoredCount: records.length,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to restore backup:', error);
     return NextResponse.json(
-      { status: 'error', message: error.message || 'Restore failed' },
+      { status: 'error', message: getErrorMessage(error, 'Restore failed') },
       { status: 500 }
     );
   }

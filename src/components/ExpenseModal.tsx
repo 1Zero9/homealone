@@ -31,12 +31,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [category, setCategory] = useState<ExpenseCategory>('utilities');
-  const [renewalDay, setRenewalDay] = useState(1);
+  const [nextRenewalDate, setNextRenewalDate] = useState('');
+  const [isPaidThisCycle, setIsPaidThisCycle] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('SEPA Direct Debit');
   const [assignedUserId, setAssignedUserId] = useState<string>('');
   const [notes, setNotes] = useState('');
   const [contractEndDate, setContractEndDate] = useState('');
   const [usageRating, setUsageRating] = useState<'high' | 'medium' | 'low'>('high');
+  const [isVariable, setIsVariable] = useState(false);
 
   useEffect(() => {
     if (editingExpense) {
@@ -45,12 +47,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setCurrency(editingExpense.currency || 'EUR');
       setBillingCycle(editingExpense.billingCycle);
       setCategory(editingExpense.category);
-      setRenewalDay(editingExpense.renewalDay || 1);
+      setNextRenewalDate(editingExpense.nextRenewalDate || '');
+      setIsPaidThisCycle(!!editingExpense.isPaidThisCycle);
       setPaymentMethod(editingExpense.paymentMethod || 'SEPA Direct Debit');
       setAssignedUserId(editingExpense.createdById || currentUserId || '');
       setNotes(editingExpense.notes || '');
       setContractEndDate(editingExpense.contractEndDate || '');
       setUsageRating(editingExpense.usageRating || 'high');
+      setIsVariable(!!editingExpense.isVariable);
     } else if (initialPresetId) {
       const preset = PRESETS.find((p) => p.id === initialPresetId);
       if (preset) {
@@ -59,10 +63,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         setCurrency('EUR');
         setBillingCycle(preset.defaultCycle);
         setCategory(preset.category);
-        setRenewalDay(1);
+        setNextRenewalDate(new Date().toISOString().split('T')[0]);
+        setIsPaidThisCycle(false);
         setPaymentMethod(preset.defaultPaymentMethod);
         setAssignedUserId(currentUserId || '');
         setNotes(preset.description || '');
+        setIsVariable(preset.category === 'shopping');
       }
     } else {
       setName('');
@@ -70,12 +76,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setCurrency('EUR');
       setBillingCycle('monthly');
       setCategory((initialCategory as ExpenseCategory) || 'utilities');
-      setRenewalDay(1);
+      setNextRenewalDate(new Date().toISOString().split('T')[0]);
+      setIsPaidThisCycle(false);
       setPaymentMethod('SEPA Direct Debit');
       setAssignedUserId(currentUserId || '');
       setNotes('');
       setContractEndDate('');
       setUsageRating('high');
+      setIsVariable((initialCategory as ExpenseCategory) === 'shopping');
     }
   }, [editingExpense, initialPresetId, initialCategory, currentUserId, isOpen]);
 
@@ -97,9 +105,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     if (!name.trim()) return;
     const numAmount = Number(amount) || 0;
 
-    const now = new Date();
-    const renewalDateObj = new Date(now.getFullYear(), now.getMonth(), Math.min(Number(renewalDay) || 1, 28));
-    const nextRenewalDate = renewalDateObj.toISOString().split('T')[0];
+    const resolvedNextRenewalDate = nextRenewalDate || new Date().toISOString().split('T')[0];
+    const resolvedRenewalDay = Number(resolvedNextRenewalDate.split('-')[2]) || 1;
 
     const catInfo = CATEGORIES[category];
 
@@ -112,13 +119,15 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         category,
         icon: catInfo?.icon || 'Zap',
         color: catInfo?.color || '#3155D9',
-        renewalDay: Number(renewalDay) || 1,
-        nextRenewalDate,
+        renewalDay: resolvedRenewalDay,
+        nextRenewalDate: resolvedNextRenewalDate,
+        isPaidThisCycle,
         paymentMethod: paymentMethod.trim() || 'SEPA Direct Debit',
         isActive: true,
         notes: notes.trim(),
         contractEndDate: contractEndDate || undefined,
         usageRating,
+        isVariable,
         createdById: assignedUserId || currentUserId,
       },
       editingExpense?.id
@@ -321,17 +330,65 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
             <div>
               <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
-                Renewal / Debit Day (1–31)
+                Next due date
               </label>
               <input
-                type="number"
-                min="1"
-                max="31"
-                value={renewalDay}
-                onChange={(e) => setRenewalDay(Math.min(31, Math.max(1, Number(e.target.value))))}
+                type="date"
+                required
+                value={nextRenewalDate}
+                onChange={(e) => setNextRenewalDate(e.target.value)}
                 className="ha-input tabular-nums"
               />
             </div>
+          </div>
+
+          {/* Paid this cycle & variable amount toggles */}
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {editingExpense && (
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                cursor: 'pointer',
+                padding: '0.6rem 0.75rem',
+                borderRadius: 'var(--ha-radius-sm)',
+                border: '1px solid var(--ha-line)',
+                backgroundColor: isPaidThisCycle ? 'var(--ha-blue-light)' : '#fafaf7',
+                width: 'fit-content',
+              }}>
+                <input
+                  type="checkbox"
+                  checked={isPaidThisCycle}
+                  onChange={(e) => setIsPaidThisCycle(e.target.checked)}
+                />
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                  Paid this cycle
+                </span>
+              </label>
+            )}
+
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              cursor: 'pointer',
+              padding: '0.6rem 0.75rem',
+              borderRadius: 'var(--ha-radius-sm)',
+              border: '1px solid var(--ha-line)',
+              backgroundColor: isVariable ? 'var(--ha-blue-light)' : '#fafaf7',
+              width: 'fit-content',
+            }}
+              title="For bills that change each cycle, like electric, gas or shopping — lets you quickly update just the amount from the ledger"
+            >
+              <input
+                type="checkbox"
+                checked={isVariable}
+                onChange={(e) => setIsVariable(e.target.checked)}
+              />
+              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                This amount varies each cycle
+              </span>
+            </label>
           </div>
 
           {/* Payment Method & Contract End Date */}

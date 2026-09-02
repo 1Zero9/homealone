@@ -40,7 +40,7 @@ export async function GET() {
       status: 'authenticated',
       user: session.user,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Session check failed:', error);
     return NextResponse.json(
       { status: 'unauthenticated' },

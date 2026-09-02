@@ -1,15 +1,18 @@
 import React from 'react';
+import Image from 'next/image';
 import type { CurrencyCode, UserProfile } from '../types/expense';
 import { CURRENCY_LIST } from '../utils/currencies';
 import { formatCurrency } from '../utils/formatters';
-import { Plus, Download, Sparkles, LogOut, ChevronDown, UserPlus } from 'lucide-react';
+import { Plus, Download, Sparkles, LogOut, UserPlus } from 'lucide-react';
+
+export type TabId = 'all' | 'ai-tech' | 'utilities' | 'education' | 'income' | 'calendar' | 'insights' | 'admin';
 
 interface NavbarProps {
   currentCurrency: CurrencyCode;
   onCurrencyChange: (currency: CurrencyCode) => void;
   monthlyTotal: number;
-  activeTab: 'all' | 'ai-tech' | 'utilities' | 'education' | 'calendar' | 'insights' | 'admin';
-  onTabChange: (tab: 'all' | 'ai-tech' | 'utilities' | 'education' | 'calendar' | 'insights' | 'admin') => void;
+  activeTab: TabId;
+  onTabChange: (tab: TabId) => void;
   onOpenAddModal: () => void;
   onOpenPresetsModal: () => void;
   onOpenExportModal: () => void;
@@ -17,8 +20,6 @@ interface NavbarProps {
   onResetData: () => void;
   onLogout: () => void;
   currentUser: UserProfile | null;
-  users: UserProfile[];
-  onSelectUser: (user: UserProfile) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -33,8 +34,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenShareModal,
   onLogout,
   currentUser,
-  users,
-  onSelectUser,
 }) => {
   return (
     <header style={{
@@ -60,12 +59,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', cursor: 'pointer' }}
             onClick={() => onTabChange('all')}
           >
-            <img
+            <Image
               src="/home-alone-logo-mark.png"
               alt="Home Alone logo"
+              width={36}
+              height={36}
               style={{
-                height: '36px',
-                width: '36px',
                 objectFit: 'contain',
                 display: 'block',
               }}
@@ -130,6 +129,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             { id: 'utilities', label: 'Utilities & bills' },
             { id: 'education', label: 'Colleges & sports' },
             { id: 'ai-tech', label: 'AI & tech' },
+            { id: 'income', label: 'Income' },
             { id: 'calendar', label: 'Schedule' },
             { id: 'insights', label: 'Optimization' },
             { id: 'admin', label: 'Admin & users' },
@@ -138,7 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             return (
               <button
                 key={tab.id}
-                onClick={() => onTabChange(tab.id as any)}
+                onClick={() => onTabChange(tab.id as TabId)}
                 style={{
                   padding: '0.45rem 0.85rem',
                   borderRadius: 'var(--ha-radius-sm)',
@@ -253,41 +253,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {currentUser.name.charAt(0).toUpperCase()}
               </div>
 
-              {users.length > 1 ? (
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <select
-                    value={currentUser.id}
-                    onChange={(e) => {
-                      const targetUser = users.find((u) => u.id === e.target.value);
-                      if (targetUser) onSelectUser(targetUser);
-                    }}
-                    style={{
-                      appearance: 'none',
-                      WebkitAppearance: 'none',
-                      backgroundColor: 'transparent',
-                      color: 'var(--ha-ink)',
-                      border: 'none',
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      outline: 'none',
-                      paddingRight: '1.2rem',
-                    }}
-                    title="Switch active profile"
-                  >
-                    {users.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={12} color="var(--ha-muted)" style={{ position: 'absolute', right: 0, pointerEvents: 'none' }} />
-                </div>
-              ) : (
-                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
-                  {currentUser.name}
-                </span>
-              )}
+              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                {currentUser.name}
+              </span>
             </div>
           )}
 

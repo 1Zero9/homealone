@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import type { UserProfile, UserRole } from '../types/expense';
+import { getErrorMessage } from '../lib/errors';
 import { X, Copy, Check, UserPlus, Users, Link as LinkIcon, CheckCircle2, AlertCircle } from 'lucide-react';
+
+interface WorkspaceInfo {
+  id: string;
+  name: string;
+  inviteCode: string;
+}
 
 interface ShareWorkspaceModalProps {
   isOpen: boolean;
@@ -18,7 +25,7 @@ export const ShareWorkspaceModal: React.FC<ShareWorkspaceModalProps> = ({
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviteRole, setInviteRole] = useState<UserRole>('MEMBER');
-  const [workspace, setWorkspace] = useState<any>(null);
+  const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
   const [members, setMembers] = useState<UserProfile[]>([]);
   const [isCopied, setIsCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -94,8 +101,8 @@ export const ShareWorkspaceModal: React.FC<ShareWorkspaceModalProps> = ({
       } else {
         setErrorMessage(data.message || 'Failed to invite user');
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to invite user');
+    } catch (err: unknown) {
+      setErrorMessage(getErrorMessage(err, 'Failed to invite user'));
     } finally {
       setIsLoading(false);
     }

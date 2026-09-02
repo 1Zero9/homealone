@@ -30,7 +30,7 @@ export function loadExpenses(): ExpenseItem[] {
     }
 
     // Ensure all items are in EUR
-    const sanitized = parsed.map((item: any) => ({
+    const sanitized = (parsed as ExpenseItem[]).map((item) => ({
       ...item,
       currency: item.currency === 'GBP' ? 'EUR' : (item.currency || 'EUR'),
     }));
@@ -162,6 +162,8 @@ export function importExpensesJSON(jsonStr: string): ExpenseItem[] {
     color: item.color || '#3155D9',
     renewalDay: Number(item.renewalDay) || 1,
     nextRenewalDate: item.nextRenewalDate || new Date().toISOString().split('T')[0],
+    isPaidThisCycle: typeof item.isPaidThisCycle === 'boolean' ? item.isPaidThisCycle : false,
+    lastPaidAt: item.lastPaidAt || null,
     paymentMethod: item.paymentMethod || 'SEPA Direct Debit',
     isActive: typeof item.isActive === 'boolean' ? item.isActive : true,
     notes: item.notes || '',

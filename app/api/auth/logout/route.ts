@@ -16,7 +16,7 @@ export async function POST() {
     const response = NextResponse.json({ status: 'ok' });
     response.cookies.delete('homealone_session');
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Logout error:', error);
     const response = NextResponse.json({ status: 'ok' });
     response.cookies.delete('homealone_session');

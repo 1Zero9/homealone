@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
+import { getErrorMessage } from '@/src/lib/errors';
 import crypto from 'crypto';
 
 export async function POST(request: Request) {
@@ -73,10 +74,10 @@ export async function POST(request: Request) {
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to join workspace:', error);
     return NextResponse.json(
-      { status: 'error', message: error.message || 'Failed to join workspace' },
+      { status: 'error', message: getErrorMessage(error, 'Failed to join workspace') },
       { status: 500 }
     );
   }

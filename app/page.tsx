@@ -1,13 +1,18 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { ExpenseItem, CurrencyCode, PresetItem, UserProfile } from '@/src/types/expense';
+import Image from 'next/image';
+import type { ExpenseItem, IncomeItem, CurrencyCode, PresetItem, UserProfile } from '@/src/types/expense';
 import { loadCurrency, saveCurrency, resetToDefaults } from '@/src/services/storage';
-import { calculateSpendingSummary } from '@/src/utils/calculations';
+import { calculateSpendingSummary, calculateIncomeSummary } from '@/src/utils/calculations';
 import { Navbar } from '@/src/components/Navbar';
+import type { TabId } from '@/src/components/Navbar';
 import { DashboardStats } from '@/src/components/DashboardStats';
+import { CashFlowSummary } from '@/src/components/CashFlowSummary';
 import { CategoryBreakdownChart } from '@/src/components/CategoryBreakdownChart';
 import { ExpenseList } from '@/src/components/ExpenseList';
+import { IncomeSection } from '@/src/components/IncomeSection';
+import { IncomeModal } from '@/src/components/IncomeModal';
 import { AiTechSection } from '@/src/components/AiTechSection';
 import { UtilitiesSection } from '@/src/components/UtilitiesSection';
 import { EducationSection } from '@/src/components/EducationSection';
@@ -19,12 +24,14 @@ import { ExpenseModal } from '@/src/components/ExpenseModal';
 import { PresetsModal } from '@/src/components/PresetsModal';
 import { ExportImportModal } from '@/src/components/ExportImportModal';
 import { ShareWorkspaceModal } from '@/src/components/ShareWorkspaceModal';
+import { AssistantBox } from '@/src/components/AssistantBox';
 
 export default function HomeAlonePage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = checking
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
+  const [incomes, setIncomes] = useState<IncomeItem[]>([]);
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
-  const [activeTab, setActiveTab] = useState<'all' | 'ai-tech' | 'utilities' | 'education' | 'calendar' | 'insights' | 'admin'>('all');
+  const [activeTab, setActiveTab] = useState<TabId>('all');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // Users & Auth
@@ -39,6 +46,8 @@ export default function HomeAlonePage() {
   const [editingExpense, setEditingExpense] = useState<ExpenseItem | null>(null);
   const [initialPresetId, setInitialPresetId] = useState<string | null>(null);
   const [initialCategory, setInitialCategory] = useState<string | null>(null);
+  const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
+  const [editingIncome, setEditingIncome] = useState<IncomeItem | null>(null);
 
   // Fetch users & expenses from Prisma PostgreSQL API
   const fetchDatabaseData = useCallback(async () => {
@@ -55,6 +64,13 @@ export default function HomeAlonePage() {
       const expData = await expRes.json();
       if (expData.status === 'ok' && Array.isArray(expData.expenses)) {
         setExpenses(expData.expenses);
+      }
+
+      // 3. Fetch Income from PostgreSQL
+      const incRes = await fetch('/api/income');
+      const incData = await incRes.json();
+      if (incData.status === 'ok' && Array.isArray(incData.incomes)) {
+        setIncomes(incData.incomes);
       }
     } catch (err) {
       console.error('Failed to load from database:', err);
@@ -133,6 +149,7 @@ export default function HomeAlonePage() {
 
   // Compute spend analytics summary
   const summary = calculateSpendingSummary(expenses, currency);
+  const incomeSummary = calculateIncomeSummary(incomes, currency);
 
   // Toggle active/pause status with PostgreSQL sync
   const handleToggleActive = async (id: string) => {
@@ -153,6 +170,29 @@ export default function HomeAlonePage() {
       });
     } catch (err) {
       console.error('Failed to update status in DB:', err);
+      fetchDatabaseData();
+    }
+  };
+
+  // Toggle paid/unpaid status with PostgreSQL sync
+  const handleTogglePaid = async (id: string) => {
+    const item = expenses.find((e) => e.id === id);
+    if (!item) return;
+
+    const updatedPaid = !item.isPaidThisCycle;
+    // Optimistic update
+    setExpenses((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, isPaidThisCycle: updatedPaid } : e))
+    );
+
+    try {
+      await fetch('/api/expenses', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...item, isPaidThisCycle: updatedPaid }),
+      });
+    } catch (err) {
+      console.error('Failed to update paid status in DB:', err);
       fetchDatabaseData();
     }
   };
@@ -292,6 +332,118 @@ export default function HomeAlonePage() {
     }
   };
 
+  // Quick update amount for variable bills (electric, gas, shopping, etc.)
+  const handleQuickUpdateAmount = async (expense: ExpenseItem, newAmount: number) => {
+    setExpenses((prev) =>
+      prev.map((e) => (e.id === expense.id ? { ...e, amount: newAmount } : e))
+    );
+
+    try {
+      await fetch('/api/expenses', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...expense, amount: newAmount }),
+      });
+    } catch (err) {
+      console.error('Failed to quick-update amount in DB:', err);
+      fetchDatabaseData();
+    }
+  };
+
+  // Toggle income active/paused status with PostgreSQL sync
+  const handleToggleIncomeActive = async (id: string) => {
+    const item = incomes.find((i) => i.id === id);
+    if (!item) return;
+
+    const updatedActive = !item.isActive;
+    setIncomes((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, isActive: updatedActive } : i))
+    );
+
+    try {
+      await fetch('/api/income', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...item, isActive: updatedActive }),
+      });
+    } catch (err) {
+      console.error('Failed to update income status in DB:', err);
+      fetchDatabaseData();
+    }
+  };
+
+  // Save new or edited income with PostgreSQL sync
+  const handleSaveIncome = async (
+    incomeData: Omit<IncomeItem, 'id' | 'createdAt' | 'updatedAt'>,
+    existingId?: string
+  ) => {
+    if (existingId) {
+      setIncomes((prev) =>
+        prev.map((item) =>
+          item.id === existingId
+            ? { ...item, ...incomeData, updatedAt: new Date().toISOString() }
+            : item
+        )
+      );
+
+      try {
+        await fetch('/api/income', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...incomeData, id: existingId }),
+        });
+      } catch (err) {
+        console.error('Failed to update income in DB:', err);
+        fetchDatabaseData();
+      }
+    } else {
+      const tempId = `inc-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+      const newItem: IncomeItem = {
+        ...incomeData,
+        id: tempId,
+        createdById: incomeData.createdById || currentUser?.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setIncomes((prev) => [newItem, ...prev]);
+
+      try {
+        const res = await fetch('/api/income', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...incomeData, createdById: incomeData.createdById || currentUser?.id }),
+        });
+        const data = await res.json();
+        if (data.status === 'ok' && data.income) {
+          setIncomes((prev) =>
+            prev.map((i) => (i.id === tempId ? data.income : i))
+          );
+        }
+      } catch (err) {
+        console.error('Failed to create income in DB:', err);
+        fetchDatabaseData();
+      }
+    }
+  };
+
+  // Delete an income record
+  const handleDeleteIncome = async (id: string) => {
+    const item = incomes.find((i) => i.id === id);
+    if (!window.confirm(`Remove "${item?.name || 'this income source'}"?`)) return;
+
+    setIncomes((prev) => prev.filter((i) => i.id !== id));
+
+    try {
+      await fetch(`/api/income?id=${id}`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.error('Failed to delete income from DB:', err);
+      fetchDatabaseData();
+    }
+  };
+
   // Reset sample data
   const handleResetData = async () => {
     if (window.confirm('Reset all expense records?')) {
@@ -307,7 +459,7 @@ export default function HomeAlonePage() {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--ha-paper)' }}>
         <div style={{ textAlign: 'center' }}>
-          <img src="/home-alone-logo-mark.png" alt="Home Alone" style={{ height: '40px', width: '40px', objectFit: 'contain', margin: '0 auto 0.75rem' }} />
+          <Image src="/home-alone-logo-mark.png" alt="Home Alone" width={40} height={40} style={{ objectFit: 'contain', margin: '0 auto 0.75rem' }} />
           <p style={{ color: 'var(--ha-muted)', fontSize: '0.85rem' }}>Loading Home Alone...</p>
         </div>
       </div>
@@ -346,8 +498,6 @@ export default function HomeAlonePage() {
         onResetData={handleResetData}
         onLogout={handleLogout}
         currentUser={currentUser}
-        users={users}
-        onSelectUser={setCurrentUser}
       />
 
       {/* Main Container Content */}
@@ -358,6 +508,22 @@ export default function HomeAlonePage() {
         padding: '1.75rem 1.5rem',
         flex: 1,
       }}>
+        {/* Ask Bar — the "Google box" for this household's spending */}
+        <div style={{ padding: '0.5rem 0 2rem' }}>
+          <AssistantBox currency={currency} />
+        </div>
+
+        {/* Money In / Money Out / Net Cash Flow */}
+        <CashFlowSummary
+          monthlyIncome={incomeSummary.monthlyTotal}
+          monthlyExpenses={summary.monthlyTotal}
+          currency={currency}
+          onOpenAddIncome={() => {
+            setEditingIncome(null);
+            setIsIncomeModalOpen(true);
+          }}
+        />
+
         {/* Top Spend Summary Cards */}
         <DashboardStats
           summary={summary}
@@ -391,6 +557,7 @@ export default function HomeAlonePage() {
               selectedCategory={selectedCategory}
               onSelectCategory={setSelectedCategory}
               onToggleActive={handleToggleActive}
+              onTogglePaid={handleTogglePaid}
               onEditExpense={(item) => {
                 setEditingExpense(item);
                 setInitialCategory(null);
@@ -406,8 +573,26 @@ export default function HomeAlonePage() {
                 setIsAddModalOpen(true);
               }}
               onOpenPresetsModal={() => setIsPresetsModalOpen(true)}
+              onQuickUpdateAmount={handleQuickUpdateAmount}
             />
           </>
+        )}
+
+        {activeTab === 'income' && (
+          <IncomeSection
+            incomes={incomes}
+            currency={currency}
+            onToggleActive={handleToggleIncomeActive}
+            onEditIncome={(item) => {
+              setEditingIncome(item);
+              setIsIncomeModalOpen(true);
+            }}
+            onDeleteIncome={handleDeleteIncome}
+            onOpenAddModal={() => {
+              setEditingIncome(null);
+              setIsIncomeModalOpen(true);
+            }}
+          />
         )}
 
         {activeTab === 'utilities' && (
@@ -541,6 +726,19 @@ export default function HomeAlonePage() {
         editingExpense={editingExpense}
         initialPresetId={initialPresetId}
         initialCategory={initialCategory}
+        users={users}
+        currentUserId={currentUser?.id}
+      />
+
+      {/* Add / Edit Income Modal */}
+      <IncomeModal
+        isOpen={isIncomeModalOpen}
+        onClose={() => {
+          setIsIncomeModalOpen(false);
+          setEditingIncome(null);
+        }}
+        onSave={handleSaveIncome}
+        editingIncome={editingIncome}
         users={users}
         currentUserId={currentUser?.id}
       />

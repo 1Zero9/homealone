@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import type { UserProfile } from '../types/expense';
+import { getErrorMessage } from '../lib/errors';
 import { ArrowRight, KeyRound, CheckCircle2, AlertCircle, Mail, User, Home } from 'lucide-react';
 
 interface LoginScreenProps {
@@ -13,7 +15,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'form' | 'code'>('form');
-  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -47,13 +48,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
       const data = await res.json();
       if (data.status === 'ok') {
-        setGeneratedCode(data.code || null);
         setStep('code');
       } else {
         setErrorMessage(data.message || 'Failed to send verification code');
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to connect to authentication server');
+    } catch (err: unknown) {
+      setErrorMessage(getErrorMessage(err, 'Failed to connect to authentication server'));
     } finally {
       setIsLoading(false);
     }
@@ -83,8 +83,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       } else {
         setErrorMessage(data.message || 'Invalid or expired code');
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Verification error');
+    } catch (err: unknown) {
+      setErrorMessage(getErrorMessage(err, 'Verification error'));
     } finally {
       setIsLoading(false);
     }
@@ -113,10 +113,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       }}>
         {/* Brand Header */}
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <img
+          <Image
             src="/home-alone-logo-mark.png"
             alt="Home Alone logo mark"
-            style={{ height: '48px', width: '48px', objectFit: 'contain', marginBottom: '0.75rem' }}
+            width={48}
+            height={48}
+            style={{ objectFit: 'contain', marginBottom: '0.75rem' }}
           />
 
           <h1 style={{
@@ -307,39 +309,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         ) : (
           /* STEP 2: Enter 6-Digit Code */
           <form onSubmit={handleVerifyCode} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {generatedCode && (
-              <div style={{
-                backgroundColor: 'var(--ha-lime-tint)',
-                border: '1px solid var(--ha-lime)',
-                borderRadius: 'var(--ha-radius-sm)',
-                padding: '0.85rem',
-                textAlign: 'center',
-              }}>
-                <div style={{ fontSize: '0.72rem', color: 'var(--ha-ink)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Your 6-Digit Magic Code
-                </div>
-                <div className="tabular-nums" style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--ha-blue)', letterSpacing: '0.2em', marginTop: '0.2rem' }}>
-                  {generatedCode}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setCode(generatedCode)}
-                  style={{
-                    marginTop: '0.35rem',
-                    fontSize: '0.75rem',
-                    color: 'var(--ha-blue)',
-                    fontWeight: 600,
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                  }}
-                >
-                  Click to autofill code
-                </button>
-              </div>
-            )}
-
             <div>
               <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
                 Enter verification code
@@ -366,7 +335,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 type="button"
-                onClick={() => { setStep('form'); setCode(''); setGeneratedCode(null); }}
+                onClick={() => { setStep('form'); setCode(''); }}
                 className="btn btn-secondary"
                 style={{ flex: 1, fontSize: '0.85rem' }}
               >

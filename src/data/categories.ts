@@ -55,6 +55,15 @@ export const CATEGORIES: Record<ExpenseCategory, CategoryInfo> = {
     borderColor: '#fcd3cf',
     icon: 'Tv',
   },
+  'shopping': {
+    id: 'shopping',
+    name: 'Shopping & Groceries',
+    description: 'One monthly total for groceries and general shopping — no itemizing',
+    color: '#8A5CF6', // Violet
+    bgColor: '#f4effe',
+    borderColor: '#ded0fb',
+    icon: 'ShoppingCart',
+  },
 };
 
 export const CATEGORY_LIST = Object.values(CATEGORIES);

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { UserProfile, DatabaseBackupRecord, UserRole } from '../types/expense';
+import { getErrorMessage } from '../lib/errors';
 import { UserPlus, Edit2, Trash2, Check, X, Database, History, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface AdminSectionProps {
@@ -83,8 +84,8 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       } else {
         setErrorMessage(data.message || 'Failed to add user');
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to add user');
+    } catch (err: unknown) {
+      setErrorMessage(getErrorMessage(err, 'Failed to add user'));
     }
   };
 
@@ -113,8 +114,8 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       } else {
         setErrorMessage(data.message || 'Failed to update user');
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to update user');
+    } catch (err: unknown) {
+      setErrorMessage(getErrorMessage(err, 'Failed to update user'));
     }
   };
 
@@ -137,8 +138,8 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       } else {
         setErrorMessage(data.message || 'Failed to delete user');
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to delete user');
+    } catch (err: unknown) {
+      setErrorMessage(getErrorMessage(err, 'Failed to delete user'));
     }
   };
 
@@ -165,8 +166,8 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       } else {
         setErrorMessage(data.message || 'Snapshot failed');
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Snapshot failed');
+    } catch (err: unknown) {
+      setErrorMessage(getErrorMessage(err, 'Snapshot failed'));
     } finally {
       setIsBackupLoading(false);
     }
@@ -196,8 +197,8 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       } else {
         setErrorMessage(data.message || 'Restore failed');
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Restore failed');
+    } catch (err: unknown) {
+      setErrorMessage(getErrorMessage(err, 'Restore failed'));
     } finally {
       setIsBackupLoading(false);
     }

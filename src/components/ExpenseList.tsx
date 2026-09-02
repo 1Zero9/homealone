@@ -3,7 +3,17 @@ import type { ExpenseItem, CurrencyCode } from '../types/expense';
 import { CATEGORIES, CATEGORY_LIST } from '../data/categories';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle } from '../utils/formatters';
-import { Search, ArrowUpDown, Edit2, Trash2, Copy, User, Plus, Sparkles } from 'lucide-react';
+import { Search, ArrowUpDown, Edit2, Trash2, Copy, User, Plus, Sparkles, RefreshCw } from 'lucide-react';
+
+function isOverdue(dateStr: string): boolean {
+  if (!dateStr) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const due = new Date(year, (month || 1) - 1, day || 1);
+  due.setHours(0, 0, 0, 0);
+  return due < today;
+}
 
 interface ExpenseListProps {
   expenses: ExpenseItem[];
@@ -11,11 +21,13 @@ interface ExpenseListProps {
   selectedCategory: string | null;
   onSelectCategory: (cat: string | null) => void;
   onToggleActive: (id: string) => void;
+  onTogglePaid: (id: string) => void;
   onEditExpense: (expense: ExpenseItem) => void;
   onDuplicateExpense: (expense: ExpenseItem) => void;
   onDeleteExpense: (id: string) => void;
   onOpenAddModal: () => void;
   onOpenPresetsModal: () => void;
+  onQuickUpdateAmount: (expense: ExpenseItem, newAmount: number) => void;
 }
 
 export const ExpenseList: React.FC<ExpenseListProps> = ({
@@ -24,11 +36,13 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   selectedCategory,
   onSelectCategory,
   onToggleActive,
+  onTogglePaid,
   onEditExpense,
   onDuplicateExpense,
   onDeleteExpense,
   onOpenAddModal,
   onOpenPresetsModal,
+  onQuickUpdateAmount,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
@@ -86,6 +100,14 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
           <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
             Household ledger
           </h3>
+          {(() => {
+            const overdueCount = expenses.filter((e) => e.isActive && !e.isPaidThisCycle && isOverdue(e.nextRenewalDate)).length;
+            return overdueCount > 0 ? (
+              <p style={{ fontSize: '0.8rem', color: 'var(--ha-red)', fontWeight: 600 }}>
+                {overdueCount} bill{overdueCount === 1 ? '' : 's'} overdue
+              </p>
+            ) : null;
+          })()}
           <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)' }}>
             {sortedItems.length} of {expenses.length} records shown
           </p>
@@ -132,7 +154,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
             <ArrowUpDown size={14} color="var(--ha-muted)" />
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as 'amount-desc' | 'amount-asc' | 'renewal' | 'name')}
               style={{
                 backgroundColor: '#fafaf7',
                 color: 'var(--ha-ink)',
@@ -296,6 +318,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
           {sortedItems.map((item) => {
             const cat = CATEGORIES[item.category] || CATEGORIES.utilities;
             const monthlyAmount = getMonthlyEquivalent(convertCurrency(item.amount, item.currency, currency), item.billingCycle);
+            const overdue = item.isActive && !item.isPaidThisCycle && isOverdue(item.nextRenewalDate);
 
             return (
               <div
@@ -329,10 +352,12 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.75rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.75rem', color: overdue ? 'var(--ha-red)' : 'var(--ha-muted)', marginTop: '2px' }}>
                       <span>{item.paymentMethod || 'Direct Debit'}</span>
                       <span>•</span>
-                      <span>Day {item.renewalDay}</span>
+                      <span style={{ fontWeight: overdue ? 700 : 400 }}>
+                        {overdue ? 'Overdue — due ' : 'Due '}{item.nextRenewalDate}
+                      </span>
                       {item.notes && (
                         <>
                           <span>•</span>
@@ -360,8 +385,17 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                   )}
                 </div>
 
-                {/* 3. Active Status Toggle & Inline Actions */}
+                {/* 3. Paid/Active Status Toggles & Inline Actions */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '1rem' }}>
+                  <span
+                    className={`ha-badge ${item.isPaidThisCycle ? 'ha-badge-neutral' : overdue ? 'ha-badge-red' : 'ha-badge-blue'}`}
+                    style={{ fontSize: '0.68rem', cursor: 'pointer' }}
+                    onClick={() => onTogglePaid(item.id)}
+                    title={item.isPaidThisCycle ? 'Paid — click to mark unpaid' : 'Unpaid — click to mark paid'}
+                  >
+                    {item.isPaidThisCycle ? 'Paid' : 'Unpaid'}
+                  </span>
+
                   <label className="toggle-switch" title={item.isActive ? 'Active — click to pause' : 'Paused — click to activate'}>
                     <input
                       type="checkbox"
@@ -370,6 +404,23 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                     />
                     <span className="slider"></span>
                   </label>
+
+                  {item.isVariable && (
+                    <button
+                      onClick={() => {
+                        const input = window.prompt(`New amount for "${item.name}" this cycle:`, String(item.amount));
+                        if (input === null) return;
+                        const parsed = Number(input);
+                        if (!Number.isFinite(parsed) || parsed < 0) return;
+                        onQuickUpdateAmount(item, parsed);
+                      }}
+                      className="btn btn-ghost"
+                      style={{ padding: '0.35rem 0.45rem' }}
+                      title="This bill varies — quickly update just the amount"
+                    >
+                      <RefreshCw size={14} color="var(--ha-blue)" />
+                    </button>
+                  )}
 
                   <button
                     onClick={() => onEditExpense(item)}

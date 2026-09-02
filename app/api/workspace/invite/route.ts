@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
+import { getErrorMessage } from '@/src/lib/errors';
 import { Role } from '@prisma/client';
+import { requireAdmin } from '@/src/lib/auth';
 
 export async function POST(request: Request) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await request.json();
     const email = (body.email || '').trim().toLowerCase();
     const name = (body.name || '').trim();
-    const role = (body.role as Role) || Role.MEMBER;
-    const workspaceId = body.workspaceId;
+    // Only an ADMIN can grant ADMIN; otherwise default to MEMBER.
+    const requestedRole = (body.role as Role) || Role.MEMBER;
+    const role = requestedRole === Role.ADMIN && auth.user.role === Role.ADMIN ? Role.ADMIN : Role.MEMBER;
 
     if (!email || !email.includes('@')) {
       return NextResponse.json(
@@ -17,18 +23,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find workspace
-    let household = workspaceId
-      ? await prisma.household.findUnique({ where: { id: workspaceId } })
-      : await prisma.household.findFirst();
-
+    // Invites always target the admin's own household.
+    const household = await prisma.household.findUnique({ where: { id: auth.user.householdId } });
     if (!household) {
-      household = await prisma.household.create({
-        data: {
-          name: 'Our Household',
-          inviteCode: 'home-alone-family',
-        },
-      });
+      return NextResponse.json(
+        { status: 'error', message: 'Household not found.' },
+        { status: 404 }
+      );
     }
 
     // Determine default display name if omitted
@@ -55,10 +56,10 @@ export async function POST(request: Request) {
       message: `Invited ${user.name} (${user.email}) to ${household.name}.`,
       user,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to invite to workspace:', error);
     return NextResponse.json(
-      { status: 'error', message: error.message || 'Invitation failed' },
+      { status: 'error', message: getErrorMessage(error, 'Invitation failed') },
       { status: 500 }
     );
   }

@@ -1,4 +1,4 @@
-import type { ExpenseCategory, ExpenseItem, SpendingSummary, CurrencyCode } from '../types/expense';
+import type { ExpenseCategory, ExpenseItem, SpendingSummary, CurrencyCode, IncomeItem, IncomeSummary } from '../types/expense';
 import { CURRENCIES } from './currencies';
 import { CATEGORIES } from '../data/categories';
 
@@ -65,6 +65,7 @@ export function calculateSpendingSummary(
     housing: 0,
     education: 0,
     lifestyle: 0,
+    shopping: 0,
   };
 
   expenses.forEach((item) => {
@@ -121,6 +122,31 @@ export function calculateSpendingSummary(
     housingMonthly: categoryTotals['housing'],
     educationMonthly: categoryTotals['education'],
     lifestyleMonthly: categoryTotals['lifestyle'],
+    shoppingMonthly: categoryTotals['shopping'],
+  };
+}
+
+/**
+ * Computes total household income, normalized to monthly/annual figures.
+ */
+export function calculateIncomeSummary(
+  incomes: IncomeItem[],
+  displayCurrency: CurrencyCode = 'EUR'
+): IncomeSummary {
+  let monthlyTotal = 0;
+  let activeCount = 0;
+
+  incomes.forEach((item) => {
+    if (!item.isActive) return;
+    const amountInDisplay = convertCurrency(item.amount, item.currency, displayCurrency);
+    monthlyTotal += getMonthlyEquivalent(amountInDisplay, item.frequency);
+    activeCount += 1;
+  });
+
+  return {
+    monthlyTotal,
+    annualTotal: monthlyTotal * 12,
+    activeCount,
   };
 }
 

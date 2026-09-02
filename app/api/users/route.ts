@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
+import { getErrorMessage } from '@/src/lib/errors';
 import { Role } from '@prisma/client';
+import { requireAdmin, requireHouseholdUser } from '@/src/lib/auth';
 
 export async function GET() {
+  const auth = await requireHouseholdUser();
+  if ('error' in auth) return auth.error;
+
   try {
     const users = await prisma.user.findMany({
+      where: { householdId: auth.user.householdId },
       orderBy: { createdAt: 'asc' },
       select: {
         id: true,
@@ -23,16 +29,19 @@ export async function GET() {
       status: 'ok',
       users,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to fetch users:', error);
     return NextResponse.json(
-      { status: 'error', message: error.message || 'Database error' },
+      { status: 'error', message: getErrorMessage(error, 'Database error') },
       { status: 500 }
     );
   }
 }
 
 export async function POST(request: Request) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await request.json();
     if (!body.name || !body.email) {
@@ -42,14 +51,23 @@ export async function POST(request: Request) {
       );
     }
 
+    const email = body.email.trim().toLowerCase();
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return NextResponse.json(
+        { status: 'error', message: 'A user with that email already exists.' },
+        { status: 409 }
+      );
+    }
+
     const role = (body.role as Role) || Role.MEMBER;
 
     const user = await prisma.user.create({
       data: {
         name: body.name.trim(),
-        email: body.email.trim().toLowerCase(),
+        email,
         role,
-        avatarUrl: body.avatarUrl || null,
+        householdId: auth.user.householdId,
       },
     });
 
@@ -57,16 +75,19 @@ export async function POST(request: Request) {
       status: 'ok',
       user,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to create user:', error);
     return NextResponse.json(
-      { status: 'error', message: error.message || 'Failed to create user' },
+      { status: 'error', message: getErrorMessage(error, 'Failed to create user') },
       { status: 500 }
     );
   }
 }
 
 export async function PUT(request: Request) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await request.json();
     if (!body.id) {
@@ -76,11 +97,32 @@ export async function PUT(request: Request) {
       );
     }
 
+    // Only allow editing members of your own household.
+    const target = await prisma.user.findUnique({ where: { id: body.id } });
+    if (!target || target.householdId !== auth.user.householdId) {
+      return NextResponse.json(
+        { status: 'error', message: 'User not found in your household' },
+        { status: 404 }
+      );
+    }
+
+    // Prevent demoting the last remaining admin of the household.
+    if (target.role === 'ADMIN' && body.role && body.role !== 'ADMIN') {
+      const adminCount = await prisma.user.count({
+        where: { householdId: auth.user.householdId, role: 'ADMIN' },
+      });
+      if (adminCount <= 1) {
+        return NextResponse.json(
+          { status: 'error', message: 'Cannot remove the last admin of the household.' },
+          { status: 400 }
+        );
+      }
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: body.id },
       data: {
         name: body.name ? body.name.trim() : undefined,
-        email: body.email ? body.email.trim().toLowerCase() : undefined,
         role: body.role ? (body.role as Role) : undefined,
       },
     });
@@ -89,16 +131,19 @@ export async function PUT(request: Request) {
       status: 'ok',
       user: updatedUser,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to update user:', error);
     return NextResponse.json(
-      { status: 'error', message: error.message || 'Failed to update user' },
+      { status: 'error', message: getErrorMessage(error, 'Failed to update user') },
       { status: 500 }
     );
   }
 }
 
 export async function DELETE(request: Request) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -110,13 +155,32 @@ export async function DELETE(request: Request) {
       );
     }
 
-    // Check count to prevent deleting last admin
-    const userCount = await prisma.user.count();
-    if (userCount <= 1) {
+    const target = await prisma.user.findUnique({ where: { id } });
+    if (!target || target.householdId !== auth.user.householdId) {
       return NextResponse.json(
-        { status: 'error', message: 'Cannot delete the only remaining user in the household.' },
+        { status: 'error', message: 'User not found in your household' },
+        { status: 404 }
+      );
+    }
+
+    if (target.id === auth.user.id) {
+      return NextResponse.json(
+        { status: 'error', message: 'You cannot remove your own account.' },
         { status: 400 }
       );
+    }
+
+    // Check count to prevent deleting the last admin
+    if (target.role === 'ADMIN') {
+      const adminCount = await prisma.user.count({
+        where: { householdId: auth.user.householdId, role: 'ADMIN' },
+      });
+      if (adminCount <= 1) {
+        return NextResponse.json(
+          { status: 'error', message: 'Cannot remove the last admin of the household.' },
+          { status: 400 }
+        );
+      }
     }
 
     await prisma.user.delete({
@@ -127,10 +191,10 @@ export async function DELETE(request: Request) {
       status: 'ok',
       deletedId: id,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to delete user:', error);
     return NextResponse.json(
-      { status: 'error', message: error.message || 'Failed to delete user' },
+      { status: 'error', message: getErrorMessage(error, 'Failed to delete user') },
       { status: 500 }
     );
   }

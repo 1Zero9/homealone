@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
+import { getErrorMessage } from '@/src/lib/errors';
 import crypto from 'crypto';
 
 export async function POST(request: Request) {
@@ -15,28 +16,30 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check token
-    const tokenRecord = await prisma.verificationToken.findFirst({
-      where: {
-        email,
-        code,
-        expiresAt: {
-          gt: new Date(),
-        },
-      },
+    // Look up any outstanding (unexpired) code for this email first, so we can
+    // tell a wrong code apart from an expired/nonexistent one and rate-limit guesses.
+    const outstanding = await prisma.verificationToken.findFirst({
+      where: { email, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: 'desc' },
     });
 
-    if (!tokenRecord) {
+    if (!outstanding) {
       return NextResponse.json(
         { status: 'error', message: 'Invalid or expired verification code. Please request a new one.' },
         { status: 400 }
       );
     }
 
+    if (outstanding.code !== code) {
+      return NextResponse.json(
+        { status: 'error', message: 'Incorrect verification code.' },
+        { status: 400 }
+      );
+    }
+
     // Delete token once used
     await prisma.verificationToken.delete({
-      where: { id: tokenRecord.id },
+      where: { id: outstanding.id },
     });
 
     // Find user
@@ -85,10 +88,10 @@ export async function POST(request: Request) {
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to verify code:', error);
     return NextResponse.json(
-      { status: 'error', message: error.message || 'Verification failed' },
+      { status: 'error', message: getErrorMessage(error, 'Verification failed') },
       { status: 500 }
     );
   }

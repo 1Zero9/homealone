@@ -4,7 +4,10 @@ export type ExpenseCategory =
   | 'utilities'      // Electricity, Gas/Heating, Water, Broadband, Mobile
   | 'housing'        // Rent/Mortgage, Property Tax, Insurance, TV Licence
   | 'education'      // College Tuition, School Fees, Uniforms, Books, Lunches
-  | 'lifestyle';     // Sports Club, Gym, Coaching, Activities, Health
+  | 'lifestyle'      // Sports Club, Gym, Coaching, Activities, Health
+  | 'shopping';      // Groceries & general shopping — one lump total, not itemized
+
+export type IncomeCategory = 'salary' | 'freelance' | 'rental' | 'benefits' | 'other';
 
 export type BillingCycle = 'monthly' | 'annual' | 'quarterly' | 'weekly' | 'termly';
 
@@ -43,11 +46,14 @@ export interface ExpenseItem {
   color: string;
   renewalDay: number;
   nextRenewalDate: string;
+  isPaidThisCycle: boolean;
+  lastPaidAt?: string | null;
   paymentMethod: string;
   isActive: boolean;
   notes?: string;
   contractEndDate?: string;
   usageRating?: 'high' | 'medium' | 'low';
+  isVariable?: boolean;
   isPreset?: boolean;
   createdById?: string;
   createdBy?: {
@@ -57,6 +63,31 @@ export interface ExpenseItem {
   };
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface IncomeItem {
+  id: string;
+  name: string;
+  amount: number;
+  currency: CurrencyCode;
+  frequency: BillingCycle;
+  category: IncomeCategory;
+  isActive: boolean;
+  notes?: string;
+  createdById?: string;
+  createdBy?: {
+    id: string;
+    name: string;
+    role: UserRole;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface IncomeSummary {
+  monthlyTotal: number;
+  annualTotal: number;
+  activeCount: number;
 }
 
 export interface DatabaseBackupRecord {
@@ -111,4 +142,5 @@ export interface SpendingSummary {
   housingMonthly: number;
   educationMonthly: number;
   lifestyleMonthly: number;
+  shoppingMonthly: number;
 }

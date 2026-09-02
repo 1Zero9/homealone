@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
-import { Role } from '@prisma/client';
+import { getErrorMessage } from '@/src/lib/errors';
+import { Role, Prisma } from '@prisma/client';
+
+const CODE_TTL_MS = 15 * 60 * 1000;
+const RESEND_COOLDOWN_MS = 30 * 1000;
 
 export async function POST(request: Request) {
   try {
@@ -14,9 +18,21 @@ export async function POST(request: Request) {
       );
     }
 
+    // Basic anti-spam: refuse to issue a new code if one was just sent.
+    const recent = await prisma.verificationToken.findFirst({
+      where: { email, createdAt: { gt: new Date(Date.now() - RESEND_COOLDOWN_MS) } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (recent) {
+      return NextResponse.json(
+        { status: 'error', message: 'A code was already sent. Please wait a moment before requesting another.' },
+        { status: 429 }
+      );
+    }
+
     // Generate 6-digit numeric OTP code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+    const expiresAt = new Date(Date.now() + CODE_TTL_MS);
 
     // Ensure primary household exists
     let household = await prisma.household.findFirst();
@@ -48,7 +64,7 @@ export async function POST(request: Request) {
         },
       });
     } else {
-      const updateData: any = {};
+      const updateData: Prisma.UserUpdateInput = {};
       if (body.name && body.name.trim()) {
         updateData.name = body.name.trim();
       }
@@ -56,7 +72,7 @@ export async function POST(request: Request) {
         updateData.role = Role.ADMIN;
       }
       if (!user.householdId && household) {
-        updateData.householdId = household.id;
+        updateData.household = { connect: { id: household.id } };
       }
       if (Object.keys(updateData).length > 0) {
         user = await prisma.user.update({
@@ -66,7 +82,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // Save verification code
+    // Invalidate any previous outstanding codes for this email, then issue a new one.
+    await prisma.verificationToken.deleteMany({ where: { email } });
     await prisma.verificationToken.create({
       data: {
         email,
@@ -75,15 +92,20 @@ export async function POST(request: Request) {
       },
     });
 
+    // No email provider is configured yet. Log the code server-side only —
+    // it must NEVER be returned in the API response or shown in the browser,
+    // since that would let anyone sign in as anyone just by knowing their email.
+    // TODO: wire up a real transactional email provider here.
+    console.log(`[auth] Verification code for ${email}: ${code} (expires ${expiresAt.toISOString()})`);
+
     return NextResponse.json({
       status: 'ok',
-      message: `A verification code has been generated for ${email}.`,
-      code, // Included for instant verification
+      message: `A verification code has been sent to ${email}.`,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to send code:', error);
     return NextResponse.json(
-      { status: 'error', message: error.message || 'Failed to send code' },
+      { status: 'error', message: getErrorMessage(error, 'Failed to send code') },
       { status: 500 }
     );
   }

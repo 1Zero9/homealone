@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { DatabaseBackupRecord, UserProfile } from '../types/expense';
+import { getErrorMessage } from '../lib/errors';
 import { X, ShieldAlert, Database, History, RefreshCw, CheckCircle2, UserCheck, AlertCircle } from 'lucide-react';
 
 interface AdminBackupModalProps {
@@ -62,8 +63,8 @@ export const AdminBackupModal: React.FC<AdminBackupModalProps> = ({
       } else {
         setErrorMessage(data.message || 'Backup failed');
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Backup failed');
+    } catch (err: unknown) {
+      setErrorMessage(getErrorMessage(err, 'Backup failed'));
     } finally {
       setIsLoading(false);
     }
@@ -90,8 +91,8 @@ export const AdminBackupModal: React.FC<AdminBackupModalProps> = ({
       } else {
         setErrorMessage(data.message || 'Restore failed');
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Restore failed');
+    } catch (err: unknown) {
+      setErrorMessage(getErrorMessage(err, 'Restore failed'));
     } finally {
       setIsLoading(false);
     }

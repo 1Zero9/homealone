@@ -7,7 +7,7 @@
     "build": "prisma generate && next build",
     "postinstall": "prisma generate",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed"
   },
@@ -15,6 +15,7 @@
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.19.3",
     "@supabase/supabase-js": "^2.49.1",
     "lucide-react": "^1.39.0",
@@ -26,6 +27,8 @@
     "@types/node": "^22.13.4",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.25",
     "prisma": "^6.19.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"

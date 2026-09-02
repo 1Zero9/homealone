@@ -1,25 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
-import { cookies } from 'next/headers';
-
-async function getAuthUser() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('homealone_session')?.value;
-  if (!token) return null;
-
-  const session = await prisma.session.findUnique({
-    where: { token },
-    include: { user: true },
-  });
-
-  if (!session || session.expiresAt < new Date()) return null;
-  return session.user;
-}
+import { getErrorMessage } from '@/src/lib/errors';
+import { requireAdmin, requireUser } from '@/src/lib/auth';
 
 export async function GET() {
-  try {
-    const user = await getAuthUser();
+  const auth = await requireUser();
+  if ('error' in auth) return auth.error;
+  const user = auth.user;
 
+  try {
     // Find household or default primary
     let household = user?.householdId
       ? await prisma.household.findUnique({
@@ -92,29 +81,33 @@ export async function GET() {
       status: 'ok',
       workspace: household,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to get workspace:', error);
     return NextResponse.json(
-      { status: 'error', message: error.message || 'Database error' },
+      { status: 'error', message: getErrorMessage(error, 'Database error') },
       { status: 500 }
     );
   }
 }
 
 export async function PUT(request: Request) {
+  const auth = await requireAdmin();
+  if ('error' in auth) return auth.error;
+
   try {
     const body = await request.json();
-    const { id, name } = body;
+    const { name } = body;
 
-    if (!id || !name) {
+    if (!name) {
       return NextResponse.json(
-        { status: 'error', message: 'Workspace id and name are required' },
+        { status: 'error', message: 'Workspace name is required' },
         { status: 400 }
       );
     }
 
+    // Admins may only rename their own household.
     const updated = await prisma.household.update({
-      where: { id },
+      where: { id: auth.user.householdId },
       data: { name: name.trim() },
     });
 
@@ -122,10 +115,10 @@ export async function PUT(request: Request) {
       status: 'ok',
       workspace: updated,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to update workspace:', error);
     return NextResponse.json(
-      { status: 'error', message: error.message || 'Update failed' },
+      { status: 'error', message: getErrorMessage(error, 'Update failed') },
       { status: 500 }
     );
   }

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import type { ExpenseItem, CurrencyCode } from '../types/expense';
 import { exportExpensesCSV, exportExpensesJSON, importExpensesJSON, resetToDefaults } from '../services/storage';
+import { getErrorMessage } from '../lib/errors';
 import { X, Upload, FileSpreadsheet, FileCode, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface ExportImportModalProps {
@@ -35,8 +36,8 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
         onDataUpdated(updated);
         setImportStatus(`Restored ${updated.length} expense records.`);
         setErrorStatus(null);
-      } catch (err: any) {
-        setErrorStatus(`Import failed: ${err.message || 'Invalid JSON file'}`);
+      } catch (err: unknown) {
+        setErrorStatus(`Import failed: ${getErrorMessage(err, 'Invalid JSON file')}`);
         setImportStatus(null);
       }
     };
