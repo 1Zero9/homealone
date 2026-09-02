@@ -3,6 +3,7 @@ import { prisma } from '@/src/lib/prisma';
 import { getErrorMessage } from '@/src/lib/errors';
 import { Role } from '@prisma/client';
 import { requireAdmin } from '@/src/lib/auth';
+import { isEmailConfigured, sendInviteEmail } from '@/src/lib/mail';
 
 export async function POST(request: Request) {
   const auth = await requireAdmin();
@@ -51,9 +52,26 @@ export async function POST(request: Request) {
       },
     });
 
+    let emailSent = false;
+    if (isEmailConfigured()) {
+      try {
+        const origin = request.headers.get('origin') || new URL(request.url).origin;
+        await sendInviteEmail(email, {
+          inviterName: auth.user.name,
+          householdName: household.name,
+          appUrl: origin,
+        });
+        emailSent = true;
+      } catch (emailError: unknown) {
+        console.error('Failed to send invite email:', emailError);
+      }
+    }
+
     return NextResponse.json({
       status: 'ok',
-      message: `Invited ${user.name} (${user.email}) to ${household.name}.`,
+      message: emailSent
+        ? `Invited ${user.name} (${user.email}) to ${household.name} — an email was sent.`
+        : `Invited ${user.name} (${user.email}) to ${household.name}.`,
       user,
     });
   } catch (error: unknown) {

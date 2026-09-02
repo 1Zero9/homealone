@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getErrorMessage } from '@/src/lib/errors';
 import { Role, Prisma } from '@prisma/client';
+import { isEmailConfigured, sendVerificationCodeEmail } from '@/src/lib/mail';
 
 const CODE_TTL_MS = 15 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 30 * 1000;
@@ -92,15 +93,28 @@ export async function POST(request: Request) {
       },
     });
 
-    // No email provider is configured yet. Log the code server-side only —
-    // it must NEVER be returned in the API response or shown in the browser,
-    // since that would let anyone sign in as anyone just by knowing their email.
-    // TODO: wire up a real transactional email provider here.
+    // The code must NEVER be returned in the API response or shown in the
+    // browser, since that would let anyone sign in as anyone just by knowing
+    // their email. Always log server-side as a fallback/debug trail.
     console.log(`[auth] Verification code for ${email}: ${code} (expires ${expiresAt.toISOString()})`);
+
+    if (isEmailConfigured()) {
+      try {
+        await sendVerificationCodeEmail(email, code);
+      } catch (emailError: unknown) {
+        console.error('Failed to send verification email:', emailError);
+        return NextResponse.json(
+          { status: 'error', message: 'Failed to send the verification email. Please try again.' },
+          { status: 502 }
+        );
+      }
+    }
 
     return NextResponse.json({
       status: 'ok',
-      message: `A verification code has been sent to ${email}.`,
+      message: isEmailConfigured()
+        ? `A verification code has been sent to ${email}.`
+        : `Email isn't configured yet — check the server logs for the verification code.`,
     });
   } catch (error: unknown) {
     console.error('Failed to send code:', error);
