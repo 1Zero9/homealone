@@ -35,15 +35,29 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   currentUser,
 }) => {
+  const isAdmin = currentUser?.role === 'ADMIN';
+
   return (
-    <header style={{
-      position: 'sticky',
-      top: 0,
-      zIndex: 50,
-      backgroundColor: 'var(--ha-paper)',
-      borderBottom: '1px solid var(--ha-line)',
-      padding: '0.85rem 1.5rem',
-    }}>
+    <div style={{ position: 'sticky', top: 0, zIndex: 50 }}>
+      {isAdmin && (
+        <div style={{
+          backgroundColor: 'var(--ha-blue)',
+          color: 'var(--ha-white)',
+          fontSize: '0.72rem',
+          fontWeight: 600,
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+          textAlign: 'center',
+          padding: '0.3rem 0.5rem',
+        }}>
+          Admin workspace — full household access
+        </div>
+      )}
+      <header style={{
+        backgroundColor: 'var(--ha-paper)',
+        borderBottom: isAdmin ? '2px solid var(--ha-blue)' : '1px solid var(--ha-line)',
+        padding: '0.85rem 1.5rem',
+      }}>
       <div style={{
         maxWidth: '1280px',
         margin: '0 auto',
@@ -82,6 +96,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}>
                   Home Alone
                 </h1>
+                {isAdmin && (
+                  <span className="ha-badge ha-badge-blue">Admin</span>
+                )}
               </div>
               <p style={{
                 fontSize: '0.78rem',
@@ -271,6 +288,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
       </div>
-    </header>
+      </header>
+    </div>
   );
 };
