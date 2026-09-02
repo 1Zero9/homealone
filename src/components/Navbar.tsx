@@ -3,7 +3,7 @@ import Image from 'next/image';
 import type { CurrencyCode, UserProfile } from '../types/expense';
 import { CURRENCY_LIST } from '../utils/currencies';
 import { formatCurrency } from '../utils/formatters';
-import { Plus, Download, Sparkles, LogOut, UserPlus } from 'lucide-react';
+import { Plus, Download, Sparkles, LogOut, UserPlus, HelpCircle } from 'lucide-react';
 
 export type TabId = 'all' | 'ai-tech' | 'utilities' | 'education' | 'income' | 'calendar' | 'insights' | 'admin';
 
@@ -17,6 +17,7 @@ interface NavbarProps {
   onOpenPresetsModal: () => void;
   onOpenExportModal: () => void;
   onOpenShareModal: () => void;
+  onOpenHelpModal: () => void;
   onResetData: () => void;
   onLogout: () => void;
   currentUser: UserProfile | null;
@@ -32,6 +33,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenPresetsModal,
   onOpenExportModal,
   onOpenShareModal,
+  onOpenHelpModal,
   onLogout,
   currentUser,
 }) => {
@@ -275,6 +277,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
           )}
+
+          {/* Help Guide */}
+          <button
+            onClick={onOpenHelpModal}
+            className="btn btn-ghost"
+            style={{ fontSize: '0.82rem', padding: '0.55rem' }}
+            title="Help guide"
+          >
+            <HelpCircle size={17} />
+          </button>
 
           {/* Prominent Log Out Button */}
           <button

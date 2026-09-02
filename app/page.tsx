@@ -25,6 +25,7 @@ import { PresetsModal } from '@/src/components/PresetsModal';
 import { ExportImportModal } from '@/src/components/ExportImportModal';
 import { ShareWorkspaceModal } from '@/src/components/ShareWorkspaceModal';
 import { ContactVendorModal } from '@/src/components/ContactVendorModal';
+import { HelpGuideModal } from '@/src/components/HelpGuideModal';
 import { AssistantBox } from '@/src/components/AssistantBox';
 
 export default function HomeAlonePage() {
@@ -44,6 +45,7 @@ export default function HomeAlonePage() {
   const [isPresetsModalOpen, setIsPresetsModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseItem | null>(null);
   const [initialPresetId, setInitialPresetId] = useState<string | null>(null);
   const [initialCategory, setInitialCategory] = useState<string | null>(null);
@@ -153,6 +155,9 @@ export default function HomeAlonePage() {
   const summary = calculateSpendingSummary(expenses, currency);
   const incomeSummary = calculateIncomeSummary(incomes, currency);
   const hasData = expenses.length > 0 || incomes.length > 0;
+  const firstName = currentUser?.name?.split(' ')[0] || 'there';
+  const greetingHour = new Date().getHours();
+  const timeGreeting = greetingHour < 12 ? 'Good morning' : greetingHour < 18 ? 'Good afternoon' : 'Good evening';
 
   // Toggle active/pause status with PostgreSQL sync
   const handleToggleActive = async (id: string) => {
@@ -498,6 +503,7 @@ export default function HomeAlonePage() {
         onOpenPresetsModal={() => setIsPresetsModalOpen(true)}
         onOpenExportModal={() => setIsExportModalOpen(true)}
         onOpenShareModal={() => setIsShareModalOpen(true)}
+        onOpenHelpModal={() => setIsHelpModalOpen(true)}
         onResetData={handleResetData}
         onLogout={handleLogout}
         currentUser={currentUser}
@@ -513,6 +519,16 @@ export default function HomeAlonePage() {
       }}>
         {/* Ask Bar — the "Google box" for this household's spending */}
         <div style={{ padding: hasData ? '0.5rem 0 2rem' : '3rem 0 2.5rem' }}>
+          <h2 style={{
+            textAlign: 'center',
+            fontFamily: 'var(--ha-font-display)',
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            color: 'var(--ha-ink)',
+            marginBottom: '1.25rem',
+          }}>
+            {timeGreeting}, {firstName}
+          </h2>
           <AssistantBox currency={currency} hasData={hasData} />
         </div>
 
@@ -782,6 +798,13 @@ export default function HomeAlonePage() {
       <ContactVendorModal
         expense={contactVendorExpense}
         onClose={() => setContactVendorExpense(null)}
+      />
+
+      {/* Help Guide Modal */}
+      <HelpGuideModal
+        isOpen={isHelpModalOpen}
+        onClose={() => setIsHelpModalOpen(false)}
+        currentUser={currentUser}
       />
     </div>
   );
