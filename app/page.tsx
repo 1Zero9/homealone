@@ -24,6 +24,7 @@ import { ExpenseModal } from '@/src/components/ExpenseModal';
 import { PresetsModal } from '@/src/components/PresetsModal';
 import { ExportImportModal } from '@/src/components/ExportImportModal';
 import { ShareWorkspaceModal } from '@/src/components/ShareWorkspaceModal';
+import { ContactVendorModal } from '@/src/components/ContactVendorModal';
 import { AssistantBox } from '@/src/components/AssistantBox';
 
 export default function HomeAlonePage() {
@@ -48,6 +49,7 @@ export default function HomeAlonePage() {
   const [initialCategory, setInitialCategory] = useState<string | null>(null);
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<IncomeItem | null>(null);
+  const [contactVendorExpense, setContactVendorExpense] = useState<ExpenseItem | null>(null);
 
   // Fetch users & expenses from Prisma PostgreSQL API
   const fetchDatabaseData = useCallback(async () => {
@@ -574,6 +576,7 @@ export default function HomeAlonePage() {
               }}
               onOpenPresetsModal={() => setIsPresetsModalOpen(true)}
               onQuickUpdateAmount={handleQuickUpdateAmount}
+              onContactVendor={(item) => setContactVendorExpense(item)}
             />
           </>
         )}
@@ -766,6 +769,12 @@ export default function HomeAlonePage() {
         onClose={() => setIsShareModalOpen(false)}
         currentUser={currentUser}
         onMembersUpdated={fetchDatabaseData}
+      />
+
+      {/* Contact Vendor Modal */}
+      <ContactVendorModal
+        expense={contactVendorExpense}
+        onClose={() => setContactVendorExpense(null)}
       />
     </div>
   );

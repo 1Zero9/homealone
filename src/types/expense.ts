@@ -52,6 +52,7 @@ export interface ExpenseItem {
   isActive: boolean;
   notes?: string;
   contractEndDate?: string;
+  vendorEmail?: string;
   usageRating?: 'high' | 'medium' | 'low';
   isVariable?: boolean;
   isPreset?: boolean;

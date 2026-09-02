@@ -3,7 +3,7 @@ import type { ExpenseItem, CurrencyCode } from '../types/expense';
 import { CATEGORIES, CATEGORY_LIST } from '../data/categories';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle } from '../utils/formatters';
-import { Search, ArrowUpDown, Edit2, Trash2, Copy, User, Plus, Sparkles, RefreshCw } from 'lucide-react';
+import { Search, ArrowUpDown, Edit2, Trash2, Copy, User, Plus, Sparkles, RefreshCw, Mail } from 'lucide-react';
 
 function isOverdue(dateStr: string): boolean {
   if (!dateStr) return false;
@@ -13,6 +13,15 @@ function isOverdue(dateStr: string): boolean {
   const due = new Date(year, (month || 1) - 1, day || 1);
   due.setHours(0, 0, 0, 0);
   return due < today;
+}
+
+function daysUntilDate(dateStr: string): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const due = new Date(year, (month || 1) - 1, day || 1);
+  due.setHours(0, 0, 0, 0);
+  return Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 interface ExpenseListProps {
@@ -28,6 +37,7 @@ interface ExpenseListProps {
   onOpenAddModal: () => void;
   onOpenPresetsModal: () => void;
   onQuickUpdateAmount: (expense: ExpenseItem, newAmount: number) => void;
+  onContactVendor: (expense: ExpenseItem) => void;
 }
 
 export const ExpenseList: React.FC<ExpenseListProps> = ({
@@ -43,6 +53,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   onOpenAddModal,
   onOpenPresetsModal,
   onQuickUpdateAmount,
+  onContactVendor,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
@@ -319,6 +330,8 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
             const cat = CATEGORIES[item.category] || CATEGORIES.utilities;
             const monthlyAmount = getMonthlyEquivalent(convertCurrency(item.amount, item.currency, currency), item.billingCycle);
             const overdue = item.isActive && !item.isPaidThisCycle && isOverdue(item.nextRenewalDate);
+            const daysUntilContractEnd = item.contractEndDate ? daysUntilDate(item.contractEndDate) : null;
+            const showContractBadge = item.isActive && daysUntilContractEnd !== null && daysUntilContractEnd <= 60;
 
             return (
               <div
@@ -348,6 +361,19 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                         <span className="ha-badge ha-badge-blue" style={{ fontSize: '0.68rem', display: 'flex', alignItems: 'center', gap: '2px' }}>
                           <User size={10} />
                           <span>{item.createdBy.name.split(' ')[0]}</span>
+                        </span>
+                      )}
+                      {showContractBadge && (
+                        <span
+                          className={`ha-badge ${daysUntilContractEnd! <= 14 ? 'ha-badge-red' : 'ha-badge-lime'}`}
+                          style={{ fontSize: '0.68rem' }}
+                          title="Contract end date — call to review, renegotiate or cancel before it auto-renews"
+                        >
+                          {daysUntilContractEnd! < 0
+                            ? 'Contract ended — review'
+                            : daysUntilContractEnd === 0
+                            ? 'Contract ends today'
+                            : `Contract ends in ${daysUntilContractEnd} days`}
                         </span>
                       )}
                     </div>
@@ -419,6 +445,17 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                       title="This bill varies — quickly update just the amount"
                     >
                       <RefreshCw size={14} color="var(--ha-blue)" />
+                    </button>
+                  )}
+
+                  {item.vendorEmail && (
+                    <button
+                      onClick={() => onContactVendor(item)}
+                      className="btn btn-ghost"
+                      style={{ padding: '0.35rem 0.45rem' }}
+                      title="Draft an email to the vendor about this contract"
+                    >
+                      <Mail size={14} color="var(--ha-blue)" />
                     </button>
                   )}
 

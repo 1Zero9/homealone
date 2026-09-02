@@ -37,6 +37,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   const [assignedUserId, setAssignedUserId] = useState<string>('');
   const [notes, setNotes] = useState('');
   const [contractEndDate, setContractEndDate] = useState('');
+  const [vendorEmail, setVendorEmail] = useState('');
   const [usageRating, setUsageRating] = useState<'high' | 'medium' | 'low'>('high');
   const [isVariable, setIsVariable] = useState(false);
 
@@ -53,6 +54,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setAssignedUserId(editingExpense.createdById || currentUserId || '');
       setNotes(editingExpense.notes || '');
       setContractEndDate(editingExpense.contractEndDate || '');
+      setVendorEmail(editingExpense.vendorEmail || '');
       setUsageRating(editingExpense.usageRating || 'high');
       setIsVariable(!!editingExpense.isVariable);
     } else if (initialPresetId) {
@@ -82,6 +84,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setAssignedUserId(currentUserId || '');
       setNotes('');
       setContractEndDate('');
+      setVendorEmail('');
       setUsageRating('high');
       setIsVariable((initialCategory as ExpenseCategory) === 'shopping');
     }
@@ -126,6 +129,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         isActive: true,
         notes: notes.trim(),
         contractEndDate: contractEndDate || undefined,
+        vendorEmail: vendorEmail.trim() || undefined,
         usageRating,
         isVariable,
         createdById: assignedUserId || currentUserId,
@@ -418,6 +422,21 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 style={{ fontSize: '0.82rem' }}
               />
             </div>
+          </div>
+
+          {/* Vendor email (for contract-review outreach) */}
+          <div>
+            <label style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', display: 'block', marginBottom: '0.35rem' }}>
+              Vendor / provider email (optional)
+            </label>
+            <input
+              type="email"
+              placeholder="e.g. support@provider.com — lets you draft a renewal/cancel email from here"
+              value={vendorEmail}
+              onChange={(e) => setVendorEmail(e.target.value)}
+              className="ha-input"
+              style={{ fontSize: '0.82rem' }}
+            />
           </div>
 
           {/* Optional Notes */}
