@@ -29,6 +29,13 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    // Find default household if not provided
+    let householdId = body.householdId;
+    if (!householdId) {
+      const defaultH = await prisma.household.findFirst();
+      householdId = defaultH?.id || null;
+    }
+
     const newExpense = await prisma.expense.create({
       data: {
         id: body.id || undefined,
@@ -47,6 +54,7 @@ export async function POST(request: Request) {
         contractEndDate: body.contractEndDate || null,
         usageRating: body.usageRating || 'high',
         createdById: body.createdById || null,
+        householdId,
       },
       include: {
         createdBy: {
@@ -95,6 +103,7 @@ export async function PUT(request: Request) {
         notes: body.notes || null,
         contractEndDate: body.contractEndDate || null,
         usageRating: body.usageRating || 'high',
+        createdById: body.createdById || undefined,
       },
       include: {
         createdBy: {

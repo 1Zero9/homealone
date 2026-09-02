@@ -13,12 +13,27 @@ enum Role {
   BACKUP_ADMIN
 }
 
+model Household {
+  id         String   @id @default(cuid())
+  name       String   @default("Our Household")
+  inviteCode String   @unique @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  users    User[]
+  expenses Expense[]
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String
   role      Role     @default(MEMBER)
   avatarUrl String?
+
+  householdId String?
+  household   Household? @relation(fields: [householdId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -60,8 +75,11 @@ model Expense {
   contractEndDate String?
   usageRating     String?  @default("high")
 
+  householdId     String?
+  household       Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
   createdById     String?
-  createdBy       User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy       User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

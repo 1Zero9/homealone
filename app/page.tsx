@@ -18,6 +18,7 @@ import { LoginScreen } from '@/src/components/LoginScreen';
 import { ExpenseModal } from '@/src/components/ExpenseModal';
 import { PresetsModal } from '@/src/components/PresetsModal';
 import { ExportImportModal } from '@/src/components/ExportImportModal';
+import { ShareWorkspaceModal } from '@/src/components/ShareWorkspaceModal';
 
 export default function HomeAlonePage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = checking
@@ -34,6 +35,7 @@ export default function HomeAlonePage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isPresetsModalOpen, setIsPresetsModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseItem | null>(null);
   const [initialPresetId, setInitialPresetId] = useState<string | null>(null);
   const [initialCategory, setInitialCategory] = useState<string | null>(null);
@@ -87,7 +89,6 @@ export default function HomeAlonePage() {
           } catch {}
           fetchDatabaseData();
         } else {
-          // If server says unauthenticated and no localStorage, show login
           const hasLocal = typeof window !== 'undefined' && localStorage.getItem('homealone_user');
           if (!hasLocal) {
             setIsAuthenticated(false);
@@ -341,6 +342,7 @@ export default function HomeAlonePage() {
         }}
         onOpenPresetsModal={() => setIsPresetsModalOpen(true)}
         onOpenExportModal={() => setIsExportModalOpen(true)}
+        onOpenShareModal={() => setIsShareModalOpen(true)}
         onResetData={handleResetData}
         onLogout={handleLogout}
         currentUser={currentUser}
@@ -558,6 +560,14 @@ export default function HomeAlonePage() {
         expenses={expenses}
         currency={currency}
         onDataUpdated={setExpenses}
+      />
+
+      {/* Share Workspace Modal */}
+      <ShareWorkspaceModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        currentUser={currentUser}
+        onMembersUpdated={fetchDatabaseData}
       />
     </div>
   );

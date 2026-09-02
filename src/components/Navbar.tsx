@@ -2,7 +2,7 @@ import React from 'react';
 import type { CurrencyCode, UserProfile } from '../types/expense';
 import { CURRENCY_LIST } from '../utils/currencies';
 import { formatCurrency } from '../utils/formatters';
-import { Plus, Download, Sparkles, LogOut, ChevronDown } from 'lucide-react';
+import { Plus, Download, Sparkles, LogOut, ChevronDown, UserPlus } from 'lucide-react';
 
 interface NavbarProps {
   currentCurrency: CurrencyCode;
@@ -13,6 +13,7 @@ interface NavbarProps {
   onOpenAddModal: () => void;
   onOpenPresetsModal: () => void;
   onOpenExportModal: () => void;
+  onOpenShareModal: () => void;
   onResetData: () => void;
   onLogout: () => void;
   currentUser: UserProfile | null;
@@ -29,6 +30,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAddModal,
   onOpenPresetsModal,
   onOpenExportModal,
+  onOpenShareModal,
   onLogout,
   currentUser,
   users,
@@ -156,7 +158,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        {/* Right Actions: Currency, Catalog, Export, Add Expense, User & Log Out */}
+        {/* Right Actions: Currency, Catalog, Share, Export, Add Expense, User & Log Out */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
           {/* Currency Dropdown */}
           <select
@@ -193,6 +195,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>Catalog</span>
           </button>
 
+          {/* Share Workspace Button */}
+          <button
+            onClick={onOpenShareModal}
+            className="btn btn-secondary"
+            style={{ fontSize: '0.85rem', padding: '0.55rem 0.85rem' }}
+            title="Share workspace with wife, partner or family members"
+          >
+            <UserPlus size={15} color="var(--ha-blue)" />
+            <span>Share</span>
+          </button>
+
           {/* Export / Backup */}
           <button
             onClick={onOpenExportModal}
@@ -214,7 +227,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>Add expense</span>
           </button>
 
-          {/* User Account Chip & Switcher */}
+          {/* User Account Chip */}
           {currentUser && (
             <div style={{
               display: 'flex',
@@ -260,7 +273,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       outline: 'none',
                       paddingRight: '1.2rem',
                     }}
-                    title="Switch household user"
+                    title="Switch active profile"
                   >
                     {users.map((u) => (
                       <option key={u.id} value={u.id}>

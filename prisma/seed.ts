@@ -3,53 +3,79 @@ import { PrismaClient, Role } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Seeding Home Alone user accounts...');
+  console.log('Ensuring primary household workspace...');
 
-  // 1. Ensure core household accounts exist
-  const stephen = await prisma.user.upsert({
+  // 1. Ensure or find primary Household
+  let household = await prisma.household.findFirst();
+  if (!household) {
+    household = await prisma.household.create({
+      data: {
+        name: 'Our Household',
+        inviteCode: 'home-alone-family',
+      },
+    });
+  }
+
+  console.log('Primary household:', household.name, `(ID: ${household.id}, Code: ${household.inviteCode})`);
+
+  // 2. Ensure core household accounts exist and belong to this household
+  await prisma.user.upsert({
     where: { email: 'scranfield@gmail.com' },
     update: {
       name: 'Stephen',
       role: Role.ADMIN,
+      householdId: household.id,
     },
     create: {
       email: 'scranfield@gmail.com',
       name: 'Stephen',
       role: Role.ADMIN,
+      householdId: household.id,
     },
   });
 
-  const wife = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'wife@homealone.local' },
     update: {
       name: 'Wife / Partner',
       role: Role.MEMBER,
+      householdId: household.id,
     },
     create: {
       email: 'wife@homealone.local',
       name: 'Wife / Partner',
       role: Role.MEMBER,
+      householdId: household.id,
     },
   });
 
-  const adminBackup = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'backup-admin@homealone.local' },
     update: {
       name: 'Admin Backup',
       role: Role.BACKUP_ADMIN,
+      householdId: household.id,
     },
     create: {
       email: 'backup-admin@homealone.local',
       name: 'Admin Backup',
       role: Role.BACKUP_ADMIN,
+      householdId: household.id,
     },
   });
 
-  console.log('Household users ready:', {
-    stephen: stephen.email,
-    wife: wife.email,
-    adminBackup: adminBackup.email,
+  // Link any orphaned users or expenses to the primary household
+  await prisma.user.updateMany({
+    where: { householdId: null },
+    data: { householdId: household.id },
   });
+
+  await prisma.expense.updateMany({
+    where: { householdId: null },
+    data: { householdId: household.id },
+  });
+
+  console.log('Household workspace and users synchronized.');
 }
 
 main()

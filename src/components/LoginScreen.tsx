@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { UserProfile } from '../types/expense';
-import { ArrowRight, KeyRound, CheckCircle2, AlertCircle, Mail, ShieldCheck, Loader2 } from 'lucide-react';
+import { ArrowRight, KeyRound, CheckCircle2, AlertCircle, Mail } from 'lucide-react';
 
 interface LoginScreenProps {
   onLoginSuccess: (user: UserProfile) => void;
@@ -12,29 +12,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeLoggingInUserId, setActiveLoggingInUserId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [householdUsers, setHouseholdUsers] = useState<UserProfile[]>([]);
-
-  // Load existing household accounts for 1-click quick access
-  useEffect(() => {
-    fetch('/api/users')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.status === 'ok' && Array.isArray(data.users)) {
-          setHouseholdUsers(data.users);
-          if (data.users.length > 0 && !email) {
-            setEmail(data.users[0].email);
-          }
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   // Send Magic OTP Code
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setErrorMessage('Please enter a valid email address.');
+      return;
+    }
 
     setIsLoading(true);
     setErrorMessage(null);
@@ -43,7 +30,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       const res = await fetch('/api/auth/send-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ email: cleanEmail }),
       });
 
       const data = await res.json();
@@ -72,7 +59,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       const res = await fetch('/api/auth/verify-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), code: code.trim() }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), code: code.trim() }),
       });
 
       const data = await res.json();
@@ -91,44 +78,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  // 1-Click Quick Login for household members
-  const handleQuickLogin = async (user: UserProfile) => {
-    setActiveLoggingInUserId(user.id);
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const res = await fetch('/api/auth/quick-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
-      });
-
-      const data = await res.json();
-      if (data.status === 'ok' && data.user) {
-        try {
-          localStorage.setItem('homealone_user', JSON.stringify(data.user));
-        } catch {}
-        onLoginSuccess(data.user);
-      } else {
-        // Fallback: If quick-login route encounters any cookie issues, directly authenticate the household user
-        try {
-          localStorage.setItem('homealone_user', JSON.stringify(user));
-        } catch {}
-        onLoginSuccess(user);
-      }
-    } catch (err: any) {
-      // Local client fallback for offline/trusted household device
-      try {
-        localStorage.setItem('homealone_user', JSON.stringify(user));
-      } catch {}
-      onLoginSuccess(user);
-    } finally {
-      setIsLoading(false);
-      setActiveLoggingInUserId(null);
-    }
-  };
-
   return (
     <div style={{
       minHeight: '100vh',
@@ -139,7 +88,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       padding: '1.5rem',
     }}>
       <div style={{
-        maxWidth: '450px',
+        maxWidth: '420px',
         width: '100%',
         backgroundColor: 'var(--ha-white)',
         border: '1px solid var(--ha-line)',
@@ -193,17 +142,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
         {/* STEP 1: Enter Email */}
         {step === 'email' ? (
-          <form onSubmit={handleSendCode} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <form onSubmit={handleSendCode} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
-                Email address
+              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.4rem' }}>
+                Your email address
               </label>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <Mail size={16} color="var(--ha-muted)" style={{ position: 'absolute', left: '0.85rem', pointerEvents: 'none' }} />
                 <input
                   type="email"
                   required
-                  placeholder="scranfield@gmail.com"
+                  placeholder="e.g. scranfield@gmail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="ha-input"
@@ -211,6 +160,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                   autoFocus
                 />
               </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', marginTop: '0.35rem' }}>
+                We'll send a 6-digit magic code to sign in or create your account.
+              </p>
             </div>
 
             <button
@@ -231,23 +183,36 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 backgroundColor: 'var(--ha-lime-tint)',
                 border: '1px solid var(--ha-lime)',
                 borderRadius: 'var(--ha-radius-sm)',
-                padding: '0.75rem',
+                padding: '0.85rem',
                 textAlign: 'center',
               }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--ha-ink)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <div style={{ fontSize: '0.72rem', color: 'var(--ha-ink)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Your 6-Digit Magic Code
                 </div>
-                <div className="tabular-nums" style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--ha-blue)', letterSpacing: '0.2em', marginTop: '0.2rem' }}>
+                <div className="tabular-nums" style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--ha-blue)', letterSpacing: '0.2em', marginTop: '0.2rem' }}>
                   {generatedCode}
                 </div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--ha-muted)', marginTop: '0.2rem' }}>
-                  Valid for 15 minutes for {email}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setCode(generatedCode)}
+                  style={{
+                    marginTop: '0.35rem',
+                    fontSize: '0.75rem',
+                    color: 'var(--ha-blue)',
+                    fontWeight: 600,
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Click to autofill code
+                </button>
               </div>
             )}
 
             <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
+              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
                 Enter verification code
               </label>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -258,12 +223,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                   placeholder="6-digit code"
                   maxLength={6}
                   value={code}
-                  onChange={(e) => setCode(e.target.value)}
+                  onChange={(e) => setCode(e.target.value.trim())}
                   className="ha-input tabular-nums"
-                  style={{ paddingLeft: '2.5rem', letterSpacing: '0.15em', fontSize: '1.1rem', fontWeight: 600 }}
+                  style={{ paddingLeft: '2.5rem', letterSpacing: '0.15em', fontSize: '1.15rem', fontWeight: 600 }}
                   autoFocus
                 />
               </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', marginTop: '0.35rem' }}>
+                Sent to <strong>{email}</strong>
+              </p>
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -277,7 +245,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               </button>
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || code.length < 6}
                 className="btn btn-primary"
                 style={{ flex: 2, fontSize: '0.85rem' }}
               >
@@ -286,83 +254,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               </button>
             </div>
           </form>
-        )}
-
-        {/* Household Member 1-Click Quick Access */}
-        {householdUsers.length > 0 && (
-          <div style={{ paddingTop: '1.25rem', borderTop: '1px solid var(--ha-line)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ha-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Household Quick Sign-In
-              </span>
-              <ShieldCheck size={14} color="var(--ha-blue)" />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-              {householdUsers.map((u) => {
-                const isThisLoggingIn = activeLoggingInUserId === u.id;
-                return (
-                  <button
-                    key={u.id}
-                    type="button"
-                    onClick={() => handleQuickLogin(u)}
-                    disabled={isLoading}
-                    className="ha-card-interactive"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0.75rem 1rem',
-                      borderRadius: 'var(--ha-radius-md)',
-                      backgroundColor: isThisLoggingIn ? 'var(--ha-blue-light)' : '#fafaf7',
-                      border: '1px solid',
-                      borderColor: isThisLoggingIn ? 'var(--ha-blue)' : 'var(--ha-line)',
-                      color: 'var(--ha-ink)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      width: '100%',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: 'var(--ha-radius-sm)',
-                        backgroundColor: u.role === 'ADMIN' ? 'var(--ha-blue-light)' : u.role === 'BACKUP_ADMIN' ? 'var(--ha-red-tint)' : '#e7e8ea',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.85rem',
-                        fontWeight: 700,
-                        color: u.role === 'ADMIN' ? 'var(--ha-blue)' : u.role === 'BACKUP_ADMIN' ? 'var(--ha-red)' : 'var(--ha-ink)',
-                      }}>
-                        {u.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
-                          {u.name}
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--ha-muted)' }}>
-                          {u.email}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span className={u.role === 'ADMIN' ? 'ha-badge ha-badge-blue' : u.role === 'BACKUP_ADMIN' ? 'ha-badge ha-badge-red' : 'ha-badge ha-badge-neutral'} style={{ fontSize: '0.68rem' }}>
-                        {u.role.replace('_', ' ')}
-                      </span>
-                      {isThisLoggingIn ? (
-                        <Loader2 size={16} className="spin" color="var(--ha-blue)" />
-                      ) : (
-                        <ArrowRight size={15} color="var(--ha-muted)" />
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         )}
       </div>
     </div>
