@@ -1,9 +1,9 @@
 import React from 'react';
-import Image from 'next/image';
 import type { CurrencyCode, UserProfile } from '../types/expense';
 import { CURRENCY_LIST } from '../utils/currencies';
 import { formatCurrency } from '../utils/formatters';
 import { Plus, Download, Sparkles, LogOut, UserPlus, HelpCircle } from 'lucide-react';
+import { TallyLogo } from './TallyLogo';
 
 export type TabId = 'all' | 'ai-tech' | 'utilities' | 'education' | 'income' | 'calendar' | 'insights' | 'admin';
 
@@ -75,16 +75,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', cursor: 'pointer' }}
             onClick={() => onTabChange('all')}
           >
-            <Image
-              src="/home-alone-logo-mark.png"
-              alt="Home Alone logo"
-              width={36}
-              height={36}
-              style={{
-                objectFit: 'contain',
-                display: 'block',
-              }}
-            />
+            <TallyLogo size={32} />
             <div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
                 <h1 style={{
@@ -93,10 +84,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   color: 'var(--ha-ink)',
                   lineHeight: 1,
                   fontFamily: 'var(--ha-font-display)',
-                  letterSpacing: '0.02em',
+                  letterSpacing: '-0.02em',
                   textTransform: 'none',
                 }}>
-                  Home Alone
+                  Tally
                 </h1>
                 {isAdmin && (
                   <span className="ha-badge ha-badge-blue">Admin</span>
@@ -108,7 +99,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 fontWeight: 400,
                 marginTop: '1px',
               }}>
-                Simple records. Clearer days.
+                Your household, in balance.
               </p>
             </div>
           </div>
@@ -293,7 +284,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={onLogout}
             className="btn btn-destructive"
             style={{ fontSize: '0.82rem', padding: '0.55rem 0.85rem' }}
-            title="Sign out of Home Alone"
+            title="Sign out of Tally"
           >
             <LogOut size={14} />
             <span>Log out</span>

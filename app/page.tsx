@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Image from 'next/image';
 import type { ExpenseItem, IncomeItem, CurrencyCode, PresetItem, UserProfile } from '@/src/types/expense';
 import { loadCurrency, saveCurrency, resetToDefaults } from '@/src/services/storage';
 import { calculateSpendingSummary, calculateIncomeSummary } from '@/src/utils/calculations';
@@ -27,6 +26,7 @@ import { ShareWorkspaceModal } from '@/src/components/ShareWorkspaceModal';
 import { ContactVendorModal } from '@/src/components/ContactVendorModal';
 import { HelpGuideModal } from '@/src/components/HelpGuideModal';
 import { AssistantBox } from '@/src/components/AssistantBox';
+import { TallyLogo } from '@/src/components/TallyLogo';
 
 export default function HomeAlonePage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = checking
@@ -467,8 +467,10 @@ export default function HomeAlonePage() {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--ha-paper)' }}>
         <div style={{ textAlign: 'center' }}>
-          <Image src="/home-alone-logo-mark.png" alt="Home Alone" width={40} height={40} style={{ objectFit: 'contain', margin: '0 auto 0.75rem' }} />
-          <p style={{ color: 'var(--ha-muted)', fontSize: '0.85rem' }}>Loading Home Alone...</p>
+          <div style={{ margin: '0 auto 0.75rem', display: 'flex', justifyContent: 'center' }}>
+            <TallyLogo size={36} />
+          </div>
+          <p style={{ color: 'var(--ha-muted)', fontSize: '0.85rem' }}>Loading Tally...</p>
         </div>
       </div>
     );
@@ -731,7 +733,7 @@ export default function HomeAlonePage() {
       }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
-            Home Alone — Simple records. Clearer days.
+            Tally — Your household, in balance.
           </div>
           <div>
             Authenticated as <strong>{currentUser?.name || 'Stephen'}</strong> ({currentUser?.role || 'ADMIN'})

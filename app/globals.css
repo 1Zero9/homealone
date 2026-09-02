@@ -1,26 +1,28 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Brand Tokens from Home Alone Brand Guide */
-  --ha-paper: #fcfcf8;
+  /* Tally Brand Tokens */
+  --ha-paper: #f4f6f2;
   --ha-white: #ffffff;
-  --ha-ink: #202124;
-  --ha-muted: #676b73;
-  --ha-line: #e7e8ea;
-  --ha-blue: #3155d9;
-  --ha-blue-hover: #2644b2;
-  --ha-blue-light: #eef2fc;
-  --ha-lime: #c8e63c;
-  --ha-lime-tint: #f6fce0;
-  --ha-red: #f04e3e;
-  --ha-red-tint: #fef2f1;
+  --ha-ink: #1f2320;
+  --ha-muted: #6b726b;
+  --ha-line: #d7dbd3;
+  --ha-blue: #256b4f;
+  --ha-blue-hover: #1c5540;
+  --ha-blue-light: #e4f0e8;
+  --ha-lime: #f0b429;
+  --ha-lime-tint: #fef6e0;
+  --ha-red: #e76f51;
+  --ha-red-tint: #fce5de;
+  --ha-info: #4a90e2;
+  --ha-info-tint: #eaf3fc;
 
-  --ha-font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --ha-font-display: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --ha-font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  --ha-radius-sm: 4px;
-  --ha-radius-md: 8px;
-  --ha-radius-lg: 12px;
+  --ha-radius-sm: 8px;
+  --ha-radius-md: 12px;
+  --ha-radius-lg: 20px;
 
   --ha-space-1: 4px;
   --ha-space-2: 8px;
@@ -30,8 +32,8 @@
   --ha-space-6: 32px;
   --ha-space-7: 48px;
 
-  --ha-shadow: 0 2px 8px rgba(32, 33, 36, 0.06);
-  --ha-shadow-elevated: 0 8px 24px rgba(32, 33, 36, 0.12);
+  --ha-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 12px rgba(16, 24, 40, 0.06);
+  --ha-shadow-elevated: 0 8px 24px rgba(16, 24, 40, 0.08), 0 16px 40px rgba(16, 24, 40, 0.10);
 }
 
 * {
@@ -73,7 +75,7 @@ h1, h2, h3, .font-display {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #b7bdb2;
   border-radius: var(--ha-radius-sm);
 }
 
@@ -96,8 +98,8 @@ h1, h2, h3, .font-display {
 }
 
 .ha-card-interactive:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(32, 33, 36, 0.08);
+  border-color: #b7bdb2;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.08);
 }
 
 /* Restrained Buttons */
@@ -136,8 +138,8 @@ h1, h2, h3, .font-display {
 }
 
 .btn-secondary:hover {
-  background-color: #f8f9fa;
-  border-color: #d1d5db;
+  background-color: #eef1ec;
+  border-color: #c3c9bd;
 }
 
 .btn-ghost {
@@ -215,7 +217,7 @@ h1, h2, h3, .font-display {
 }
 
 .ha-ledger-row:hover {
-  background-color: #fafaf7;
+  background-color: #f6f8f4;
 }
 
 .ha-ledger-row:last-child {
@@ -226,7 +228,7 @@ h1, h2, h3, .font-display {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(32, 33, 36, 0.45);
+  background: rgba(31, 35, 32, 0.45);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   display: flex;
@@ -283,7 +285,7 @@ h1, h2, h3, .font-display {
   background-color: var(--ha-line);
   transition: 0.2s ease;
   border-radius: var(--ha-radius-md);
-  border: 1px solid #d1d5db;
+  border: 1px solid #c3c9bd;
 }
 
 .slider:before {
@@ -311,7 +313,7 @@ input:checked + .slider:before {
 /* Form Controls */
 .ha-input {
   width: 100%;
-  background-color: #fafaf7;
+  background-color: #f6f8f4;
   border: 1px solid var(--ha-line);
   border-radius: var(--ha-radius-md);
   padding: 0.65rem 0.85rem;
@@ -325,7 +327,7 @@ input:checked + .slider:before {
 .ha-input:focus {
   border-color: var(--ha-blue);
   background-color: var(--ha-white);
-  outline: 2px solid rgba(49, 85, 217, 0.2);
+  outline: 2px solid rgba(37, 107, 79, 0.2);
   outline-offset: 1px;
 }
 

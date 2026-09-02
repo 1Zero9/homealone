@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import Image from 'next/image';
 import type { UserProfile } from '../types/expense';
 import { getErrorMessage } from '../lib/errors';
 import { ArrowRight, KeyRound, CheckCircle2, AlertCircle, Mail, User, Home } from 'lucide-react';
+import { TallyLogo } from './TallyLogo';
 
 interface LoginScreenProps {
   onLoginSuccess: (user: UserProfile) => void;
@@ -113,13 +113,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       }}>
         {/* Brand Header */}
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Image
-            src="/home-alone-logo-mark.png"
-            alt="Home Alone logo mark"
-            width={48}
-            height={48}
-            style={{ objectFit: 'contain', marginBottom: '0.75rem' }}
-          />
+          <div style={{ marginBottom: '0.75rem' }}>
+            <TallyLogo size={44} />
+          </div>
 
           <h1 style={{
             fontSize: '2.1rem',
@@ -127,12 +123,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             color: 'var(--ha-ink)',
             lineHeight: 1.1,
             fontFamily: 'var(--ha-font-display)',
-            letterSpacing: '0.02em',
+            letterSpacing: '-0.02em',
           }}>
-            Home Alone
+            Tally
           </h1>
           <p style={{ fontSize: '0.85rem', color: 'var(--ha-muted)', marginTop: '4px' }}>
-            Simple records. Clearer days.
+            Your household, in balance.
           </p>
         </div>
 
@@ -293,7 +289,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                   onClick={() => { setMode('signup'); setErrorMessage(null); }}
                   style={{ background: 'none', border: 'none', color: 'var(--ha-muted)', fontSize: '0.78rem', cursor: 'pointer' }}
                 >
-                  New to Home Alone? <strong style={{ color: 'var(--ha-blue)' }}>Set up an account</strong>
+                  New to Tally? <strong style={{ color: 'var(--ha-blue)' }}>Set up an account</strong>
                 </button>
               ) : (
                 <button

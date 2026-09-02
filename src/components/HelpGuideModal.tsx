@@ -96,7 +96,7 @@ export const HelpGuideModal: React.FC<HelpGuideModalProps> = ({ isOpen, onClose,
               Help guide
             </h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
-              A quick tour of what you can do in Home Alone
+              A quick tour of what you can do in Tally
             </p>
           </div>
 

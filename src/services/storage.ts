@@ -78,7 +78,7 @@ export function resetToDefaults(): ExpenseItem[] {
 export function exportExpensesJSON(expenses: ExpenseItem[]): void {
   const dataStr = JSON.stringify(
     {
-      app: 'Home Alone',
+      app: 'Tally',
       version: '3.0.0',
       exportedAt: new Date().toISOString(),
       expenses,
@@ -90,7 +90,7 @@ export function exportExpensesJSON(expenses: ExpenseItem[]): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `home-alone-expenses-${new Date().toISOString().split('T')[0]}.json`;
+  a.download = `tally-expenses-${new Date().toISOString().split('T')[0]}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -137,7 +137,7 @@ export function exportExpensesCSV(expenses: ExpenseItem[]): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `home-alone-expenses-${new Date().toISOString().split('T')[0]}.csv`;
+  a.download = `tally-expenses-${new Date().toISOString().split('T')[0]}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

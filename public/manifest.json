@@ -1,11 +1,11 @@
 {
-  "name": "Home Alone — Household Expense Tracker",
-  "short_name": "Home Alone",
-  "description": "Simple records. Clearer days. Light-mode household expense and subscription tracking.",
+  "name": "Tally — Your household, in balance.",
+  "short_name": "Tally",
+  "description": "Track household expenses, income, and subscriptions — and keep your budget in balance.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FCFCF8",
-  "theme_color": "#3155D9",
+  "background_color": "#F4F6F2",
+  "theme_color": "#256B4F",
   "icons": [
     {
       "src": "/home-alone-logo-mark.png",
