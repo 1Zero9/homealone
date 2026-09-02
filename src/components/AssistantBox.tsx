@@ -29,6 +29,7 @@ interface AnswerContent {
 
 interface AssistantBoxProps {
   currency: CurrencyCode;
+  hasData?: boolean;
 }
 
 const QUICK_ACTIONS: { id: string; label: string }[] = [
@@ -39,7 +40,7 @@ const QUICK_ACTIONS: { id: string; label: string }[] = [
   { id: 'cashflow', label: 'Money in vs money out' },
 ];
 
-export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency }) => {
+export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = true }) => {
   const [question, setQuestion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -159,7 +160,7 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency }) => {
           type="text"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Ask about your household spending..."
+          placeholder={hasData ? 'Ask about your household spending...' : 'Add an expense to start asking questions...'}
           className="ha-input"
           style={{
             width: '100%',
@@ -173,7 +174,7 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency }) => {
         )}
       </form>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginBottom: answer || errorMessage ? '1.25rem' : 0 }}>
+      <div style={{ display: hasData ? 'flex' : 'none', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginBottom: answer || errorMessage ? '1.25rem' : 0 }}>
         {QUICK_ACTIONS.map((action) => (
           <button
             key={action.id}

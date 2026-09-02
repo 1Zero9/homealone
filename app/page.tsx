@@ -152,6 +152,7 @@ export default function HomeAlonePage() {
   // Compute spend analytics summary
   const summary = calculateSpendingSummary(expenses, currency);
   const incomeSummary = calculateIncomeSummary(incomes, currency);
+  const hasData = expenses.length > 0 || incomes.length > 0;
 
   // Toggle active/pause status with PostgreSQL sync
   const handleToggleActive = async (id: string) => {
@@ -511,46 +512,52 @@ export default function HomeAlonePage() {
         flex: 1,
       }}>
         {/* Ask Bar — the "Google box" for this household's spending */}
-        <div style={{ padding: '0.5rem 0 2rem' }}>
-          <AssistantBox currency={currency} />
+        <div style={{ padding: hasData ? '0.5rem 0 2rem' : '3rem 0 2.5rem' }}>
+          <AssistantBox currency={currency} hasData={hasData} />
         </div>
 
-        {/* Money In / Money Out / Net Cash Flow */}
-        <CashFlowSummary
-          monthlyIncome={incomeSummary.monthlyTotal}
-          monthlyExpenses={summary.monthlyTotal}
-          currency={currency}
-          onOpenAddIncome={() => {
-            setEditingIncome(null);
-            setIsIncomeModalOpen(true);
-          }}
-        />
+        {hasData && (
+          <>
+            {/* Money In / Money Out / Net Cash Flow */}
+            <CashFlowSummary
+              monthlyIncome={incomeSummary.monthlyTotal}
+              monthlyExpenses={summary.monthlyTotal}
+              currency={currency}
+              onOpenAddIncome={() => {
+                setEditingIncome(null);
+                setIsIncomeModalOpen(true);
+              }}
+            />
 
-        {/* Top Spend Summary Cards */}
-        <DashboardStats
-          summary={summary}
-          currency={currency}
-          onFilterCategory={(cat) => {
-            if (cat === 'ai-tech') setActiveTab('ai-tech');
-            else if (cat === 'utilities') setActiveTab('utilities');
-            else if (cat === 'education') setActiveTab('education');
-            else {
-              setSelectedCategory(cat);
-              setActiveTab('all');
-            }
-          }}
-        />
+            {/* Top Spend Summary Cards */}
+            <DashboardStats
+              summary={summary}
+              currency={currency}
+              onFilterCategory={(cat) => {
+                if (cat === 'ai-tech') setActiveTab('ai-tech');
+                else if (cat === 'utilities') setActiveTab('utilities');
+                else if (cat === 'education') setActiveTab('education');
+                else {
+                  setSelectedCategory(cat);
+                  setActiveTab('all');
+                }
+              }}
+            />
+          </>
+        )}
 
         {/* Tab View Routing */}
         {activeTab === 'all' && (
           <>
             {/* Category Distribution Breakdown */}
-            <CategoryBreakdownChart
-              expenses={expenses}
-              currency={currency}
-              selectedCategory={selectedCategory}
-              onSelectCategory={setSelectedCategory}
-            />
+            {hasData && (
+              <CategoryBreakdownChart
+                expenses={expenses}
+                currency={currency}
+                selectedCategory={selectedCategory}
+                onSelectCategory={setSelectedCategory}
+              />
+            )}
 
             {/* Complete Household Ledger */}
             <ExpenseList
