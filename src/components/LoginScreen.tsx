@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import type { UserProfile } from '../types/expense';
-import { ArrowRight, KeyRound, CheckCircle2, AlertCircle, Mail } from 'lucide-react';
+import { ArrowRight, KeyRound, CheckCircle2, AlertCircle, Mail, User, Home } from 'lucide-react';
 
 interface LoginScreenProps {
   onLoginSuccess: (user: UserProfile) => void;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [name, setName] = useState('');
+  const [householdName, setHouseholdName] = useState('');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
-  const [step, setStep] = useState<'email' | 'code'>('email');
+  const [step, setStep] = useState<'form' | 'code'>('form');
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -23,6 +26,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       return;
     }
 
+    if (mode === 'signup' && !name.trim()) {
+      setErrorMessage('Please enter your name.');
+      return;
+    }
+
     setIsLoading(true);
     setErrorMessage(null);
 
@@ -30,7 +38,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       const res = await fetch('/api/auth/send-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cleanEmail }),
+        body: JSON.stringify({
+          email: cleanEmail,
+          name: mode === 'signup' ? name.trim() : undefined,
+          householdName: mode === 'signup' ? householdName.trim() : undefined,
+        }),
       });
 
       const data = await res.json();
@@ -47,7 +59,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  // Verify Code and Sign In
+  // Verify Code and Sign In / Complete Setup
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!code.trim()) return;
@@ -88,7 +100,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       padding: '1.5rem',
     }}>
       <div style={{
-        maxWidth: '420px',
+        maxWidth: '430px',
         width: '100%',
         backgroundColor: 'var(--ha-white)',
         border: '1px solid var(--ha-line)',
@@ -122,6 +134,57 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           </p>
         </div>
 
+        {/* Mode Switcher Tabs (Sign In / Create Account) */}
+        {step === 'form' && (
+          <div style={{
+            display: 'flex',
+            backgroundColor: '#fafaf7',
+            padding: '0.25rem',
+            borderRadius: 'var(--ha-radius-md)',
+            border: '1px solid var(--ha-line)',
+          }}>
+            <button
+              type="button"
+              onClick={() => { setMode('signin'); setErrorMessage(null); }}
+              style={{
+                flex: 1,
+                padding: '0.5rem',
+                borderRadius: 'var(--ha-radius-sm)',
+                border: 'none',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                backgroundColor: mode === 'signin' ? 'var(--ha-white)' : 'transparent',
+                color: mode === 'signin' ? 'var(--ha-ink)' : 'var(--ha-muted)',
+                boxShadow: mode === 'signin' ? 'var(--ha-shadow-subtle)' : 'none',
+                transition: 'all 0.12s ease',
+              }}
+            >
+              Sign In
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setMode('signup'); setErrorMessage(null); }}
+              style={{
+                flex: 1,
+                padding: '0.5rem',
+                borderRadius: 'var(--ha-radius-sm)',
+                border: 'none',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                backgroundColor: mode === 'signup' ? 'var(--ha-white)' : 'transparent',
+                color: mode === 'signup' ? 'var(--ha-ink)' : 'var(--ha-muted)',
+                boxShadow: mode === 'signup' ? 'var(--ha-shadow-subtle)' : 'none',
+                transition: 'all 0.12s ease',
+              }}
+            >
+              Create Account
+            </button>
+          </div>
+        )}
+
         {/* Error notification */}
         {errorMessage && (
           <div style={{
@@ -140,40 +203,106 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           </div>
         )}
 
-        {/* STEP 1: Enter Email */}
-        {step === 'email' ? (
-          <form onSubmit={handleSendCode} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        {/* STEP 1: Form (Sign In or Sign Up) */}
+        {step === 'form' ? (
+          <form onSubmit={handleSendCode} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+            {/* If Sign Up: Ask for Name */}
+            {mode === 'signup' && (
+              <div>
+                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
+                  Full name *
+                </label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <User size={16} color="var(--ha-muted)" style={{ position: 'absolute', left: '0.85rem', pointerEvents: 'none' }} />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Your full name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="ha-input"
+                    style={{ paddingLeft: '2.5rem' }}
+                    autoFocus
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Email Address */}
             <div>
-              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.4rem' }}>
-                Your email address
+              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
+                Email address *
               </label>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <Mail size={16} color="var(--ha-muted)" style={{ position: 'absolute', left: '0.85rem', pointerEvents: 'none' }} />
                 <input
                   type="email"
                   required
-                  placeholder="e.g. scranfield@gmail.com"
+                  placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="ha-input"
                   style={{ paddingLeft: '2.5rem' }}
-                  autoFocus
+                  autoFocus={mode === 'signin'}
                 />
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', marginTop: '0.35rem' }}>
-                We'll send a 6-digit magic code to sign in or create your account.
+                {mode === 'signin'
+                  ? "We'll send a 6-digit magic code to verify your identity."
+                  : "We'll send a verification code to finish setting up your account."}
               </p>
             </div>
+
+            {/* If Sign Up: Optional Household Name */}
+            {mode === 'signup' && (
+              <div>
+                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
+                  Household / Family name (optional)
+                </label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <Home size={16} color="var(--ha-muted)" style={{ position: 'absolute', left: '0.85rem', pointerEvents: 'none' }} />
+                  <input
+                    type="text"
+                    placeholder="e.g. Our Family Home"
+                    value={householdName}
+                    onChange={(e) => setHouseholdName(e.target.value)}
+                    className="ha-input"
+                    style={{ paddingLeft: '2.5rem' }}
+                  />
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={isLoading}
               className="btn btn-primary"
-              style={{ width: '100%', padding: '0.75rem', fontSize: '0.9rem' }}
+              style={{ width: '100%', padding: '0.75rem', fontSize: '0.9rem', marginTop: '0.25rem' }}
             >
-              <span>{isLoading ? 'Sending code...' : 'Continue with Magic Code'}</span>
+              <span>{isLoading ? 'Sending code...' : mode === 'signin' ? 'Continue with Magic Code' : 'Create Household Account'}</span>
               <ArrowRight size={15} />
             </button>
+
+            {/* Footer toggle text */}
+            <div style={{ textAlign: 'center', marginTop: '0.25rem' }}>
+              {mode === 'signin' ? (
+                <button
+                  type="button"
+                  onClick={() => { setMode('signup'); setErrorMessage(null); }}
+                  style={{ background: 'none', border: 'none', color: 'var(--ha-muted)', fontSize: '0.78rem', cursor: 'pointer' }}
+                >
+                  New to Home Alone? <strong style={{ color: 'var(--ha-blue)' }}>Set up an account</strong>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => { setMode('signin'); setErrorMessage(null); }}
+                  style={{ background: 'none', border: 'none', color: 'var(--ha-muted)', fontSize: '0.78rem', cursor: 'pointer' }}
+                >
+                  Already have an account? <strong style={{ color: 'var(--ha-blue)' }}>Sign in</strong>
+                </button>
+              )}
+            </div>
           </form>
         ) : (
           /* STEP 2: Enter 6-Digit Code */
@@ -237,7 +366,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 type="button"
-                onClick={() => { setStep('email'); setCode(''); setGeneratedCode(null); }}
+                onClick={() => { setStep('form'); setCode(''); setGeneratedCode(null); }}
                 className="btn btn-secondary"
                 style={{ flex: 1, fontSize: '0.85rem' }}
               >
@@ -250,7 +379,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 style={{ flex: 2, fontSize: '0.85rem' }}
               >
                 <CheckCircle2 size={15} />
-                <span>Verify & Sign In</span>
+                <span>{mode === 'signup' ? 'Complete Setup' : 'Verify & Sign In'}</span>
               </button>
             </div>
           </form>

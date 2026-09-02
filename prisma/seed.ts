@@ -20,15 +20,15 @@ async function main() {
 
   // 2. Ensure core household accounts exist and belong to this household
   await prisma.user.upsert({
-    where: { email: 'scranfield@gmail.com' },
+    where: { email: 'onezeronine@gmail.com' },
     update: {
-      name: 'Stephen',
+      name: 'Admin',
       role: Role.ADMIN,
       householdId: household.id,
     },
     create: {
-      email: 'scranfield@gmail.com',
-      name: 'Stephen',
+      email: 'onezeronine@gmail.com',
+      name: 'Admin',
       role: Role.ADMIN,
       householdId: household.id,
     },

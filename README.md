@@ -2,58 +2,88 @@
 
 > Simple records. Clearer days.
 
-Home Alone is a light-mode household expense and subscription tracking web application built with Next.js App Router, TypeScript, and React 19.
+Home Alone is an editorial light-mode household expense, subscription, and utility tracking web application built with Next.js App Router (15+), TypeScript, React 19, and PostgreSQL via Prisma ORM.
 
 ---
 
-## Features
+## Key Features
 
-- **Household & Subscription Ledger**: Track recurring streaming platforms (Netflix, Spotify, Apple TV+), AI developer tools (ChatGPT, Claude, Cursor, Midjourney), and essential home utilities (Electricity & Gas, Broadband, Water, Property Tax).
-- **Multi-Device Cloud Sync**: Real-time cross-device persistence across your mobile phone, laptop, and desktop via Supabase (PostgreSQL), with offline localStorage fallback.
-- **Mobile PWA Ready**: Installable on iOS Safari and Android Chrome as a standalone mobile application via Web App Manifest.
-- **Light-Mode Editorial Design System**: Built according to the Home Alone Brand & Interface Guide with custom tokens, Barlow Condensed and Inter typography, and tabular figures.
-- **Euro (€ / EUR) Standardized**: Default European financial ledger with multi-currency conversion support (£ GBP, $ USD, CAD, AUD, JPY).
-- **AI & Tech Intelligence**: Audits active models and identifies multi-frontier model redundancy (e.g. ChatGPT + Claude concurrent subscription warnings).
-- **Household Utilities & Contracts**: Tracks direct debit schedules and flags fixed-term contract expiry dates.
-- **Chronological Payment Schedule**: 31-day renewal calendar with 7-day payment urgency countdowns.
-- **Budget Optimization**: Objective insights calculating annual tier discount opportunities (~16% / 2 months free) and rotation strategies.
-- **Preset Catalog & Portability**: Standard one-click subscription catalog, CSV export for spreadsheets, and offline JSON backup/restore.
+- **Household & Subscription Ledger**: Track recurring streaming subscriptions (Netflix, Spotify, Apple TV+), AI developer tools (ChatGPT, Claude, Cursor), utilities (Electricity & Gas, Broadband, Water), and family education/sports costs.
+- **Passwordless 6-Digit Magic Code Authentication**: Fast, secure sign-in and account registration with 6-digit OTP verification codes and PostgreSQL session management.
+- **Shared Household Workspaces & Roles**:
+  - **Admin** (`onezeronine@gmail.com`): Full administrative control over users, workspace sharing, and database backups.
+  - **Member** (Normal user/family): Ability to view, log, categorize, and edit household expenses.
+  - **Backup Admin**: Disaster recovery and emergency failover role.
+- **Collaborative Sharing**: Shareable workspace invite links and direct email invitations for partners, spouses, or family members.
+- **Light-Mode Editorial Design System**: Custom Home Alone design system tokens (`--ha-*`), Barlow Condensed display headings, Inter UI typography, and tabular figures for financial accuracy.
+- **Euro (€ / EUR) Standardized**: Default European financial ledger with multi-currency conversion (£ GBP, $ USD, CAD, AUD, JPY).
+- **AI & Tech Redundancy Intelligence**: Audits active models and alerts on multi-frontier subscription overlap (e.g. concurrent ChatGPT + Claude subscriptions).
+- **Household Utilities & Contracts**: Direct debit schedules, energy provider rates, and contract expiry tracking.
+- **Upcoming Renewals Schedule**: 31-day renewal calendar with 7-day payment urgency indicators.
+- **Budget Optimization**: Automated analysis calculating annual tier discounts (~16% / 2 months free) and rotation strategies.
+- **Data Portability & Backups**: Preset subscription catalog, CSV spreadsheet export, and full database JSON snapshots.
 
 ---
 
 ## Tech Stack
 
 - **Framework**: Next.js 15 (App Router) + React 19 + TypeScript
-- **Database / Sync**: Supabase (PostgreSQL) + LocalStorage offline-first fallback
-- **Styling**: Pure CSS design system with CSS custom properties (`--ha-*`)
+- **Database & ORM**: PostgreSQL via Prisma ORM (`@prisma/client`)
+- **Authentication**: Passwordless 6-Digit OTP Magic Code with HTTP-only secure cookie sessions
+- **Styling**: Pure Vanilla CSS design tokens (`--ha-*`)
 - **Icons**: Lucide React
-- **Deployment**: 1-click deploy to Vercel, Netlify, or Node.js
+- **Deployment**: Vercel, Netlify, or Node.js Docker containers
 
 ---
 
-## Environment Variables (Optional for Cloud Sync)
+## Environment Variables
 
-To enable cross-device cloud sync with Supabase:
+Create a `.env` file in the project root:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
+# PostgreSQL Database Connection URL (e.g. Supabase, Neon, or local Postgres)
+DATABASE_URL="postgresql://postgres:[PASSWORD]@[HOST]:[PORT]/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres:[PASSWORD]@[HOST]:[PORT]/postgres"
 
-*Note: If no Supabase keys are provided, Home Alone automatically uses local browser storage.*
+# Optional Base URL
+NEXT_PUBLIC_APP_URL="http://localhost:5174"
+```
 
 ---
 
-## Development
+## Getting Started & Development
 
 ```bash
-# Install dependencies
+# 1. Install dependencies
 npm install
 
-# Start Next.js development server
-npm run dev
+# 2. Push schema to database and generate Prisma client
+npm run db:push
+npx prisma generate
 
-# Build for production
+# 3. Seed initial workspace and admin account
+npm run db:seed
+
+# 4. Start Next.js development server
+npm run dev -- -p 5174
+```
+
+Access the application in your browser at [http://localhost:5174](http://localhost:5174).
+
+---
+
+## Authentication & Account Setup
+
+1. **Admin Access**: Sign in with `onezeronine@gmail.com` to receive an admin magic code and access the Admin & Users management tab.
+2. **Account Creation**: Click **Create Account** on the logon screen to register a new family/household member account (Role: `MEMBER`).
+3. **Collaborative Invites**: Send an invite link or add members directly from the **Share** button in the top navigation bar.
+
+---
+
+## Building for Production
+
+```bash
+# Run type checking and production build
 npm run build
 
 # Start production server
