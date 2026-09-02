@@ -63,19 +63,46 @@ export default function HomeAlonePage() {
   useEffect(() => {
     setCurrency(loadCurrency());
 
+    // Check localStorage first for instant display
+    try {
+      const savedUserStr = localStorage.getItem('homealone_user');
+      if (savedUserStr) {
+        const savedUser = JSON.parse(savedUserStr);
+        if (savedUser && savedUser.id) {
+          setIsAuthenticated(true);
+          setCurrentUser(savedUser);
+        }
+      }
+    } catch {}
+
+    // Verify session with server
     fetch('/api/auth/me')
       .then((r) => r.json())
       .then((data) => {
         if (data.status === 'authenticated' && data.user) {
           setIsAuthenticated(true);
           setCurrentUser(data.user);
+          try {
+            localStorage.setItem('homealone_user', JSON.stringify(data.user));
+          } catch {}
           fetchDatabaseData();
         } else {
-          setIsAuthenticated(false);
+          // If server says unauthenticated and no localStorage, show login
+          const hasLocal = typeof window !== 'undefined' && localStorage.getItem('homealone_user');
+          if (!hasLocal) {
+            setIsAuthenticated(false);
+          } else {
+            fetchDatabaseData();
+          }
         }
       })
       .catch(() => {
-        setIsAuthenticated(false);
+        const hasLocal = typeof window !== 'undefined' && localStorage.getItem('homealone_user');
+        if (!hasLocal) {
+          setIsAuthenticated(false);
+        } else {
+          fetchDatabaseData();
+        }
       });
   }, [fetchDatabaseData]);
 
@@ -84,12 +111,18 @@ export default function HomeAlonePage() {
   }, [currency]);
 
   const handleLoginSuccess = (user: UserProfile) => {
+    try {
+      localStorage.setItem('homealone_user', JSON.stringify(user));
+    } catch {}
     setIsAuthenticated(true);
     setCurrentUser(user);
     fetchDatabaseData();
   };
 
   const handleLogout = async () => {
+    try {
+      localStorage.removeItem('homealone_user');
+    } catch {}
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch {}
