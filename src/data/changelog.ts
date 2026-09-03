@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.17.1';
+export const APP_VERSION = '1.17.2';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.17.2',
+    date: '2026-09-03',
+    changes: [
+      'Clicking outside the statement import dialog no longer does anything — only the visible Close, Back and Import buttons can close or navigate it, so an accidental click can\'t lose your in-progress import.',
+    ],
+  },
   {
     version: '1.17.1',
     date: '2026-09-03',

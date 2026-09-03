@@ -398,7 +398,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   })();
 
   return (
-    <div className="modal-overlay" onClick={requestClose}>
+    <div className="modal-overlay">
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: step === 'review' ? '760px' : '540px' }}>
         <div style={{
           display: 'flex',
