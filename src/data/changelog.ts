@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.9.1';
+export const APP_VERSION = '1.9.2';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.9.2',
+    date: '2026-09-03',
+    changes: [
+      'Household ledger filters now include "Unpaid" and "Overdue", each showing a live count, alongside the existing All/Active/Paused.',
+    ],
+  },
   {
     version: '1.9.1',
     date: '2026-09-03',

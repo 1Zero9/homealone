@@ -56,7 +56,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   onContactVendor,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused' | 'unpaid' | 'overdue'>('all');
   const [sortBy, setSortBy] = useState<'amount-desc' | 'amount-asc' | 'renewal' | 'name'>('amount-desc');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -80,6 +80,8 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
 
     if (statusFilter === 'active' && !item.isActive) return false;
     if (statusFilter === 'paused' && item.isActive) return false;
+    if (statusFilter === 'unpaid' && item.isPaidThisCycle) return false;
+    if (statusFilter === 'overdue' && !(item.isActive && !item.isPaidThisCycle && isOverdue(item.nextRenewalDate))) return false;
 
     return true;
   });
@@ -95,6 +97,19 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
     if (sortBy === 'name') return a.name.localeCompare(b.name);
     return 0;
   });
+
+  const overdueCount = expenses.filter((e) => e.isActive && !e.isPaidThisCycle && isOverdue(e.nextRenewalDate)).length;
+  const unpaidCount = expenses.filter((e) => !e.isPaidThisCycle).length;
+  const activeCount = expenses.filter((e) => e.isActive).length;
+  const pausedCount = expenses.filter((e) => !e.isActive).length;
+
+  const STATUS_FILTERS: { id: typeof statusFilter; label: string; count: number }[] = [
+    { id: 'all', label: 'All', count: expenses.length },
+    { id: 'active', label: 'Active', count: activeCount },
+    { id: 'paused', label: 'Paused', count: pausedCount },
+    { id: 'unpaid', label: 'Unpaid', count: unpaidCount },
+    { id: 'overdue', label: 'Overdue', count: overdueCount },
+  ];
 
   return (
     <div className="ha-card" style={{ marginBottom: '2.5rem', overflow: 'hidden' }}>
@@ -112,14 +127,11 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
           <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
             Household ledger
           </h3>
-          {(() => {
-            const overdueCount = expenses.filter((e) => e.isActive && !e.isPaidThisCycle && isOverdue(e.nextRenewalDate)).length;
-            return overdueCount > 0 ? (
-              <p style={{ fontSize: '0.8rem', color: 'var(--ha-red)', fontWeight: 600 }}>
-                {overdueCount} bill{overdueCount === 1 ? '' : 's'} overdue
-              </p>
-            ) : null;
-          })()}
+          {overdueCount > 0 && (
+            <p style={{ fontSize: '0.8rem', color: 'var(--ha-red)', fontWeight: 600 }}>
+              {overdueCount} bill{overdueCount === 1 ? '' : 's'} overdue
+            </p>
+          )}
           <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)' }}>
             {sortedItems.length} of {expenses.length} records shown
           </p>
@@ -246,26 +258,45 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
         </div>
 
         {/* Status filters */}
-        <div style={{ display: 'flex', gap: '0.25rem' }}>
-          {(['all', 'active', 'paused'] as const).map((st) => (
-            <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
-              style={{
-                padding: '0.25rem 0.55rem',
-                borderRadius: 'var(--ha-radius-sm)',
-                border: '1px solid var(--ha-line)',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                textTransform: 'capitalize',
-                backgroundColor: statusFilter === st ? 'var(--ha-ink)' : 'var(--ha-white)',
-                color: statusFilter === st ? 'var(--ha-white)' : 'var(--ha-muted)',
-                cursor: 'pointer',
-              }}
-            >
-              {st}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+          {STATUS_FILTERS.map(({ id, label, count }) => {
+            const isSelected = statusFilter === id;
+            const isAlertFilter = id === 'overdue' || id === 'unpaid';
+            return (
+              <button
+                key={id}
+                onClick={() => setStatusFilter(id)}
+                disabled={count === 0 && id !== 'all'}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  padding: '0.25rem 0.55rem',
+                  borderRadius: 'var(--ha-radius-sm)',
+                  border: '1px solid',
+                  borderColor: isSelected ? (isAlertFilter ? 'var(--ha-red)' : 'var(--ha-ink)') : 'var(--ha-line)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  backgroundColor: isSelected ? (isAlertFilter ? 'var(--ha-red)' : 'var(--ha-ink)') : 'var(--ha-white)',
+                  color: isSelected ? 'var(--ha-white)' : count === 0 && id !== 'all' ? '#c3c9bd' : isAlertFilter ? 'var(--ha-red)' : 'var(--ha-muted)',
+                  cursor: count === 0 && id !== 'all' ? 'default' : 'pointer',
+                  opacity: count === 0 && id !== 'all' ? 0.6 : 1,
+                }}
+              >
+                <span>{label}</span>
+                <span style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  padding: '0 0.35rem',
+                  borderRadius: '999px',
+                  backgroundColor: isSelected ? 'rgba(255,255,255,0.25)' : 'var(--ha-line)',
+                  color: isSelected ? 'var(--ha-white)' : 'var(--ha-muted)',
+                }}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
