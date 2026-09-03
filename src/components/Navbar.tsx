@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { UserProfile } from '../types/expense';
 import { Plus, Search, Settings, HelpCircle, LogOut, ShieldCheck, Menu, X, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { TallyLogo } from './TallyLogo';
+import { APP_VERSION } from '../data/changelog';
 
 export type TabId = 'overview' | 'all' | 'ai-tech' | 'utilities' | 'education' | 'income' | 'calendar' | 'insights' | 'accounts' | 'moneymap' | 'flow' | 'goals' | 'admin';
 
@@ -30,6 +31,7 @@ interface NavbarProps {
   currentUser: UserProfile | null;
   isPrivacyBlurred: boolean;
   onTogglePrivacyBlur: () => void;
+  onOpenChangelog: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -43,6 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   isPrivacyBlurred,
   onTogglePrivacyBlur,
+  onOpenChangelog,
 }) => {
   const isAdmin = currentUser?.role === 'ADMIN';
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
@@ -103,6 +106,25 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Your household, in balance.
               </p>
             </div>
+            <button
+              className="hide-mobile"
+              onClick={(e) => { e.stopPropagation(); onOpenChangelog(); }}
+              title="View changelog"
+              style={{
+                background: 'none',
+                border: '1px solid var(--ha-line)',
+                borderRadius: 'var(--ha-radius-sm)',
+                padding: '0.1rem 0.4rem',
+                color: 'var(--ha-muted)',
+                fontSize: '0.68rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                alignSelf: 'flex-start',
+                marginTop: '2px',
+              }}
+            >
+              v{APP_VERSION}
+            </button>
           </div>
 
           {/* Primary Nav Links (desktop) */}
@@ -233,6 +255,21 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <TallyLogo size={24} />
                 <span style={{ fontWeight: 700, fontSize: '1.1rem', fontFamily: 'var(--ha-font-display)' }}>Tally</span>
+                <button
+                  onClick={() => { setIsDrawerOpen(false); onOpenChangelog(); }}
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--ha-line)',
+                    borderRadius: 'var(--ha-radius-sm)',
+                    padding: '0.1rem 0.4rem',
+                    color: 'var(--ha-muted)',
+                    fontSize: '0.68rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  v{APP_VERSION}
+                </button>
               </div>
               <button className="ha-icon-btn" onClick={() => setIsDrawerOpen(false)}>
                 <X size={20} />

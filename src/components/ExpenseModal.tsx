@@ -295,28 +295,26 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
           {/* Paid this cycle & variable amount toggles */}
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            {editingExpense && (
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                cursor: 'pointer',
-                padding: '0.6rem 0.75rem',
-                borderRadius: 'var(--ha-radius-sm)',
-                border: '1px solid var(--ha-line)',
-                backgroundColor: isPaidThisCycle ? 'var(--ha-blue-light)' : '#fafaf7',
-                width: 'fit-content',
-              }}>
-                <input
-                  type="checkbox"
-                  checked={isPaidThisCycle}
-                  onChange={(e) => setIsPaidThisCycle(e.target.checked)}
-                />
-                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
-                  {billingCycle === 'once' ? 'Paid' : 'Paid this cycle'}
-                </span>
-              </label>
-            )}
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              cursor: 'pointer',
+              padding: '0.6rem 0.75rem',
+              borderRadius: 'var(--ha-radius-sm)',
+              border: '1px solid var(--ha-line)',
+              backgroundColor: isPaidThisCycle ? 'var(--ha-blue-light)' : '#fafaf7',
+              width: 'fit-content',
+            }}>
+              <input
+                type="checkbox"
+                checked={isPaidThisCycle}
+                onChange={(e) => setIsPaidThisCycle(e.target.checked)}
+              />
+              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                {billingCycle === 'once' ? 'Paid' : 'Paid this cycle'}
+              </span>
+            </label>
 
             {billingCycle !== 'once' && (
               <label style={{

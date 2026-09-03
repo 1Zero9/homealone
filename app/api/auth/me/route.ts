@@ -1,36 +1,15 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/src/lib/prisma';
-import { cookies } from 'next/headers';
-import { SESSION_COOKIE } from '@/src/lib/auth';
+import { getSessionUser } from '@/src/lib/auth';
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get(SESSION_COOKIE)?.value;
+    // Routed through getSessionUser() (rather than querying the Session
+    // table directly) so this endpoint also benefits from sliding
+    // session expiration — every "am I still logged in?" check counts
+    // as activity that keeps the session alive.
+    const user = await getSessionUser();
 
-    if (!token) {
-      return NextResponse.json(
-        { status: 'unauthenticated' },
-        { status: 200 }
-      );
-    }
-
-    const session = await prisma.session.findUnique({
-      where: { token },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    });
-
-    if (!session || session.expiresAt < new Date()) {
+    if (!user) {
       return NextResponse.json(
         { status: 'unauthenticated' },
         { status: 200 }
@@ -39,7 +18,7 @@ export async function GET() {
 
     return NextResponse.json({
       status: 'authenticated',
-      user: session.user,
+      user,
     });
   } catch (error: unknown) {
     console.error('Session check failed:', error);

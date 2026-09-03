@@ -1,8 +1,8 @@
 import React from 'react';
 import type { ExpenseItem, CurrencyCode, SpendingSummary, IncomeSummary } from '../types/expense';
-import { CATEGORY_LIST } from '../data/categories';
+import { CATEGORY_LIST, CATEGORIES } from '../data/categories';
 import { convertCurrency, getMonthlyEquivalent, getDaysUntilRenewal } from '../utils/calculations';
-import { formatCurrency, formatRenewalCountdown } from '../utils/formatters';
+import { formatCurrency, formatRenewalCountdown, formatDate } from '../utils/formatters';
 import { TrendingUp, Clock, PiggyBank, ArrowRight, Edit2 } from 'lucide-react';
 
 interface OverviewDashboardProps {
@@ -30,16 +30,24 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
 
   const renewals = activeExpenses.map((item) => {
     const daysLeft = getDaysUntilRenewal(item.nextRenewalDate || `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${item.renewalDay}`, item.billingCycle);
-    return { ...item, daysLeft, urgencyInfo: formatRenewalCountdown(daysLeft) };
+    // Already paid this cycle — don't show it as due/overdue regardless of the date.
+    const urgencyInfo = item.isPaidThisCycle
+      ? { text: 'Paid', urgency: 'distant' as const }
+      : formatRenewalCountdown(daysLeft);
+    return { ...item, daysLeft, urgencyInfo };
   }).sort((a, b) => a.daysLeft - b.daysLeft);
 
-  const dueNext7Days = renewals.filter((item) => item.daysLeft <= 7);
+  const dueNext7Days = renewals.filter((item) => !item.isPaidThisCycle && item.daysLeft <= 7);
   const totalNext7Days = dueNext7Days.reduce((sum, item) => sum + convertCurrency(item.amount, item.currency, currency), 0);
-  const upcomingBills = renewals.slice(0, 5);
+  const upcomingBills = renewals.filter((item) => !item.isPaidThisCycle).slice(0, 5);
 
   const recentlyAdded = [...activeExpenses]
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-    .slice(0, 6);
+    .slice(0, 6)
+    .map((item) => {
+      const daysLeft = getDaysUntilRenewal(item.nextRenewalDate || `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${item.renewalDay}`, item.billingCycle);
+      return { ...item, daysLeft };
+    });
 
   const categoryData = CATEGORY_LIST.map((cat) => {
     const catItems = activeExpenses.filter((e) => e.category === cat.id);
@@ -138,29 +146,48 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
           </div>
           {recentlyAdded.length > 0 ? (
             <div>
-              {recentlyAdded.map((item) => (
-                <div key={item.id} className="ha-ledger-row">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span className="ha-color-marker" style={{ backgroundColor: item.color || '#3155D9' }} />
-                    <div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
-                        {item.name}
-                      </div>
-                      <div style={{ fontSize: '0.73rem', color: 'var(--ha-muted)' }}>
-                        {item.paymentMethod || 'Direct Debit'} • {item.billingCycle}
+              {recentlyAdded.map((item) => {
+                const overdue = !item.isPaidThisCycle && item.daysLeft < 0;
+                return (
+                  <div key={item.id} className="ha-ledger-row" style={{ alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span className="ha-color-marker" style={{ backgroundColor: item.color || '#3155D9' }} />
+                      <div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                          {item.name}
+                        </div>
+                        <div style={{ fontSize: '0.73rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
+                          {item.paymentMethod || 'Direct Debit'} • {item.billingCycle}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.35rem', flexWrap: 'wrap' }}>
+                          <span className="ha-badge ha-badge-neutral" style={{ fontSize: '0.68rem' }}>
+                            {CATEGORIES[item.category]?.name || item.category}
+                          </span>
+                          <span
+                            className={`ha-badge ${item.isPaidThisCycle ? 'ha-badge-blue' : overdue ? 'ha-badge-red' : 'ha-badge-neutral'}`}
+                            style={{ fontSize: '0.68rem' }}
+                          >
+                            {item.isPaidThisCycle ? 'Paid' : overdue ? 'Overdue' : 'Unpaid'}
+                          </span>
+                          {item.billingCycle !== 'once' && (
+                            <span style={{ fontSize: '0.7rem', color: 'var(--ha-muted)' }}>
+                              Due {formatDate(item.nextRenewalDate)}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div className="tabular-nums" style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
-                      {formatCurrency(item.amount, item.currency)}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div className="tabular-nums" style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
+                        {formatCurrency(item.amount, item.currency)}
+                      </div>
+                      <button onClick={() => onEditExpense(item)} className="btn btn-ghost" style={{ padding: '0.3rem 0.4rem' }}>
+                        <Edit2 size={13} />
+                      </button>
                     </div>
-                    <button onClick={() => onEditExpense(item)} className="btn btn-ghost" style={{ padding: '0.3rem 0.4rem' }}>
-                      <Edit2 size={13} />
-                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div style={{ padding: '2rem 1.4rem', textAlign: 'center', color: 'var(--ha-muted)', fontSize: '0.85rem' }}>

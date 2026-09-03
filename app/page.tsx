@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { EyeOff } from 'lucide-react';
 import type { ExpenseItem, IncomeItem, CurrencyCode, PresetItem, UserProfile, AccountItem, TransferItem, GoalItem } from '@/src/types/expense';
 import { loadCurrency, saveCurrency, resetToDefaults } from '@/src/services/storage';
 import { calculateSpendingSummary, calculateIncomeSummary } from '@/src/utils/calculations';
@@ -37,6 +38,7 @@ import { GoalsSection } from '@/src/components/GoalsSection';
 import { GoalModal } from '@/src/components/GoalModal';
 import { PrivacyBlurOverlay } from '@/src/components/PrivacyBlurOverlay';
 import { usePrivacyBlur } from '@/src/hooks/usePrivacyBlur';
+import { ChangelogModal } from '@/src/components/ChangelogModal';
 
 export default function TallyPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = checking
@@ -68,6 +70,7 @@ export default function TallyPage() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isChangelogModalOpen, setIsChangelogModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseItem | null>(null);
   const [initialPresetId, setInitialPresetId] = useState<string | null>(null);
   const [initialCategory, setInitialCategory] = useState<string | null>(null);
@@ -81,7 +84,7 @@ export default function TallyPage() {
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<GoalItem | null>(null);
 
-  const { isBlurred: isPrivacyBlurred, reveal: revealPrivacyBlur, toggle: togglePrivacyBlur } = usePrivacyBlur();
+  const { isBlurred: isPrivacyBlurred, reveal: revealPrivacyBlur, toggle: togglePrivacyBlur, blurNow: hidePrivacyNow } = usePrivacyBlur();
 
   // Fetch users & expenses from Prisma PostgreSQL API
   const fetchDatabaseData = useCallback(async () => {
@@ -193,6 +196,7 @@ export default function TallyPage() {
   };
 
   const handleLogout = async () => {
+    if (!window.confirm('Log out of Tally?')) return;
     try {
       localStorage.removeItem('tally_user');
     } catch {}
@@ -678,6 +682,7 @@ export default function TallyPage() {
         currentUser={currentUser}
         isPrivacyBlurred={isPrivacyBlurred}
         onTogglePrivacyBlur={togglePrivacyBlur}
+        onOpenChangelog={() => setIsChangelogModalOpen(true)}
       />
 
       <PrivacyBlurOverlay
@@ -996,6 +1001,40 @@ export default function TallyPage() {
         </div>
       </footer>
       </PrivacyBlurOverlay>
+
+      {/* Quick-hide panic button — always on top, instantly blurs the screen */}
+      {!isPrivacyBlurred && (
+        <button
+          onClick={hidePrivacyNow}
+          title="Hide screen now"
+          aria-label="Hide screen now"
+          style={{
+            position: 'fixed',
+            bottom: '1.25rem',
+            right: '1.25rem',
+            zIndex: 100,
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            backgroundColor: 'var(--ha-ink)',
+            color: 'var(--ha-white)',
+            border: 'none',
+            boxShadow: 'var(--ha-shadow-elevated)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <EyeOff size={20} />
+        </button>
+      )}
+
+      {/* Changelog / What's New Modal */}
+      <ChangelogModal
+        isOpen={isChangelogModalOpen}
+        onClose={() => setIsChangelogModalOpen(false)}
+      />
 
       {/* Add / Edit Expense Modal */}
       <ExpenseModal

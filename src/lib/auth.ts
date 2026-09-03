@@ -18,6 +18,14 @@ export interface SessionUser {
  * This is the ONLY source of truth for "who is making this request" —
  * never trust a userId/householdId/role passed in a request body.
  */
+// Sessions last 30 days from creation. To avoid signing active users out
+// mid-use, we "touch" (extend) the session back out to a fresh 30 days
+// once its remaining life drops below this threshold — so anyone who
+// opens the app at least once every ~25 days stays signed in
+// indefinitely without ever seeing the magic-code screen again.
+const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
+const SESSION_REFRESH_THRESHOLD_MS = 25 * 24 * 60 * 60 * 1000;
+
 export async function getSessionUser(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
@@ -29,6 +37,17 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   });
 
   if (!session || session.expiresAt < new Date()) return null;
+
+  // Sliding expiration: extend the session on active use.
+  const remainingMs = session.expiresAt.getTime() - Date.now();
+  if (remainingMs < SESSION_REFRESH_THRESHOLD_MS) {
+    prisma.session
+      .update({
+        where: { token },
+        data: { expiresAt: new Date(Date.now() + SESSION_LIFETIME_MS) },
+      })
+      .catch((err) => console.error('Failed to refresh session expiry:', err));
+  }
 
   const { user } = session;
   return {

@@ -19,19 +19,23 @@ export const UpcomingRenewals: React.FC<UpcomingRenewalsProps> = ({
 
   const sortedRenewals = activeItems.map((item) => {
     const daysLeft = getDaysUntilRenewal(item.nextRenewalDate || `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${item.renewalDay}`, item.billingCycle);
+    // Already paid this cycle — don't show it as due/overdue regardless of the date.
+    const urgencyInfo = item.isPaidThisCycle
+      ? { text: 'Paid', urgency: 'distant' as const }
+      : formatRenewalCountdown(daysLeft);
     return {
       ...item,
       daysLeft,
-      urgencyInfo: formatRenewalCountdown(daysLeft),
+      urgencyInfo,
     };
   }).sort((a, b) => a.daysLeft - b.daysLeft);
 
-  const dueNext7Days = sortedRenewals.filter((item) => item.daysLeft <= 7);
+  const dueNext7Days = sortedRenewals.filter((item) => !item.isPaidThisCycle && item.daysLeft <= 7);
   const totalNext7Days = dueNext7Days.reduce((sum, item) => {
     return sum + convertCurrency(item.amount, item.currency, currency);
   }, 0);
 
-  const totalNext30Days = sortedRenewals.filter((item) => item.daysLeft <= 30).reduce((sum, item) => {
+  const totalNext30Days = sortedRenewals.filter((item) => !item.isPaidThisCycle && item.daysLeft <= 30).reduce((sum, item) => {
     return sum + convertCurrency(item.amount, item.currency, currency);
   }, 0);
 
