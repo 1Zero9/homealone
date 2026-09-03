@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.15.0';
+export const APP_VERSION = '1.16.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.16.0',
+    date: '2026-09-03',
+    changes: [
+      'Statement uploads now accept PDF exports and photos/screenshots as well as CSV — Tally reads the transactions straight off the page using AI, so there\'s no need to convert a bank PDF to CSV first.',
+    ],
+  },
   {
     version: '1.15.0',
     date: '2026-09-03',

@@ -87,6 +87,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const [isLoadingReview, setIsLoadingReview] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [busyGroupKey, setBusyGroupKey] = useState<string | null>(null);
+  const [aiRows, setAiRows] = useState<PreparedRow[] | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadedInitialRef = useRef(false);
 
@@ -117,6 +119,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     setSelectedExpenseId({});
     setCollapsedGroups(new Set());
     setBusyGroupKey(null);
+    setAiRows(null);
+    setIsExtracting(false);
     loadedInitialRef.current = false;
   }, []);
 
@@ -169,14 +173,73 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     setStep('map');
   };
 
+  const extractFromFile = async (fileBase64: string, mimeType: string, name: string) => {
+    setIsExtracting(true);
+    setParseError('');
+    try {
+      const res = await fetch('/api/statements/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileBase64, mimeType }),
+      });
+      const data = await res.json();
+      if (data.status !== 'ok') {
+        setParseError(data.message || 'Failed to read that file.');
+        return;
+      }
+      const extracted: PreparedRow[] = (data.transactions || []).map(
+        (t: { date: string; rawDescription: string; amount: number; direction: 'DEBIT' | 'CREDIT' }) => ({
+          date: t.date,
+          rawDescription: t.rawDescription,
+          amount: t.amount,
+          direction: t.direction,
+        })
+      );
+      setAiRows(extracted);
+      setHeaders([]);
+      setRows([]);
+      setLabel(name.replace(/\.[^.]+$/, '') || `Statement — ${new Date().toLocaleDateString('en-GB')}`);
+      setStep('map');
+    } catch {
+      setParseError('Failed to read that file. Please try again.');
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
   const handleFile = (file: File) => {
     setFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = () => loadText(String(reader.result || ''), file.name);
-    reader.readAsText(file);
+    setParseError('');
+
+    const lowerName = file.name.toLowerCase();
+    const isCsv = file.type === 'text/csv' || lowerName.endsWith('.csv');
+    const isPdf = file.type === 'application/pdf' || lowerName.endsWith('.pdf');
+    const isImage = file.type.startsWith('image/');
+
+    if (isCsv) {
+      const reader = new FileReader();
+      reader.onload = () => loadText(String(reader.result || ''), file.name);
+      reader.readAsText(file);
+      return;
+    }
+
+    if (isPdf || isImage) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = String(reader.result || '');
+        const base64 = dataUrl.split(',')[1] || '';
+        const mimeType = file.type || (isPdf ? 'application/pdf' : 'image/png');
+        void extractFromFile(base64, mimeType, file.name);
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    setParseError('Unsupported file type. Please upload a CSV, PDF, or photo/screenshot of your statement.');
   };
 
   const preparedRows: PreparedRow[] = useMemo(() => {
+    if (aiRows) return aiRows;
     if (descCol === null) return [];
     const out: PreparedRow[] = [];
     for (const row of rows) {
@@ -213,10 +276,11 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
       out.push({ date, rawDescription, amount, direction });
     }
     return out;
-  }, [rows, dateCol, descCol, amountMode, amountCol, debitCol, creditCol, positiveMeans]);
+  }, [aiRows, rows, dateCol, descCol, amountMode, amountCol, debitCol, creditCol, positiveMeans]);
 
-  const canImport =
-    dateCol !== null && descCol !== null && (amountMode === 'single' ? amountCol !== null : debitCol !== null || creditCol !== null);
+  const canImport = aiRows !== null
+    ? true
+    : dateCol !== null && descCol !== null && (amountMode === 'single' ? amountCol !== null : debitCol !== null || creditCol !== null);
 
   const handleImport = async () => {
     if (preparedRows.length === 0) {
@@ -299,6 +363,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    if (isExtracting) return;
     const file = e.dataTransfer.files?.[0];
     if (file) handleFile(file);
   };
@@ -339,8 +404,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
               {step === 'review' ? importLabel || 'Review statement' : 'Import a statement'}
             </h3>
             <p style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
-              {step === 'upload' && 'Upload a bank or credit-card CSV export to cross-check against your bills.'}
-              {step === 'map' && `${rows.length} rows found — tell us which columns are which.`}
+              {step === 'upload' && 'Upload a bank or credit-card statement — CSV, PDF, or a photo — to cross-check against your bills.'}
+              {step === 'map' && (aiRows ? `${aiRows.length} transaction${aiRows.length === 1 ? '' : 's'} found — check the details below before importing.` : `${rows.length} rows found — tell us which columns are which.`)}
               {step === 'review' && (importAccount ? `${importAccount.name}${importAccount.institution ? ` — ${importAccount.institution}` : ''} · Confirm matches, link forgotten payments, or ignore what you don't need.` : 'Confirm matches, link forgotten payments, or ignore what you don\'t need.')}
             </p>
           </div>
@@ -355,31 +420,48 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
               <div
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => !isExtracting && fileInputRef.current?.click()}
                 style={{
                   border: '2px dashed var(--ha-line)',
                   borderRadius: 'var(--ha-radius-lg)',
                   padding: '2.5rem 1.5rem',
                   textAlign: 'center',
-                  cursor: 'pointer',
+                  cursor: isExtracting ? 'default' : 'pointer',
                   backgroundColor: '#fafaf7',
+                  opacity: isExtracting ? 0.75 : 1,
                 }}
               >
-                <FileSpreadsheet size={30} color="var(--ha-muted)" style={{ marginBottom: '0.6rem' }} />
-                <div style={{ fontWeight: 600, color: 'var(--ha-ink)', fontSize: '0.95rem' }}>
-                  Drop a CSV export here
-                </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginTop: '0.35rem' }}>
-                  or click to choose a file — most banks and card providers let you export statements as CSV
-                </div>
+                {isExtracting ? (
+                  <>
+                    <Loader2 size={30} color="var(--ha-muted)" className="spin" style={{ marginBottom: '0.6rem' }} />
+                    <div style={{ fontWeight: 600, color: 'var(--ha-ink)', fontSize: '0.95rem' }}>
+                      Reading your statement…
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginTop: '0.35rem' }}>
+                      This can take a few seconds for PDFs with lots of transactions
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <FileSpreadsheet size={30} color="var(--ha-muted)" style={{ marginBottom: '0.6rem' }} />
+                    <div style={{ fontWeight: 600, color: 'var(--ha-ink)', fontSize: '0.95rem' }}>
+                      Drop a CSV, PDF, or photo here
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginTop: '0.35rem' }}>
+                      or click to choose a file — CSV works best, but a PDF export or a clear photo of a paper statement works too
+                    </div>
+                  </>
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".csv,text/csv"
+                  accept=".csv,text/csv,.pdf,application/pdf,image/*"
                   style={{ display: 'none' }}
+                  disabled={isExtracting}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) handleFile(file);
+                    if (file && !isExtracting) handleFile(file);
+                    e.target.value = '';
                   }}
                 />
               </div>
@@ -426,71 +508,79 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                 )}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.3rem' }}>
-                    Date column
-                  </label>
-                  <select className="ha-input" value={dateCol ?? ''} onChange={(e) => setDateCol(e.target.value === '' ? null : Number(e.target.value))}>
-                    <option value="">— Select —</option>
-                    {headers.map((h, i) => <option key={i} value={i}>{h || `Column ${i + 1}`}</option>)}
-                  </select>
+              {aiRows ? (
+                <div style={{ fontSize: '0.8rem', color: 'var(--ha-muted)' }}>
+                  <span><strong style={{ color: 'var(--ha-ink)' }}>{preparedRows.length}</strong> transaction{preparedRows.length === 1 ? '' : 's'} read from the file and ready to import.</span>
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.3rem' }}>
-                    Description column
-                  </label>
-                  <select className="ha-input" value={descCol ?? ''} onChange={(e) => setDescCol(e.target.value === '' ? null : Number(e.target.value))}>
-                    <option value="">— Select —</option>
-                    {headers.map((h, i) => <option key={i} value={i}>{h || `Column ${i + 1}`}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', color: 'var(--ha-ink)', cursor: 'pointer' }}>
-                    <input type="radio" checked={amountMode === 'single'} onChange={() => setAmountMode('single')} />
-                    Single amount column
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', color: 'var(--ha-ink)', cursor: 'pointer' }}>
-                    <input type="radio" checked={amountMode === 'split'} onChange={() => setAmountMode('split')} />
-                    Separate debit/credit columns
-                  </label>
-                </div>
-
-                {amountMode === 'single' ? (
+              ) : (
+                <>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <select className="ha-input" value={amountCol ?? ''} onChange={(e) => setAmountCol(e.target.value === '' ? null : Number(e.target.value))}>
-                      <option value="">— Amount column —</option>
-                      {headers.map((h, i) => <option key={i} value={i}>{h || `Column ${i + 1}`}</option>)}
-                    </select>
-                    <select className="ha-input" value={positiveMeans} onChange={(e) => setPositiveMeans(e.target.value as 'out' | 'in')}>
-                      <option value="out">Positive = money out</option>
-                      <option value="in">Positive = money in</option>
-                    </select>
+                    <div>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.3rem' }}>
+                        Date column
+                      </label>
+                      <select className="ha-input" value={dateCol ?? ''} onChange={(e) => setDateCol(e.target.value === '' ? null : Number(e.target.value))}>
+                        <option value="">— Select —</option>
+                        {headers.map((h, i) => <option key={i} value={i}>{h || `Column ${i + 1}`}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.3rem' }}>
+                        Description column
+                      </label>
+                      <select className="ha-input" value={descCol ?? ''} onChange={(e) => setDescCol(e.target.value === '' ? null : Number(e.target.value))}>
+                        <option value="">— Select —</option>
+                        {headers.map((h, i) => <option key={i} value={i}>{h || `Column ${i + 1}`}</option>)}
+                      </select>
+                    </div>
                   </div>
-                ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <select className="ha-input" value={debitCol ?? ''} onChange={(e) => setDebitCol(e.target.value === '' ? null : Number(e.target.value))}>
-                      <option value="">— Debit (out) column —</option>
-                      {headers.map((h, i) => <option key={i} value={i}>{h || `Column ${i + 1}`}</option>)}
-                    </select>
-                    <select className="ha-input" value={creditCol ?? ''} onChange={(e) => setCreditCol(e.target.value === '' ? null : Number(e.target.value))}>
-                      <option value="">— Credit (in) column —</option>
-                      {headers.map((h, i) => <option key={i} value={i}>{h || `Column ${i + 1}`}</option>)}
-                    </select>
-                  </div>
-                )}
-              </div>
 
-              <div style={{ fontSize: '0.8rem', color: 'var(--ha-muted)' }}>
-                {canImport ? (
-                  <span><strong style={{ color: 'var(--ha-ink)' }}>{preparedRows.length}</strong> of {rows.length} rows look valid and ready to import.</span>
-                ) : (
-                  'Select the columns above to preview how many rows will import.'
-                )}
-              </div>
+                  <div>
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', color: 'var(--ha-ink)', cursor: 'pointer' }}>
+                        <input type="radio" checked={amountMode === 'single'} onChange={() => setAmountMode('single')} />
+                        Single amount column
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', color: 'var(--ha-ink)', cursor: 'pointer' }}>
+                        <input type="radio" checked={amountMode === 'split'} onChange={() => setAmountMode('split')} />
+                        Separate debit/credit columns
+                      </label>
+                    </div>
+
+                    {amountMode === 'single' ? (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <select className="ha-input" value={amountCol ?? ''} onChange={(e) => setAmountCol(e.target.value === '' ? null : Number(e.target.value))}>
+                          <option value="">— Amount column —</option>
+                          {headers.map((h, i) => <option key={i} value={i}>{h || `Column ${i + 1}`}</option>)}
+                        </select>
+                        <select className="ha-input" value={positiveMeans} onChange={(e) => setPositiveMeans(e.target.value as 'out' | 'in')}>
+                          <option value="out">Positive = money out</option>
+                          <option value="in">Positive = money in</option>
+                        </select>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <select className="ha-input" value={debitCol ?? ''} onChange={(e) => setDebitCol(e.target.value === '' ? null : Number(e.target.value))}>
+                          <option value="">— Debit (out) column —</option>
+                          {headers.map((h, i) => <option key={i} value={i}>{h || `Column ${i + 1}`}</option>)}
+                        </select>
+                        <select className="ha-input" value={creditCol ?? ''} onChange={(e) => setCreditCol(e.target.value === '' ? null : Number(e.target.value))}>
+                          <option value="">— Credit (in) column —</option>
+                          {headers.map((h, i) => <option key={i} value={i}>{h || `Column ${i + 1}`}</option>)}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ fontSize: '0.8rem', color: 'var(--ha-muted)' }}>
+                    {canImport ? (
+                      <span><strong style={{ color: 'var(--ha-ink)' }}>{preparedRows.length}</strong> of {rows.length} rows look valid and ready to import.</span>
+                    ) : (
+                      'Select the columns above to preview how many rows will import.'
+                    )}
+                  </div>
+                </>
+              )}
 
               {canImport && preparedRows.length > 0 && (
                 <div style={{ border: '1px solid var(--ha-line)', borderRadius: 'var(--ha-radius-md)', overflow: 'hidden' }}>
@@ -521,7 +611,11 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
               )}
 
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'space-between' }}>
-                <button onClick={() => setStep('upload')} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>
+                <button
+                  onClick={() => { setAiRows(null); setHeaders([]); setRows([]); setStep('upload'); }}
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.85rem' }}
+                >
                   <ArrowLeft size={14} />
                   Back
                 </button>

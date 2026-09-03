@@ -184,6 +184,79 @@ If the image doesn't look like a bill/receipt/invoice at all, still respond with
   };
 }
 
+export interface StatementExtractedTransaction {
+  date: string;
+  rawDescription: string;
+  amount: number;
+  direction: 'DEBIT' | 'CREDIT';
+}
+
+/**
+ * Reads a bank/credit-card statement supplied as a PDF or a photo/screenshot
+ * and extracts every transaction line it can find using Gemini's document
+ * and vision understanding. Used as the non-CSV path for statement import —
+ * CSV exports are still parsed directly, without going through the AI.
+ */
+export async function analyzeStatementDocument(
+  fileBase64: string,
+  mimeType: string
+): Promise<StatementExtractedTransaction[]> {
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  if (!apiKey) {
+    throw new Error('AI assistant is not configured yet. Ask an admin to set GOOGLE_AI_API_KEY.');
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+
+  const prompt = `You are reading a bank or credit-card statement (a PDF export or a photo/screenshot) for the "Tally" household finance app.
+
+Extract EVERY individual transaction line you can find into a JSON array. For each transaction, extract:
+- date: the transaction date in YYYY-MM-DD format. If only a day/month are printed without a year, infer the year from context elsewhere on the document (e.g. a statement period or generation date); never guess a year with no basis in the document.
+- rawDescription: the transaction description/narrative exactly as printed, kept reasonably short
+- amount: the transaction amount as a plain positive number (no currency symbol, no thousands separators, no minus sign)
+- direction: "DEBIT" if money left the account (a purchase, payment, fee, direct debit, standing order out), or "CREDIT" if money came into the account (a refund, salary, transfer in, interest)
+
+Ignore running/opening/closing balance lines, page headers/footers, and marketing text — only return actual transaction rows. If the document isn't a statement at all, or you can't confidently read any transaction rows, return an empty array rather than guessing.
+
+Respond with ONLY valid JSON in this exact shape, no markdown fences, no commentary:
+{"transactions": [{"date": "YYYY-MM-DD", "rawDescription": "...", "amount": 0, "direction": "DEBIT"}]}`;
+
+  const result = await model.generateContent([
+    { inlineData: { data: fileBase64, mimeType } },
+    prompt,
+  ]);
+  const text = result.response.text().trim();
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error("Could not read that statement. Please try a clearer file, or export as CSV instead.");
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonMatch[0]);
+  } catch {
+    throw new Error("Could not read that statement. Please try a clearer file, or export as CSV instead.");
+  }
+
+  const list = (parsed as { transactions?: unknown })?.transactions;
+  if (!Array.isArray(list)) {
+    throw new Error("Could not read that statement. Please try a clearer file, or export as CSV instead.");
+  }
+
+  return list
+    .filter((t): t is Record<string, unknown> => !!t && typeof t === 'object')
+    .map((t) => ({
+      date: typeof t.date === 'string' ? t.date : '',
+      rawDescription: typeof t.rawDescription === 'string' ? t.rawDescription.trim() : '',
+      amount: typeof t.amount === 'number' ? Math.abs(t.amount) : 0,
+      direction: (t.direction === 'CREDIT' ? 'CREDIT' : 'DEBIT') as 'DEBIT' | 'CREDIT',
+    }))
+    .filter((t) => t.date && t.rawDescription && t.amount > 0)
+    .slice(0, 1000);
+}
+
 export type MoneyFlowInsightType = 'idle_cash' | 'timing_risk' | 'consolidation' | 'savings' | 'general';
 export type MoneyFlowSeverity = 'info' | 'warning' | 'opportunity';
 
