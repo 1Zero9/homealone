@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { UserProfile } from '../types/expense';
-import { Plus, Search, Settings, HelpCircle, LogOut, ShieldCheck, Menu, X, ChevronDown } from 'lucide-react';
+import { Plus, Search, Settings, HelpCircle, LogOut, ShieldCheck, Menu, X, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { TallyLogo } from './TallyLogo';
 
 export type TabId = 'overview' | 'all' | 'ai-tech' | 'utilities' | 'education' | 'income' | 'calendar' | 'insights' | 'accounts' | 'moneymap' | 'flow' | 'goals' | 'admin';
@@ -28,6 +28,8 @@ interface NavbarProps {
   onFocusAsk: () => void;
   onLogout: () => void;
   currentUser: UserProfile | null;
+  isPrivacyBlurred: boolean;
+  onTogglePrivacyBlur: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -39,6 +41,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onFocusAsk,
   onLogout,
   currentUser,
+  isPrivacyBlurred,
+  onTogglePrivacyBlur,
 }) => {
   const isAdmin = currentUser?.role === 'ADMIN';
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
@@ -123,6 +127,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Search size={17} />
             </button>
 
+            <button
+              className="ha-icon-btn"
+              title={isPrivacyBlurred ? 'Reveal screen' : 'Blur screen for privacy'}
+              onClick={onTogglePrivacyBlur}
+            >
+              {isPrivacyBlurred ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
+
             <button onClick={onOpenAddModal} className="btn btn-primary" style={{ fontSize: '0.82rem', padding: '0.5rem 0.9rem' }}>
               <Plus size={14} />
               <span>Add expense</span>
@@ -195,6 +207,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Mobile Actions */}
           <div className="mobile-menu-btn" style={{ alignItems: 'center', gap: '0.4rem' }}>
+            <button
+              className="ha-icon-btn"
+              title={isPrivacyBlurred ? 'Reveal screen' : 'Blur screen for privacy'}
+              onClick={onTogglePrivacyBlur}
+            >
+              {isPrivacyBlurred ? <EyeOff size={19} /> : <Eye size={19} />}
+            </button>
             <button className="ha-icon-btn" title="Add expense" onClick={onOpenAddModal}>
               <Plus size={19} />
             </button>

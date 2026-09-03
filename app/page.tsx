@@ -35,6 +35,8 @@ import { TransfersSection } from '@/src/components/TransfersSection';
 import { TransferModal } from '@/src/components/TransferModal';
 import { GoalsSection } from '@/src/components/GoalsSection';
 import { GoalModal } from '@/src/components/GoalModal';
+import { PrivacyBlurOverlay } from '@/src/components/PrivacyBlurOverlay';
+import { usePrivacyBlur } from '@/src/hooks/usePrivacyBlur';
 
 export default function TallyPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = checking
@@ -78,6 +80,8 @@ export default function TallyPage() {
   const [editingTransfer, setEditingTransfer] = useState<TransferItem | null>(null);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<GoalItem | null>(null);
+
+  const { isBlurred: isPrivacyBlurred, reveal: revealPrivacyBlur, toggle: togglePrivacyBlur } = usePrivacyBlur();
 
   // Fetch users & expenses from Prisma PostgreSQL API
   const fetchDatabaseData = useCallback(async () => {
@@ -672,8 +676,15 @@ export default function TallyPage() {
         onFocusAsk={handleFocusAsk}
         onLogout={handleLogout}
         currentUser={currentUser}
+        isPrivacyBlurred={isPrivacyBlurred}
+        onTogglePrivacyBlur={togglePrivacyBlur}
       />
 
+      <PrivacyBlurOverlay
+        isBlurred={isPrivacyBlurred}
+        onReveal={revealPrivacyBlur}
+        style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+      >
       {/* Main Container Content */}
       <main style={{
         maxWidth: '1280px',
@@ -984,6 +995,7 @@ export default function TallyPage() {
           </div>
         </div>
       </footer>
+      </PrivacyBlurOverlay>
 
       {/* Add / Edit Expense Modal */}
       <ExpenseModal
