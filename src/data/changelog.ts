@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.17.2';
+export const APP_VERSION = '1.18.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.18.0',
+    date: '2026-09-03',
+    changes: [
+      'PDF/photo statement imports now also read the account number, sort code, IBAN, account holder, statement period and opening/closing balance printed on the statement.',
+      'When you pick which account a statement is for, Tally checks the extracted account number and sort code against what\'s saved for that account and flags a mismatch — handy for catching "wrong account" mix-ups before you import.',
+      'If an account has no account number or sort code saved yet, you can save the one read off the statement with one click.',
+    ],
+  },
   {
     version: '1.17.2',
     date: '2026-09-03',

@@ -17,6 +17,9 @@ import {
 import type { ExpenseItem, StatementTransactionItem, CurrencyCode, AccountItem } from '../types/expense';
 import { formatCurrency } from '../utils/formatters';
 import { parseCsv, guessColumns, parseAmount, parseDateFlexible, type ColumnGuess } from '../lib/statementMatching';
+import type { StatementAccountInfo } from '../lib/ai';
+
+type FieldMatch = 'match' | 'mismatch' | 'not_set' | 'no_data';
 
 interface StatementImportModalProps {
   isOpen: boolean;
@@ -89,6 +92,10 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const [busyGroupKey, setBusyGroupKey] = useState<string | null>(null);
   const [aiRows, setAiRows] = useState<PreparedRow[] | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [accountInfo, setAccountInfo] = useState<StatementAccountInfo | null>(null);
+  const [accountMatch, setAccountMatch] = useState<{ accountNumber: FieldMatch; routingNumber: FieldMatch } | null>(null);
+  const [savingField, setSavingField] = useState<'accountNumber' | 'routingNumber' | null>(null);
+  const [savedFields, setSavedFields] = useState<{ accountNumber?: boolean; routingNumber?: boolean }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadedInitialRef = useRef(false);
 
@@ -121,6 +128,10 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     setBusyGroupKey(null);
     setAiRows(null);
     setIsExtracting(false);
+    setAccountInfo(null);
+    setAccountMatch(null);
+    setSavingField(null);
+    setSavedFields({});
     loadedInitialRef.current = false;
   }, []);
 
@@ -204,6 +215,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
         })
       );
       setAiRows(extracted);
+      setAccountInfo(data.accountInfo || null);
       setHeaders([]);
       setRows([]);
       setLabel(name.replace(/\.[^.]+$/, '') || `Statement — ${new Date().toLocaleDateString('en-GB')}`);
@@ -289,6 +301,46 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const canImport = aiRows !== null
     ? true
     : dateCol !== null && descCol !== null && (amountMode === 'single' ? amountCol !== null : debitCol !== null || creditCol !== null);
+
+  useEffect(() => {
+    setSavedFields({});
+    if (step !== 'map' || !accountId || !accountInfo || (!accountInfo.accountNumber && !accountInfo.sortCode)) {
+      setAccountMatch(null);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/accounts/${accountId}/compare-statement`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accountNumber: accountInfo.accountNumber, sortCode: accountInfo.sortCode }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        setAccountMatch(data.status === 'ok' ? { accountNumber: data.accountNumber, routingNumber: data.routingNumber } : null);
+      })
+      .catch(() => { if (!cancelled) setAccountMatch(null); });
+    return () => { cancelled = true; };
+  }, [accountId, accountInfo, step]);
+
+  const saveAccountField = async (field: 'accountNumber' | 'routingNumber', value: string) => {
+    if (!accountId) return;
+    setSavingField(field);
+    try {
+      const res = await fetch('/api/accounts', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: accountId, [field]: value }),
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        setSavedFields((prev) => ({ ...prev, [field]: true }));
+        setAccountMatch((prev) => (prev ? { ...prev, [field]: 'match' } : prev));
+      }
+    } finally {
+      setSavingField(null);
+    }
+  };
 
   const handleImport = async () => {
     if (preparedRows.length === 0) {
@@ -516,6 +568,111 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                 )}
               </div>
 
+              {accountInfo && (accountInfo.bankName || accountInfo.accountHolderName || accountInfo.accountNumber || accountInfo.sortCode || accountInfo.iban || accountInfo.statementPeriod || accountInfo.openingBalance != null || accountInfo.closingBalance != null) && (
+                <div style={{
+                  border: '1px solid var(--ha-line)',
+                  borderRadius: 'var(--ha-radius-md)',
+                  padding: '0.85rem 1rem',
+                  backgroundColor: '#fafaf7',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.45rem',
+                }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                    Account details found on statement
+                  </div>
+
+                  {(accountInfo.bankName || accountInfo.accountHolderName) && (
+                    <div style={{ fontSize: '0.8rem', color: 'var(--ha-muted)' }}>
+                      {[accountInfo.bankName, accountInfo.accountHolderName].filter(Boolean).join(' — ')}
+                    </div>
+                  )}
+
+                  {accountInfo.accountNumber && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.8rem' }}>
+                      <span style={{ color: 'var(--ha-muted)' }}>Account no.</span>
+                      <span style={{ fontWeight: 600, color: 'var(--ha-ink)' }}>{accountInfo.accountNumber}</span>
+                      {accountMatch?.accountNumber === 'match' && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--ha-blue)', fontWeight: 600, fontSize: '0.75rem' }}>
+                          <CheckCircle2 size={13} /> Matches saved account
+                        </span>
+                      )}
+                      {accountMatch?.accountNumber === 'mismatch' && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--ha-red)', fontWeight: 600, fontSize: '0.75rem' }}>
+                          <AlertTriangle size={13} /> Doesn&apos;t match the saved account number
+                        </span>
+                      )}
+                      {accountMatch?.accountNumber === 'not_set' && !savedFields.accountNumber && (
+                        <button
+                          type="button"
+                          onClick={() => saveAccountField('accountNumber', accountInfo.accountNumber!)}
+                          disabled={savingField === 'accountNumber'}
+                          className="btn btn-ghost"
+                          style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+                        >
+                          {savingField === 'accountNumber' ? 'Saving…' : `Save to ${accounts.find((a) => a.id === accountId)?.name || 'account'}`}
+                        </button>
+                      )}
+                      {savedFields.accountNumber && (
+                        <span style={{ color: 'var(--ha-blue)', fontSize: '0.75rem', fontWeight: 600 }}>Saved</span>
+                      )}
+                    </div>
+                  )}
+
+                  {accountInfo.sortCode && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.8rem' }}>
+                      <span style={{ color: 'var(--ha-muted)' }}>Sort code</span>
+                      <span style={{ fontWeight: 600, color: 'var(--ha-ink)' }}>{accountInfo.sortCode}</span>
+                      {accountMatch?.routingNumber === 'match' && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--ha-blue)', fontWeight: 600, fontSize: '0.75rem' }}>
+                          <CheckCircle2 size={13} /> Matches saved account
+                        </span>
+                      )}
+                      {accountMatch?.routingNumber === 'mismatch' && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--ha-red)', fontWeight: 600, fontSize: '0.75rem' }}>
+                          <AlertTriangle size={13} /> Doesn&apos;t match the saved sort code
+                        </span>
+                      )}
+                      {accountMatch?.routingNumber === 'not_set' && !savedFields.routingNumber && (
+                        <button
+                          type="button"
+                          onClick={() => saveAccountField('routingNumber', accountInfo.sortCode!)}
+                          disabled={savingField === 'routingNumber'}
+                          className="btn btn-ghost"
+                          style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+                        >
+                          {savingField === 'routingNumber' ? 'Saving…' : `Save to ${accounts.find((a) => a.id === accountId)?.name || 'account'}`}
+                        </button>
+                      )}
+                      {savedFields.routingNumber && (
+                        <span style={{ color: 'var(--ha-blue)', fontSize: '0.75rem', fontWeight: 600 }}>Saved</span>
+                      )}
+                    </div>
+                  )}
+
+                  {accountInfo.iban && (
+                    <div style={{ fontSize: '0.8rem' }}>
+                      <span style={{ color: 'var(--ha-muted)' }}>IBAN </span>
+                      <span style={{ fontWeight: 600, color: 'var(--ha-ink)' }}>{accountInfo.iban}</span>
+                    </div>
+                  )}
+
+                  {(accountInfo.statementPeriod || accountInfo.openingBalance != null || accountInfo.closingBalance != null) && (
+                    <div style={{ fontSize: '0.76rem', color: 'var(--ha-muted)' }}>
+                      {accountInfo.statementPeriod}
+                      {(accountInfo.openingBalance != null || accountInfo.closingBalance != null) && (
+                        <span>
+                          {accountInfo.statementPeriod ? ' · ' : ''}
+                          {accountInfo.openingBalance != null ? formatCurrency(accountInfo.openingBalance, householdCurrency) : '—'}
+                          {' → '}
+                          {accountInfo.closingBalance != null ? formatCurrency(accountInfo.closingBalance, householdCurrency) : '—'}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {aiRows ? (
                 <div style={{ fontSize: '0.8rem', color: 'var(--ha-muted)' }}>
                   <span><strong style={{ color: 'var(--ha-ink)' }}>{preparedRows.length}</strong> transaction{preparedRows.length === 1 ? '' : 's'} read from the file and ready to import.</span>
@@ -620,7 +777,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
 
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'space-between' }}>
                 <button
-                  onClick={() => { setAiRows(null); setHeaders([]); setRows([]); setStep('upload'); }}
+                  onClick={() => { setAiRows(null); setHeaders([]); setRows([]); setAccountInfo(null); setAccountMatch(null); setStep('upload'); }}
                   className="btn btn-secondary"
                   style={{ fontSize: '0.85rem' }}
                 >

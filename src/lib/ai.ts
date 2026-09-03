@@ -192,15 +192,50 @@ export interface StatementExtractedTransaction {
 }
 
 /**
+ * Account-level details printed on a statement itself (as opposed to the
+ * individual transaction rows) — used to help confirm the statement belongs
+ * to the account the user selected, and to offer filling in a blank account
+ * record. Never persisted anywhere just from reading the document; only
+ * saved if the user explicitly chooses to.
+ */
+export interface StatementAccountInfo {
+  bankName: string | null;
+  accountHolderName: string | null;
+  accountNumber: string | null;
+  sortCode: string | null;
+  iban: string | null;
+  statementPeriod: string | null;
+  openingBalance: number | null;
+  closingBalance: number | null;
+}
+
+export interface StatementDocumentExtraction {
+  transactions: StatementExtractedTransaction[];
+  accountInfo: StatementAccountInfo;
+}
+
+const EMPTY_ACCOUNT_INFO: StatementAccountInfo = {
+  bankName: null,
+  accountHolderName: null,
+  accountNumber: null,
+  sortCode: null,
+  iban: null,
+  statementPeriod: null,
+  openingBalance: null,
+  closingBalance: null,
+};
+
+/**
  * Reads a bank/credit-card statement supplied as a PDF or a photo/screenshot
- * and extracts every transaction line it can find using Gemini's document
- * and vision understanding. Used as the non-CSV path for statement import —
- * CSV exports are still parsed directly, without going through the AI.
+ * and extracts every transaction line it can find, plus whatever account-level
+ * details are printed on it (account number, sort code, etc.), using Gemini's
+ * document and vision understanding. Used as the non-CSV path for statement
+ * import — CSV exports are still parsed directly, without going through the AI.
  */
 export async function analyzeStatementDocument(
   fileBase64: string,
   mimeType: string
-): Promise<StatementExtractedTransaction[]> {
+): Promise<StatementDocumentExtraction> {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) {
     throw new Error('AI assistant is not configured yet. Ask an admin to set GOOGLE_AI_API_KEY.');
@@ -219,8 +254,20 @@ Extract EVERY individual transaction line you can find into a JSON array. For ea
 
 Ignore running/opening/closing balance lines, page headers/footers, and marketing text — only return actual transaction rows. If the document isn't a statement at all, or you can't confidently read any transaction rows, return an empty array rather than guessing.
 
+Also extract these account-level details if they are printed anywhere on the document (usually near the top), as a separate "accountInfo" object:
+- bankName: the bank or card issuer's name, e.g. "AIB", "Revolut"
+- accountHolderName: the name of the account holder printed on the statement
+- accountNumber: the account number exactly as printed — it is very often partially masked (e.g. "•••• 1234" or "****1234"), which is fine, extract it exactly as shown
+- sortCode: the sort code / routing number / branch code, exactly as printed
+- iban: the IBAN, exactly as printed
+- statementPeriod: the statement period as a short human string, e.g. "1 Aug 2026 – 31 Aug 2026"
+- openingBalance: the opening/starting balance as a plain number (no currency symbol, can be negative), or null
+- closingBalance: the closing/ending balance as a plain number (no currency symbol, can be negative), or null
+
+Use null for any accountInfo field you cannot confidently find — never guess.
+
 Respond with ONLY valid JSON in this exact shape, no markdown fences, no commentary:
-{"transactions": [{"date": "YYYY-MM-DD", "rawDescription": "...", "amount": 0, "direction": "DEBIT"}]}`;
+{"transactions": [{"date": "YYYY-MM-DD", "rawDescription": "...", "amount": 0, "direction": "DEBIT"}], "accountInfo": {"bankName": null, "accountHolderName": null, "accountNumber": null, "sortCode": null, "iban": null, "statementPeriod": null, "openingBalance": null, "closingBalance": null}}`;
 
   const result = await model.generateContent([
     { inlineData: { data: fileBase64, mimeType } },
@@ -245,7 +292,7 @@ Respond with ONLY valid JSON in this exact shape, no markdown fences, no comment
     throw new Error("Could not read that statement. Please try a clearer file, or export as CSV instead.");
   }
 
-  return list
+  const transactions = list
     .filter((t): t is Record<string, unknown> => !!t && typeof t === 'object')
     .map((t) => ({
       date: typeof t.date === 'string' ? t.date : '',
@@ -255,6 +302,24 @@ Respond with ONLY valid JSON in this exact shape, no markdown fences, no comment
     }))
     .filter((t) => t.date && t.rawDescription && t.amount > 0)
     .slice(0, 1000);
+
+  const rawInfo = (parsed as { accountInfo?: unknown })?.accountInfo;
+  const info = rawInfo && typeof rawInfo === 'object' ? (rawInfo as Record<string, unknown>) : {};
+  const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() !== '' ? v.trim() : null);
+  const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+  const accountInfo: StatementAccountInfo = {
+    ...EMPTY_ACCOUNT_INFO,
+    bankName: str(info.bankName),
+    accountHolderName: str(info.accountHolderName),
+    accountNumber: str(info.accountNumber),
+    sortCode: str(info.sortCode),
+    iban: str(info.iban),
+    statementPeriod: str(info.statementPeriod),
+    openingBalance: num(info.openingBalance),
+    closingBalance: num(info.closingBalance),
+  };
+
+  return { transactions, accountInfo };
 }
 
 export type MoneyFlowInsightType = 'idle_cash' | 'timing_risk' | 'consolidation' | 'savings' | 'general';

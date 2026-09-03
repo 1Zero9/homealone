@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const transactions = await analyzeStatementDocument(fileBase64, mimeType);
+    const { transactions, accountInfo } = await analyzeStatementDocument(fileBase64, mimeType);
 
     if (transactions.length === 0) {
       return NextResponse.json(
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ status: 'ok', transactions });
+    return NextResponse.json({ status: 'ok', transactions, accountInfo });
   } catch (error: unknown) {
     console.error('Statement extraction failed:', error);
     return NextResponse.json(
