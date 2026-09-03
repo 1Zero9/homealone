@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.16.0';
+export const APP_VERSION = '1.17.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.17.0',
+    date: '2026-09-03',
+    changes: [
+      'Add goal now lets you split the remaining amount into equal payments (2, 4, 12, 20, or any custom number) to quickly see how much to save per instalment.',
+    ],
+  },
   {
     version: '1.16.0',
     date: '2026-09-03',

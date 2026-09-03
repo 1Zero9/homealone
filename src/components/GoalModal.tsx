@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import type { GoalItem, AccountItem, CurrencyCode } from '../types/expense';
 import { CURRENCIES } from '../utils/currencies';
-import { X } from 'lucide-react';
+import { formatCurrency } from '../utils/formatters';
+import { X, Divide } from 'lucide-react';
+
+const SPLIT_PRESETS = [2, 4, 12, 20];
 
 interface GoalModalProps {
   isOpen: boolean;
@@ -25,6 +28,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({
   const [targetDate, setTargetDate] = useState('');
   const [linkedAccountId, setLinkedAccountId] = useState('');
   const [notes, setNotes] = useState('');
+  const [splitCount, setSplitCount] = useState<number | ''>('');
 
   useEffect(() => {
     if (editingGoal) {
@@ -35,6 +39,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({
       setTargetDate(editingGoal.targetDate || '');
       setLinkedAccountId(editingGoal.linkedAccountId || '');
       setNotes(editingGoal.notes || '');
+      setSplitCount('');
     } else {
       setName('');
       setTargetAmount('');
@@ -43,6 +48,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({
       setTargetDate('');
       setLinkedAccountId('');
       setNotes('');
+      setSplitCount('');
     }
   }, [editingGoal, isOpen]);
 
@@ -71,6 +77,8 @@ export const GoalModal: React.FC<GoalModalProps> = ({
   };
 
   const currencySymbol = CURRENCIES[currency]?.symbol || '€';
+  const remainingToSave = Math.max(0, (Number(targetAmount) || 0) - (Number(currentAmount) || 0));
+  const perChunk = splitCount && Number(splitCount) > 0 ? remainingToSave / Number(splitCount) : null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -153,6 +161,62 @@ export const GoalModal: React.FC<GoalModalProps> = ({
                 />
               </div>
             </div>
+          </div>
+
+          <div style={{
+            border: '1px solid var(--ha-line)',
+            borderRadius: 'var(--ha-radius-md)',
+            padding: '0.85rem 1rem',
+            backgroundColor: '#fafaf7',
+          }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem' }}>
+              <Divide size={13} />
+              Split into equal payments (optional)
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {SPLIT_PRESETS.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setSplitCount(n)}
+                  className="ha-chip"
+                  style={{
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    backgroundColor: splitCount === n ? 'var(--ha-blue)' : 'var(--ha-white)',
+                    color: splitCount === n ? 'var(--ha-white)' : 'var(--ha-ink)',
+                    border: '1px solid var(--ha-line)',
+                  }}
+                >
+                  {n}
+                </button>
+              ))}
+              <input
+                type="number"
+                min="2"
+                placeholder="Custom"
+                value={splitCount}
+                onChange={(e) => setSplitCount(e.target.value === '' ? '' : Number(e.target.value))}
+                className="ha-input"
+                style={{ width: '90px', fontSize: '0.82rem', padding: '0.4rem 0.6rem' }}
+              />
+              {splitCount !== '' && (
+                <button
+                  type="button"
+                  onClick={() => setSplitCount('')}
+                  className="btn btn-ghost"
+                  style={{ fontSize: '0.75rem', padding: '0.4rem 0.5rem' }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            {perChunk !== null && (
+              <p style={{ fontSize: '0.82rem', color: 'var(--ha-ink)', marginTop: '0.6rem' }}>
+                <strong>{splitCount}</strong> payments of <strong>{formatCurrency(perChunk, currency)}</strong> each
+                {' '}<span style={{ color: 'var(--ha-muted)' }}>({formatCurrency(remainingToSave, currency)} left to save)</span>
+              </p>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
