@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.14.1';
+export const APP_VERSION = '1.14.2';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.14.2',
+    date: '2026-09-03',
+    changes: [
+      'Actually fixed the "Money Journey" dropdown jump this time — its open animation and its centering were both fighting over the same CSS transform, snapping it to a new spot right after it opened.',
+    ],
+  },
   {
     version: '1.14.1',
     date: '2026-09-03',

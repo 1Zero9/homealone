@@ -151,7 +151,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {isJourneyMenuOpen && (
                 <>
                   <div className="ha-dropdown-overlay" onClick={() => setIsJourneyMenuOpen(false)} />
-                  <div className="ha-dropdown" style={{ left: '50%', right: 'auto', transform: 'translateX(-50%)' }}>
+                  <div className="ha-dropdown" style={{ left: '50%', right: 'auto', width: '200px', marginLeft: '-100px' }}>
                     {JOURNEY_NAV_ITEMS.map((item) => (
                       <button
                         key={item.id}
