@@ -13,8 +13,8 @@ export const metadata: Metadata = {
   description: 'Track household expenses, income, and subscriptions — and keep your budget in balance.',
   manifest: '/manifest.json',
   icons: {
-    icon: '/home-alone-logo-mark.png',
-    apple: '/home-alone-logo-mark.png',
+    icon: '/tally-logo.png',
+    apple: '/tally-logo.png',
   },
   appleWebApp: {
     capable: true,

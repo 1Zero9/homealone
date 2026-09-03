@@ -8,12 +8,12 @@
   "theme_color": "#256B4F",
   "icons": [
     {
-      "src": "/home-alone-logo-mark.png",
+      "src": "/tally-logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/home-alone-logo-mark.png",
+      "src": "/tally-logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }
