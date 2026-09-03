@@ -53,9 +53,11 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
     id: 'statements',
     title: 'Importing a bank/card statement',
     body: [
-      'Open "Flow" (under the Money Journey menu) → "Statement imports" → "Import statement", then upload a CSV export from your bank or credit card.',
-      'Tell Tally which column is the date, description and amount, and pick which Account the statement is from — this keeps matching accurate once you have more than one account.',
+      'Open "Flow" (under the Money Journey menu) → "Statement imports" → "Import statement", then upload a CSV export, a PDF statement, or a photo/screenshot of a paper statement — Tally reads PDFs and photos with AI, so there\'s no need to convert them to CSV first.',
+      'For CSV, tell Tally which column is the date, description and amount. Pick which Account the statement is from either way — this keeps matching accurate once you have more than one account.',
+      'From a PDF or photo, Tally also pulls out the account number, sort code, IBAN, account holder and statement period if they\'re printed on it, and checks the account number/sort code against what\'s saved for the account you picked — flagging a mismatch, or offering to save it in one click if that account has nothing on file yet.',
       'Tally automatically matches rows against your existing bills and transfers, flags recurring charges you haven\'t logged yet, and remembers your confirmations so cryptic statement descriptions are recognised automatically next time.',
+      'Clicking outside the import dialog never discards anything — only the visible buttons (Back, Import, Done, the X) can close or navigate it.',
     ],
   },
   {
@@ -72,6 +74,7 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
     body: [
       'Track savings targets like an emergency fund or a holiday. Link a goal to the account the money is actually sitting in and watch the progress bar fill up.',
       'You can also link a goal from a Planned expense, so its progress shows up right there on the planned item.',
+      'When adding or editing a goal, use "Split into equal payments" to see what the remaining amount works out to per instalment (2, 4, 12, 20, or any custom number) — it\'s just a quick calculator, nothing is saved.',
     ],
   },
   {

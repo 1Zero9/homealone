@@ -80,9 +80,21 @@ Supported account types: **Checking, Savings, Credit Union, Credit Card, Debit C
 
 You can optionally link a transfer to an existing recurring Expense or Income record, or just use a free-text label for anything ad hoc. Every transfer is dated, so Flow becomes a real, searchable history of where your money actually went — not just a projection.
 
+### Statement imports
+
+Under Flow, **Statement imports** lets you cross-check a real bank or credit-card statement against what you've logged:
+
+- **Upload a CSV, PDF, or photo/screenshot** — CSV works best, but Tally reads PDFs and photos with AI, so there's no need to convert a bank PDF to CSV first.
+- For CSV, tell Tally which column is the date, description and amount. Either way, pick which **Account** the statement is from — this keeps matching accurate once you have more than one account.
+- From a PDF or photo, Tally also extracts whatever account-level details are printed — bank name, account holder, account number, sort code/IBAN, statement period, opening/closing balance — and, once you pick the account, checks the account number and sort code against what's saved for it. A mismatch is flagged; if the account has nothing saved yet, you can save the extracted value in one click.
+- Tally auto-matches rows against your existing bills and transfers, flags recurring-but-untracked charges worth checking, and remembers your confirmations so cryptic statement references are recognised automatically next time.
+- Clicking outside the import dialog never discards anything — only the visible buttons (Back, Import, Done, the X) can close or navigate it.
+
 ## 8. Goals
 
 Track savings targets — an emergency fund, a holiday, a deposit. Each goal has a name, target amount, current amount, optional target date, and can be linked to the account the money is actually sitting in. Progress bars show percentage complete and days remaining until the target date.
+
+Use **Split into equal payments** when adding or editing a goal to see what the remaining amount works out to per instalment (2, 4, 12, 20, or a custom number) — it's a quick on-screen calculator only, nothing is saved.
 
 A goal can also be linked from a [Planned expense](#9-planned-expenses) — e.g. saving towards a known future cost like college fees — so its progress bar shows up right on that planned item too.
 
@@ -146,7 +158,7 @@ Click **Export** at any time to download your records as a CSV spreadsheet or a 
 
 - Passwordless sign-in via one-time 6-digit codes — no passwords stored anywhere.
 - Session tokens live in a secure, httpOnly cookie, valid up to 30 days.
-- Sensitive account fields (account numbers, online banking logins, security notes) are encrypted at rest and only decrypted on an explicit "reveal" action.
+- Sensitive account fields (account numbers, online banking logins, security notes) are encrypted at rest and only decrypted on an explicit "reveal" action — or, for statement imports, an on-the-fly admin-only comparison that returns a match/mismatch signal but never the decrypted value itself.
 - AI features (the Ask box and Money flow analysis) only ever send your own household's data, and only when you actively trigger them — nothing runs automatically in the background.
 - Full details: see the in-app **Privacy** page (footer link) and the **AI transparency** page.
 
