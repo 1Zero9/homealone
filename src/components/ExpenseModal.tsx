@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { ExpenseItem, ExpenseCategory, BillingCycle, CurrencyCode, UserProfile, AccountItem } from '../types/expense';
+import type { ExpenseItem, ExpenseCategory, BillingCycle, CurrencyCode, UserProfile, AccountItem, GoalItem } from '../types/expense';
 import { CATEGORY_LIST, CATEGORIES } from '../data/categories';
 import { PRESETS } from '../data/presets';
 import { CURRENCIES } from '../utils/currencies';
@@ -24,10 +24,12 @@ interface ExpenseModalProps {
   editingExpense?: ExpenseItem | null;
   initialPresetId?: string | null;
   initialCategory?: string | null;
+  initialIsPending?: boolean;
   draftExpense?: Partial<ExpenseItem> | null;
   users?: UserProfile[];
   currentUserId?: string;
   accounts?: AccountItem[];
+  goals?: GoalItem[];
 }
 
 export const ExpenseModal: React.FC<ExpenseModalProps> = ({
@@ -37,10 +39,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   editingExpense,
   initialPresetId,
   initialCategory,
+  initialIsPending,
   draftExpense,
   users = [],
   currentUserId,
   accounts = [],
+  goals = [],
 }) => {
   const [name, setName] = useState('');
   const [vendor, setVendor] = useState('');
@@ -58,6 +62,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   const [usageRating, setUsageRating] = useState<'high' | 'medium' | 'low'>('high');
   const [isVariable, setIsVariable] = useState(false);
   const [paymentAccountId, setPaymentAccountId] = useState<string>('');
+  const [isPending, setIsPending] = useState(false);
+  const [linkedGoalId, setLinkedGoalId] = useState<string>('');
 
   useEffect(() => {
     if (editingExpense) {
@@ -77,6 +83,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setUsageRating(editingExpense.usageRating || 'high');
       setIsVariable(!!editingExpense.isVariable);
       setPaymentAccountId(editingExpense.paymentAccountId || '');
+      setIsPending(!!editingExpense.isPending);
+      setLinkedGoalId(editingExpense.linkedGoalId || '');
     } else if (initialPresetId) {
       const preset = PRESETS.find((p) => p.id === initialPresetId);
       if (preset) {
@@ -93,6 +101,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         setNotes(preset.description || '');
         setIsVariable(preset.category === 'shopping');
         setPaymentAccountId('');
+        setIsPending(false);
+        setLinkedGoalId('');
       }
     } else if (draftExpense) {
       setName(draftExpense.name || '');
@@ -111,6 +121,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setUsageRating('high');
       setIsVariable(false);
       setPaymentAccountId('');
+      setIsPending(false);
+      setLinkedGoalId('');
     } else {
       setName('');
       setVendor('');
@@ -128,8 +140,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setUsageRating('high');
       setIsVariable((initialCategory as ExpenseCategory) === 'shopping');
       setPaymentAccountId('');
+      setIsPending(!!initialIsPending);
+      setLinkedGoalId('');
     }
-  }, [editingExpense, initialPresetId, initialCategory, draftExpense, currentUserId, isOpen]);
+  }, [editingExpense, initialPresetId, initialCategory, initialIsPending, draftExpense, currentUserId, isOpen]);
 
   if (!isOpen) return null;
 
@@ -157,13 +171,15 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         nextRenewalDate: resolvedNextRenewalDate,
         isPaidThisCycle,
         paymentMethod: paymentMethod.trim() || 'SEPA Direct Debit',
-        isActive: true,
+        isActive: !isPending,
+        isPending,
         notes: notes.trim(),
         contractEndDate: contractEndDate || undefined,
         vendorEmail: vendorEmail.trim() || undefined,
         usageRating,
         isVariable,
         paymentAccountId: paymentAccountId || null,
+        linkedGoalId: isPending ? (linkedGoalId || null) : null,
         createdById: assignedUserId || currentUserId,
       },
       editingExpense?.id
@@ -283,6 +299,54 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             </select>
           </div>
 
+          {/* Pending / not-yet-required toggle */}
+          <label style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.6rem',
+            cursor: 'pointer',
+            padding: '0.75rem',
+            borderRadius: 'var(--ha-radius-sm)',
+            border: '1px solid var(--ha-line)',
+            backgroundColor: isPending ? '#fdf2e3' : '#fafaf7',
+          }}>
+            <input
+              type="checkbox"
+              checked={isPending}
+              onChange={(e) => setIsPending(e.target.checked)}
+              style={{ marginTop: '2px' }}
+            />
+            <span>
+              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block' }}>
+                Planned — not required yet
+              </span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--ha-muted)' }}>
+                Saves this to a separate Planned list only. It won&apos;t count towards totals, bills or insights until you activate it.
+              </span>
+            </span>
+          </label>
+
+          {isPending && goals.length > 0 && (
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
+                Link to a savings goal (optional)
+              </label>
+              <select
+                value={linkedGoalId}
+                onChange={(e) => setLinkedGoalId(e.target.value)}
+                className="ha-input"
+              >
+                <option value="">Not linked</option>
+                {goals.map((g) => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+              <p style={{ fontSize: '0.72rem', color: 'var(--ha-muted)', marginTop: '0.3rem' }}>
+                Shows savings progress towards this cost right on the Planned list.
+              </p>
+            </div>
+          )}
+
           {/* Member Assignment & Renewal Day */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '1rem' }}>
             {users.length > 0 && (
@@ -321,26 +385,28 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
           {/* Paid this cycle & variable amount toggles */}
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <label style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              cursor: 'pointer',
-              padding: '0.6rem 0.75rem',
-              borderRadius: 'var(--ha-radius-sm)',
-              border: '1px solid var(--ha-line)',
-              backgroundColor: isPaidThisCycle ? 'var(--ha-blue-light)' : '#fafaf7',
-              width: 'fit-content',
-            }}>
-              <input
-                type="checkbox"
-                checked={isPaidThisCycle}
-                onChange={(e) => setIsPaidThisCycle(e.target.checked)}
-              />
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
-                {billingCycle === 'once' ? 'Paid' : 'Paid this cycle'}
-              </span>
-            </label>
+            {!isPending && (
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                cursor: 'pointer',
+                padding: '0.6rem 0.75rem',
+                borderRadius: 'var(--ha-radius-sm)',
+                border: '1px solid var(--ha-line)',
+                backgroundColor: isPaidThisCycle ? 'var(--ha-blue-light)' : '#fafaf7',
+                width: 'fit-content',
+              }}>
+                <input
+                  type="checkbox"
+                  checked={isPaidThisCycle}
+                  onChange={(e) => setIsPaidThisCycle(e.target.checked)}
+                />
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                  {billingCycle === 'once' ? 'Paid' : 'Paid this cycle'}
+                </span>
+              </label>
+            )}
 
             {billingCycle !== 'once' && (
               <label style={{

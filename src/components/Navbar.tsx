@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import type { UserProfile } from '../types/expense';
 import { Plus, Search, Settings, HelpCircle, LogOut, ShieldCheck, Menu, X, ChevronDown, Eye, EyeOff, ScanLine } from 'lucide-react';
 import { TallyLogo } from './TallyLogo';
-import { APP_VERSION } from '../data/changelog';
+import { APP_VERSION, MOBILE_APP_VERSION } from '../data/changelog';
 
-export type TabId = 'overview' | 'all' | 'ai-tech' | 'utilities' | 'education' | 'income' | 'calendar' | 'insights' | 'accounts' | 'moneymap' | 'flow' | 'goals' | 'admin';
+export type TabId = 'overview' | 'all' | 'ai-tech' | 'utilities' | 'education' | 'big-ticket' | 'income' | 'calendar' | 'insights' | 'accounts' | 'moneymap' | 'flow' | 'goals' | 'planned' | 'admin';
 
-export const SPENDING_TABS: TabId[] = ['all', 'ai-tech', 'utilities', 'education'];
+export const SPENDING_TABS: TabId[] = ['all', 'ai-tech', 'utilities', 'education', 'big-ticket'];
 
 const NAV_ITEMS: { id: TabId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -16,6 +16,7 @@ const NAV_ITEMS: { id: TabId; label: string }[] = [
   { id: 'accounts', label: 'Accounts' },
   { id: 'flow', label: 'Flow' },
   { id: 'goals', label: 'Goals' },
+  { id: 'planned', label: 'Planned' },
   { id: 'moneymap', label: 'Money Map' },
   { id: 'insights', label: 'Insights' },
 ];
@@ -32,7 +33,7 @@ interface NavbarProps {
   currentUser: UserProfile | null;
   isPrivacyBlurred: boolean;
   onTogglePrivacyBlur: () => void;
-  onOpenChangelog: () => void;
+  onOpenChangelog: (variant?: 'desktop' | 'mobile') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -110,7 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <button
               className="hide-mobile"
-              onClick={(e) => { e.stopPropagation(); onOpenChangelog(); }}
+              onClick={(e) => { e.stopPropagation(); onOpenChangelog('desktop'); }}
               title="View changelog"
               style={{
                 background: 'none',
@@ -265,7 +266,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <TallyLogo size={24} />
                 <span style={{ fontWeight: 700, fontSize: '1.1rem', fontFamily: 'var(--ha-font-display)' }}>Tally</span>
                 <button
-                  onClick={() => { setIsDrawerOpen(false); onOpenChangelog(); }}
+                  onClick={() => { setIsDrawerOpen(false); onOpenChangelog('mobile'); }}
                   style={{
                     background: 'none',
                     border: '1px solid var(--ha-line)',
@@ -277,7 +278,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     cursor: 'pointer',
                   }}
                 >
-                  v{APP_VERSION}
+                  v{MOBILE_APP_VERSION}
                 </button>
               </div>
               <button className="ha-icon-btn" onClick={() => setIsDrawerOpen(false)}>

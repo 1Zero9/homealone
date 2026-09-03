@@ -95,6 +95,7 @@ model Expense {
   lastPaidAt      DateTime?
   paymentMethod   String   @default("SEPA Direct Debit")
   isActive        Boolean  @default(true)
+  isPending       Boolean  @default(false)
   notes           String?
   contractEndDate String?
   vendorEmail     String?
@@ -109,6 +110,9 @@ model Expense {
 
   paymentAccountId String?
   paymentAccount    Account? @relation("ExpensePaymentAccount", fields: [paymentAccountId], references: [id], onDelete: SetNull)
+
+  linkedGoalId String?
+  linkedGoal   Goal?   @relation("ExpenseLinkedGoal", fields: [linkedGoalId], references: [id], onDelete: SetNull)
 
   transfers Transfer[]
 
@@ -253,6 +257,8 @@ model Goal {
 
   linkedAccountId String?
   linkedAccount   Account? @relation("GoalAccount", fields: [linkedAccountId], references: [id], onDelete: SetNull)
+
+  linkedExpenses Expense[] @relation("ExpenseLinkedGoal")
 
   householdId String?
   household   Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)

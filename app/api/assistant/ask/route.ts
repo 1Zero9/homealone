@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     }
 
     const expenses = await prisma.expense.findMany({
-      where: { householdId: auth.user.householdId },
+      where: { householdId: auth.user.householdId, isPending: false },
       select: {
         name: true,
         amount: true,

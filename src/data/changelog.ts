@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.5.0';
+export const APP_VERSION = '1.9.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,36 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.9.0',
+    date: '2026-09-03',
+    changes: [
+      'Planned expenses can now link to a savings Goal — see how much you\'ve saved towards it right on the Planned list.',
+      'Overview now shows a quiet nudge when planned costs are coming up, linking straight to the Planned list.',
+      'Planned items due within 30 days now get a "consider activating" badge as a gentle reminder.',
+    ],
+  },
+  {
+    version: '1.8.0',
+    date: '2026-09-03',
+    changes: [
+      'New "Planned" section for costs that aren\'t required yet (e.g. college) — add them ahead of time and they sit in their own stand-alone list, with zero impact on totals, bills or insights until you hit "Activate".',
+    ],
+  },
+  {
+    version: '1.7.0',
+    date: '2026-09-03',
+    changes: [
+      'New "Mortgage & loans" spending category to keep big-ticket items (mortgage, car/personal loan repayments, holidays) separate from everyday bills — totals and account links are unaffected.',
+    ],
+  },
+  {
+    version: '1.6.0',
+    date: '2026-09-03',
+    changes: [
+      'Spending ledger rows now expand into a quick view on click — see category, billing cycle, renewal day, payment account, vendor email, contract end date, usage and notes without opening the edit form.',
+    ],
+  },
   {
     version: '1.5.0',
     date: '2026-09-03',
@@ -68,6 +98,19 @@ export const CHANGELOG: ChangelogEntry[] = [
       'AI spending assistant, income tracking, and a savings horizon view.',
       'Automatic contract renewal reminders and vendor contact email drafting.',
       'Progressive Web App support for installing on mobile devices.',
+    ],
+  },
+];
+
+export const MOBILE_APP_VERSION = '1.0.0';
+
+export const MOBILE_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.0.0',
+    date: '2026-09-03',
+    changes: [
+      'Ledger rows resized so they no longer run oversized on small screens.',
+      'Overview stat cards resized to fit mobile screens properly.',
     ],
   },
 ];

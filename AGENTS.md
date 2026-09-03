@@ -11,3 +11,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 # Workflow conventions
 
 - Whenever a set of user-facing changes is complete and about to be committed, bump the version in `package.json` and add a matching entry to `src/data/changelog.ts` (`APP_VERSION` + a new `CHANGELOG` entry) describing what changed, before committing.
+- If the changes are specific to the mobile PWA experience (mobile-only layout/UX, not visible on desktop), instead (or in addition, if the change spans both) bump `MOBILE_APP_VERSION` and add a matching entry to `MOBILE_CHANGELOG` in `src/data/changelog.ts`. The mobile version/changelog is shown via the version badge in the mobile drawer menu (`Navbar.tsx`) and is tracked independently from the desktop version.

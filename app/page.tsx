@@ -14,6 +14,8 @@ import { IncomeModal } from '@/src/components/IncomeModal';
 import { AiTechSection } from '@/src/components/AiTechSection';
 import { UtilitiesSection } from '@/src/components/UtilitiesSection';
 import { EducationSection } from '@/src/components/EducationSection';
+import { BigTicketSection } from '@/src/components/BigTicketSection';
+import { PlannedExpensesSection } from '@/src/components/PlannedExpensesSection';
 import { UpcomingRenewals } from '@/src/components/UpcomingRenewals';
 import { OptimizationInsights } from '@/src/components/OptimizationInsights';
 import { MoneyFlowInsights } from '@/src/components/MoneyFlowInsights';
@@ -58,6 +60,7 @@ export default function TallyPage() {
     { id: 'ai-tech', label: 'AI & tech' },
     { id: 'utilities', label: 'Utilities & bills' },
     { id: 'education', label: 'Colleges & sports' },
+    { id: 'big-ticket', label: 'Mortgage & loans' },
   ];
 
   // Users & Auth
@@ -72,9 +75,11 @@ export default function TallyPage() {
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isChangelogModalOpen, setIsChangelogModalOpen] = useState(false);
+  const [changelogVariant, setChangelogVariant] = useState<'desktop' | 'mobile'>('desktop');
   const [editingExpense, setEditingExpense] = useState<ExpenseItem | null>(null);
   const [initialPresetId, setInitialPresetId] = useState<string | null>(null);
   const [initialCategory, setInitialCategory] = useState<string | null>(null);
+  const [forceIsPending, setForceIsPending] = useState(false);
   const [draftExpense, setDraftExpense] = useState<Partial<ExpenseItem> | null>(null);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [scanInitialImage, setScanInitialImage] = useState<{ dataUrl: string; base64: string; mimeType: string } | null>(null);
@@ -265,10 +270,14 @@ export default function TallyPage() {
     setCurrentUser(null);
   };
 
+  // Planned/pending expenses stand alone and must not affect any totals, bills or insights.
+  const liveExpenses = expenses.filter((e) => !e.isPending);
+  const plannedExpenses = expenses.filter((e) => e.isPending);
+
   // Compute spend analytics summary
-  const summary = calculateSpendingSummary(expenses, currency);
+  const summary = calculateSpendingSummary(liveExpenses, currency);
   const incomeSummary = calculateIncomeSummary(incomes, currency);
-  const hasData = expenses.length > 0 || incomes.length > 0;
+  const hasData = liveExpenses.length > 0 || incomes.length > 0;
   const firstName = currentUser?.name?.split(' ')[0] || 'there';
   const greetingHour = new Date().getHours();
   const timeGreeting = greetingHour < 12 ? 'Good morning' : greetingHour < 18 ? 'Good afternoon' : 'Good evening';
@@ -292,6 +301,27 @@ export default function TallyPage() {
       });
     } catch (err) {
       console.error('Failed to update status in DB:', err);
+      fetchDatabaseData();
+    }
+  };
+
+  // Activate a planned/pending expense — it starts counting towards totals, bills and insights
+  const handleActivatePending = async (id: string) => {
+    const item = expenses.find((e) => e.id === id);
+    if (!item) return;
+
+    setExpenses((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, isPending: false, isActive: true } : e))
+    );
+
+    try {
+      await fetch('/api/expenses', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...item, isPending: false, isActive: true }),
+      });
+    } catch (err) {
+      console.error('Failed to activate planned expense in DB:', err);
       fetchDatabaseData();
     }
   };
@@ -725,6 +755,7 @@ export default function TallyPage() {
           if (tab === 'ai-tech') setSelectedCategory('ai-tech');
           else if (tab === 'utilities') setSelectedCategory('utilities');
           else if (tab === 'education') setSelectedCategory('education');
+          else if (tab === 'big-ticket') setSelectedCategory('big-ticket');
           else setSelectedCategory(null);
         }}
         onOpenAddModal={() => {
@@ -744,7 +775,7 @@ export default function TallyPage() {
         currentUser={currentUser}
         isPrivacyBlurred={isPrivacyBlurred}
         onTogglePrivacyBlur={togglePrivacyBlur}
-        onOpenChangelog={() => setIsChangelogModalOpen(true)}
+        onOpenChangelog={(variant) => { setChangelogVariant(variant ?? 'desktop'); setIsChangelogModalOpen(true); }}
       />
 
       <PrivacyBlurOverlay
@@ -778,7 +809,7 @@ export default function TallyPage() {
         {/* Overview Dashboard */}
         {activeTab === 'overview' && hasData && (
           <OverviewDashboard
-            expenses={expenses}
+            expenses={liveExpenses}
             summary={summary}
             incomeSummary={incomeSummary}
             currency={currency}
@@ -792,6 +823,7 @@ export default function TallyPage() {
               if (cat === 'ai-tech') setActiveTab('ai-tech');
               else if (cat === 'utilities') setActiveTab('utilities');
               else if (cat === 'education') setActiveTab('education');
+              else if (cat === 'big-ticket') setActiveTab('big-ticket');
               else {
                 setSelectedCategory(cat);
                 setActiveTab('all');
@@ -806,6 +838,8 @@ export default function TallyPage() {
               setActiveTab('all');
             }}
             onViewAllBills={() => setActiveTab('calendar')}
+            plannedExpenses={plannedExpenses}
+            onViewPlanned={() => setActiveTab('planned')}
           />
         )}
 
@@ -833,7 +867,7 @@ export default function TallyPage() {
             {/* Category Distribution Breakdown */}
             {hasData && (
               <CategoryBreakdownChart
-                expenses={expenses}
+                expenses={liveExpenses}
                 currency={currency}
                 selectedCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}
@@ -842,7 +876,7 @@ export default function TallyPage() {
 
             {/* Complete Household Ledger */}
             <ExpenseList
-              expenses={expenses}
+              expenses={liveExpenses}
               currency={currency}
               selectedCategory={selectedCategory}
               onSelectCategory={setSelectedCategory}
@@ -888,7 +922,7 @@ export default function TallyPage() {
 
         {activeTab === 'utilities' && (
           <UtilitiesSection
-            expenses={expenses}
+            expenses={liveExpenses}
             currency={currency}
             onEditExpense={(item) => {
               setEditingExpense(item);
@@ -908,9 +942,31 @@ export default function TallyPage() {
           />
         )}
 
+        {activeTab === 'big-ticket' && (
+          <BigTicketSection
+            expenses={liveExpenses}
+            currency={currency}
+            onEditExpense={(item) => {
+              setEditingExpense(item);
+              setIsAddModalOpen(true);
+            }}
+            onOpenAddModal={() => {
+              setEditingExpense(null);
+              setInitialPresetId(null);
+              setInitialCategory('big-ticket');
+              setIsAddModalOpen(true);
+            }}
+            onOpenAddPreset={(presetId) => {
+              setEditingExpense(null);
+              setInitialPresetId(presetId);
+              setIsAddModalOpen(true);
+            }}
+          />
+        )}
+
         {activeTab === 'education' && (
           <EducationSection
-            expenses={expenses}
+            expenses={liveExpenses}
             currency={currency}
             onEditExpense={(item) => {
               setEditingExpense(item);
@@ -932,7 +988,7 @@ export default function TallyPage() {
 
         {activeTab === 'ai-tech' && (
           <AiTechSection
-            expenses={expenses}
+            expenses={liveExpenses}
             currency={currency}
             onToggleActive={handleToggleActive}
             onEditExpense={(item) => {
@@ -955,7 +1011,7 @@ export default function TallyPage() {
 
         {activeTab === 'calendar' && (
           <UpcomingRenewals
-            expenses={expenses}
+            expenses={liveExpenses}
             currency={currency}
             onEditExpense={(item) => {
               setEditingExpense(item);
@@ -968,7 +1024,7 @@ export default function TallyPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
             <MoneyFlowInsights />
             <OptimizationInsights
-              expenses={expenses}
+              expenses={liveExpenses}
               currency={currency}
             />
           </div>
@@ -993,7 +1049,7 @@ export default function TallyPage() {
         {activeTab === 'moneymap' && (
           <MoneyMap
             incomes={incomes}
-            expenses={expenses}
+            expenses={liveExpenses}
             accounts={accounts}
             transfers={transfers}
             currency={currency}
@@ -1027,6 +1083,27 @@ export default function TallyPage() {
               setEditingGoal(null);
               setIsGoalModalOpen(true);
             }}
+          />
+        )}
+
+        {activeTab === 'planned' && (
+          <PlannedExpensesSection
+            expenses={expenses}
+            currency={currency}
+            onEditExpense={(item) => {
+              setEditingExpense(item);
+              setInitialCategory(null);
+              setInitialPresetId(null);
+              setIsAddModalOpen(true);
+            }}
+            onOpenAddModal={() => {
+              setEditingExpense(null);
+              setInitialPresetId(null);
+              setInitialCategory(null);
+              setIsAddModalOpen(true);
+              setForceIsPending(true);
+            }}
+            onActivate={handleActivatePending}
           />
         )}
 
@@ -1101,6 +1178,7 @@ export default function TallyPage() {
       <ChangelogModal
         isOpen={isChangelogModalOpen}
         onClose={() => setIsChangelogModalOpen(false)}
+        variant={changelogVariant}
       />
 
       {/* Add / Edit Expense Modal */}
@@ -1112,15 +1190,18 @@ export default function TallyPage() {
           setInitialPresetId(null);
           setInitialCategory(null);
           setDraftExpense(null);
+          setForceIsPending(false);
         }}
         onSave={handleSaveExpense}
         editingExpense={editingExpense}
         initialPresetId={initialPresetId}
         initialCategory={initialCategory}
+        initialIsPending={forceIsPending}
         draftExpense={draftExpense}
         users={users}
         currentUserId={currentUser?.id}
         accounts={accounts}
+        goals={goals}
       />
 
       {/* Scan a bill screenshot */}

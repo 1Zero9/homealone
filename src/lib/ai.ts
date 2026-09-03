@@ -133,7 +133,7 @@ Extract the following from the image:
 - currency: the ISO 4217 currency code if you can tell (EUR, GBP, USD, CAD, AUD, JPY), else null
 - date: the payment/due/invoice date in YYYY-MM-DD format if visible, else null
 - billingCycleGuess: your best guess at one of "monthly", "annual", "quarterly", "weekly", "termly", "once" based on context clues, else null if unclear
-- categoryGuess: your best guess at one of "entertainment", "ai-tech", "utilities", "housing", "education", "lifestyle", "shopping" based on the vendor/content, else null
+- categoryGuess: your best guess at one of "entertainment", "ai-tech", "utilities", "housing", "education", "lifestyle", "shopping", "big-ticket" (mortgage/car/personal loan repayments, holidays & other big financed purchases) based on the vendor/content, else null
 - isPaid: true if the document shows this was already paid/charged (e.g. a receipt or "payment successful" confirmation), false if it looks like an unpaid invoice/bill still due
 
 Then compare the vendor name against this list of the household's existing bill names and, ONLY if you are confident one of them refers to the same underlying bill, return it verbatim as "matchedName". Otherwise return null for matchedName. Do not invent a name that isn't in the list.

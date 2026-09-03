@@ -20,6 +20,9 @@ export async function GET() {
         paymentAccount: {
           select: { id: true, name: true, type: true, institution: true },
         },
+        linkedGoal: {
+          select: { id: true, name: true, targetAmount: true, currentAmount: true, currency: true, targetDate: true },
+        },
       },
     });
 
@@ -46,6 +49,9 @@ export async function GET() {
             },
             paymentAccount: {
               select: { id: true, name: true, type: true, institution: true },
+            },
+            linkedGoal: {
+              select: { id: true, name: true, targetAmount: true, currentAmount: true, currency: true, targetDate: true },
             },
           },
         });
@@ -86,12 +92,16 @@ export async function POST(request: Request) {
         nextRenewalDate: body.nextRenewalDate || new Date().toISOString().split('T')[0],
         paymentMethod: body.paymentMethod || 'SEPA Direct Debit',
         isActive: typeof body.isActive === 'boolean' ? body.isActive : true,
+        isPending: typeof body.isPending === 'boolean' ? body.isPending : false,
+        isPaidThisCycle: typeof body.isPaidThisCycle === 'boolean' ? body.isPaidThisCycle : false,
+        ...(body.isPaidThisCycle === true ? { lastPaidAt: new Date() } : {}),
         notes: body.notes || null,
         contractEndDate: body.contractEndDate || null,
         vendorEmail: body.vendorEmail || null,
         usageRating: body.usageRating || 'high',
         isVariable: typeof body.isVariable === 'boolean' ? body.isVariable : false,
         paymentAccountId: body.paymentAccountId || null,
+        linkedGoalId: body.linkedGoalId || null,
         createdById: auth.user.id,
         householdId: auth.user.householdId,
       },
@@ -101,6 +111,9 @@ export async function POST(request: Request) {
         },
         paymentAccount: {
           select: { id: true, name: true, type: true, institution: true },
+        },
+        linkedGoal: {
+          select: { id: true, name: true, targetAmount: true, currentAmount: true, currency: true, targetDate: true },
         },
       },
     });
@@ -158,12 +171,14 @@ export async function PUT(request: Request) {
         nextRenewalDate: body.nextRenewalDate,
         paymentMethod: body.paymentMethod,
         isActive: typeof body.isActive === 'boolean' ? body.isActive : true,
+        isPending: typeof body.isPending === 'boolean' ? body.isPending : false,
         notes: body.notes || null,
         contractEndDate: body.contractEndDate || null,
         vendorEmail: body.vendorEmail || null,
         usageRating: body.usageRating || 'high',
         isVariable: typeof body.isVariable === 'boolean' ? body.isVariable : false,
         ...(body.paymentAccountId !== undefined ? { paymentAccountId: body.paymentAccountId || null } : {}),
+        ...(body.linkedGoalId !== undefined ? { linkedGoalId: body.linkedGoalId || null } : {}),
         ...(typeof body.isPaidThisCycle === 'boolean' ? { isPaidThisCycle: body.isPaidThisCycle } : {}),
         ...(markingPaid ? { lastPaidAt: new Date() } : {}),
         ...(markingUnpaid ? { lastPaidAt: null } : {}),
@@ -174,6 +189,9 @@ export async function PUT(request: Request) {
         },
         paymentAccount: {
           select: { id: true, name: true, type: true, institution: true },
+        },
+        linkedGoal: {
+          select: { id: true, name: true, targetAmount: true, currentAmount: true, currency: true, targetDate: true },
         },
       },
     });

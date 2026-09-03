@@ -5,7 +5,8 @@ export type ExpenseCategory =
   | 'housing'        // Rent/Mortgage, Property Tax, Insurance, TV Licence
   | 'education'      // College Tuition, School Fees, Uniforms, Books, Lunches
   | 'lifestyle'      // Sports Club, Gym, Coaching, Activities, Health
-  | 'shopping';      // Groceries & general shopping — one lump total, not itemized
+  | 'shopping'       // Groceries & general shopping — one lump total, not itemized
+  | 'big-ticket';    // Mortgage, car/personal loan repayments, holidays & other big purchases
 
 export type IncomeCategory = 'salary' | 'freelance' | 'rental' | 'benefits' | 'other';
 
@@ -62,6 +63,7 @@ export interface ExpenseItem {
   lastPaidAt?: string | null;
   paymentMethod: string;
   isActive: boolean;
+  isPending?: boolean;
   notes?: string;
   contractEndDate?: string;
   vendorEmail?: string;
@@ -70,6 +72,15 @@ export interface ExpenseItem {
   isPreset?: boolean;
   paymentAccountId?: string | null;
   paymentAccount?: AccountSummary | null;
+  linkedGoalId?: string | null;
+  linkedGoal?: {
+    id: string;
+    name: string;
+    targetAmount: number;
+    currentAmount: number;
+    currency: CurrencyCode;
+    targetDate?: string | null;
+  } | null;
   createdById?: string;
   createdBy?: {
     id: string;

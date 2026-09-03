@@ -1,6 +1,6 @@
 import React from 'react';
 import type { UserProfile } from '../types/expense';
-import { X, Sparkles, Plus, UserPlus, Download, Bell, Mail, ShieldCheck, Landmark, ArrowLeftRight, Target, Activity } from 'lucide-react';
+import { X, Sparkles, Plus, UserPlus, Download, Bell, Mail, ShieldCheck, Landmark, ArrowLeftRight, Target, Activity, CalendarClock } from 'lucide-react';
 
 interface HelpGuideModalProps {
   isOpen: boolean;
@@ -30,6 +30,7 @@ const SECTIONS: GuideSection[] = [
     body: [
       'Click "Add expense" in the top bar to record a bill, subscription or one-off cost. Set the amount, billing cycle, category and payment method.',
       'Use "Catalog" to add common household bills (Netflix, electricity, broadband, etc.) in one click instead of typing them from scratch.',
+      'Big one-off costs like a mortgage, loan repayment or large purchase have their own "Mortgage, Loans & Big Purchases" category, kept separate from everyday bills.',
       'Switch to the "Income" tab to record salary, freelance or rental income and see your money in vs money out.',
     ],
   },
@@ -54,6 +55,16 @@ const SECTIONS: GuideSection[] = [
     title: 'Goals',
     body: [
       'Track savings targets like an emergency fund or a holiday. Link a goal to the account the money is actually sitting in and watch the progress bar fill up.',
+      'You can also link a goal from a Planned expense, so its progress shows up right there on the planned item.',
+    ],
+  },
+  {
+    icon: <CalendarClock size={16} color="var(--ha-blue)" />,
+    title: 'Planned expenses',
+    body: [
+      'Got a cost coming up that isn\'t required yet — like college fees? Tick "Planned — not required yet" when adding it, or use "Add planned expense" from the "Planned" tab.',
+      'Planned items sit in their own stand-alone list and never count towards totals, bills or insights until you hit "Activate".',
+      'Optionally link a planned item to a Goal to track savings progress, and watch for the "consider activating" badge once its date is within 30 days.',
     ],
   },
   {

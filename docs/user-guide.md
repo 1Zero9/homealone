@@ -16,14 +16,15 @@ Tally is a shared household ledger for expenses, income, accounts, and the real 
 6. [Accounts](#6-accounts)
 7. [Flow (the money journey ledger)](#7-flow-the-money-journey-ledger)
 8. [Goals](#8-goals)
-9. [Money Map](#9-money-map)
-10. [Insights](#10-insights)
-11. [Asking Tally a question](#11-asking-tally-a-question)
-12. [Settings & preferences](#12-settings--preferences)
-13. [Sharing your household workspace](#13-sharing-your-household-workspace)
-14. [Admin & users](#14-admin--users)
-15. [Data export & backup](#15-data-export--backup)
-16. [Privacy & security](#16-privacy--security)
+9. [Planned expenses](#9-planned-expenses)
+10. [Money Map](#10-money-map)
+11. [Insights](#11-insights)
+12. [Asking Tally a question](#12-asking-tally-a-question)
+13. [Settings & preferences](#13-settings--preferences)
+14. [Sharing your household workspace](#14-sharing-your-household-workspace)
+15. [Admin & users](#15-admin--users)
+16. [Data export & backup](#16-data-export--backup)
+17. [Privacy & security](#17-privacy--security)
 
 ---
 
@@ -41,9 +42,10 @@ The landing dashboard once you sign in. It shows your household's current-period
 
 ## 3. Spending
 
-The **Spending** tab (and its sub-views: **All**, **AI & Tech**, **Utilities**, **Education**) is your recurring-bill ledger — subscriptions, utilities, and household costs.
+The **Spending** tab (and its sub-views: **All**, **AI & Tech**, **Utilities**, **Education**, **Mortgage, Loans & Big Purchases**) is your recurring-bill ledger — subscriptions, utilities, household costs, and big-ticket items like mortgage or loan repayments and one-off large purchases.
 
-- **Add expense**: set the amount, currency, billing cycle (`weekly`, `monthly`, `quarterly`, `termly`, `annual`), category, payment method, and optional contract end date.
+- **Add expense**: set the amount, currency, billing cycle (`weekly`, `monthly`, `quarterly`, `termly`, `annual`, `once`), category, payment method, and optional contract end date.
+- **One-off costs**: use billing cycle `once` for a single payment (e.g. a large purchase). It won't recur or roll forward once its date passes — mark it paid or delete it when done.
 - **Catalog**: add common household bills (Netflix, electricity, broadband, etc.) in one click instead of typing them from scratch.
 - **Usage rating**: mark a subscription as low/medium/high usage — low-usage items are flagged as cancellation candidates in Insights.
 - **Pause / resume**: pause a subscription instead of deleting it, so you keep the history and see it counted in your "already saving" total.
@@ -82,7 +84,19 @@ You can optionally link a transfer to an existing recurring Expense or Income re
 
 Track savings targets — an emergency fund, a holiday, a deposit. Each goal has a name, target amount, current amount, optional target date, and can be linked to the account the money is actually sitting in. Progress bars show percentage complete and days remaining until the target date.
 
-## 9. Money Map
+A goal can also be linked from a [Planned expense](#9-planned-expenses) — e.g. saving towards a known future cost like college fees — so its progress bar shows up right on that planned item too.
+
+## 9. Planned expenses
+
+For costs you know are coming but aren't required yet — like college fees, a future big purchase, or anything you want to prepare for ahead of time. Tick **"Planned — not required yet"** when adding an expense (or use **"Add planned expense"** from the **Planned** tab) and it sits in its own stand-alone list.
+
+- **Zero impact until activated**: planned items never count towards totals, bills, insights, or the money-flow analysis — they're purely a heads-up list.
+- **Link a goal**: optionally link a planned item to a [Goal](#8-goals) to track savings progress towards it right there on the list.
+- **Due-soon badge**: once a planned item's expected date is within 30 days, it gets a "consider activating" badge as a gentle reminder.
+- **Overview nudge**: when you have planned costs coming up, a quiet banner appears on the Overview dashboard — click it to jump straight to the Planned list. It's informational only and never changes any figures.
+- **Activate**: when a planned cost becomes real, click **Activate** to move it into your normal ledger — it will start counting towards totals, bills and insights from that point on.
+
+## 10. Money Map
 
 A visual diagram of your money's journey, with two modes:
 
@@ -91,22 +105,22 @@ A visual diagram of your money's journey, with two modes:
 
 Hover any connection to see the exact amount. Account circles are colored blue when net-positive and red when net-negative or a loan.
 
-## 10. Insights
+## 11. Insights
 
 Two sections, side by side:
 
 - **Money flow analysis (AI)**: click **Analyze my money flow** for an on-demand AI review of your accounts, transfers, and goals — flagging idle cash sitting in low-interest accounts, direct-debit **timing risk** (bills landing before income arrives), account **consolidation** opportunities, and concrete **savings** suggestions. This is opt-in per click, not automatic, and only ever uses your own household's data.
 - **What could we save?**: a rule-based (non-AI) breakdown of savings opportunities — switching monthly subscriptions to annual billing, rarely-used subscriptions worth cancelling, and a running total of what you're already saving from paused subscriptions. Toggle the horizon between 1 month, 1 year, 3 years, and 5 years.
 
-## 11. Asking Tally a question
+## 12. Asking Tally a question
 
 Click the search icon in the top bar to ask a plain-English question about your own household data — e.g. *"where can I save"* or *"what's going out this week"*. Tally answers using only your household's expense and income records; it never sees or uses data from any other household.
 
-## 12. Settings & preferences
+## 13. Settings & preferences
 
 Open via the gear icon in the top bar. Set your preferred display currency (EUR, GBP, USD, CAD, AUD, JPY — amounts convert automatically), and manage other household-wide preferences.
 
-## 13. Sharing your household workspace
+## 14. Sharing your household workspace
 
 Click **Share** to:
 
@@ -115,7 +129,7 @@ Click **Share** to:
 
 Everyone in the same household sees the same shared ledger — accounts, expenses, income, transfers, and goals are all shared, not per-person.
 
-## 14. Admin & users
+## 15. Admin & users
 
 Available to **Admin** and **Backup Admin** roles via the avatar menu. Manage household member accounts, change roles, and remove accounts that no longer belong. A household must always keep at least one Admin — Tally won't let you remove the last one. Admins can also trigger a full database backup export.
 
@@ -124,11 +138,11 @@ Roles:
 - **Member** — day-to-day use: log, categorize, and edit household expenses, income, accounts, transfers, and goals.
 - **Backup Admin** — a disaster-recovery role for emergency failover if the primary Admin is unavailable.
 
-## 15. Data export & backup
+## 16. Data export & backup
 
 Click **Export** at any time to download your records as a CSV spreadsheet or a full JSON backup. Admins can also trigger a full database backup from the Admin tab.
 
-## 16. Privacy & security
+## 17. Privacy & security
 
 - Passwordless sign-in via one-time 6-digit codes — no passwords stored anywhere.
 - Session tokens live in a secure, httpOnly cookie, valid up to 30 days.

@@ -64,6 +64,15 @@ export const CATEGORIES: Record<ExpenseCategory, CategoryInfo> = {
     borderColor: '#ded0fb',
     icon: 'ShoppingCart',
   },
+  'big-ticket': {
+    id: 'big-ticket',
+    name: 'Mortgage, Loans & Big Purchases',
+    description: 'Mortgage repayments, car & personal loans, holidays and other major financed purchases',
+    color: '#B45309', // Amber/Gold
+    bgColor: '#fdf2e3',
+    borderColor: '#f6dfb8',
+    icon: 'Landmark',
+  },
 };
 
 export const CATEGORY_LIST = Object.values(CATEGORIES);

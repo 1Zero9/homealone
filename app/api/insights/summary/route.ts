@@ -29,7 +29,9 @@ export async function GET() {
       where: { householdId: auth.user.householdId },
     });
 
-    const active = expenses.filter((e) => e.isActive);
+    // Planned/pending expenses stand alone and must not affect any figures here.
+    const liveExpenses = expenses.filter((e) => !e.isPending);
+    const active = liveExpenses.filter((e) => e.isActive);
 
     // Most bills here are direct debit — they leave the account automatically.
     // What matters isn't "paid/overdue", it's "what's coming, and when".
@@ -91,7 +93,7 @@ export async function GET() {
       .map((e) => ({ id: e.id, name: e.name, monthlyAmount: e.amount, estAnnualSavings: Math.round(e.amount * 2 * 100) / 100 }));
     const potentialAnnualSavings = annualOpportunities.reduce((sum, o) => sum + o.estAnnualSavings, 0);
 
-    const pausedMonthlySavings = expenses
+    const pausedMonthlySavings = liveExpenses
       .filter((e) => !e.isActive)
       .reduce((sum, e) => sum + getMonthlyEquivalent(e.amount, e.billingCycle as BillingCycle), 0);
 
@@ -108,7 +110,7 @@ export async function GET() {
         monthlyTotal: Math.round(monthlyTotal * 100) / 100,
         annualTotal: Math.round(monthlyTotal * 12 * 100) / 100,
         activeCount: active.length,
-        pausedCount: expenses.length - active.length,
+        pausedCount: liveExpenses.length - active.length,
         pausedMonthlySavings: Math.round(pausedMonthlySavings * 100) / 100,
         next7Days,
         next7DaysTotal: Math.round(next7Days.reduce((s, o) => s + o.amount, 0) * 100) / 100,

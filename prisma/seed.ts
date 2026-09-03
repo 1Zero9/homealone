@@ -23,12 +23,26 @@ async function main() {
     where: { email: 'onezeronine@gmail.com' },
     update: {
       name: 'Admin',
-      role: Role.ADMIN,
+      role: Role.BACKUP_ADMIN,
       householdId: household.id,
     },
     create: {
       email: 'onezeronine@gmail.com',
       name: 'Admin',
+      role: Role.BACKUP_ADMIN,
+      householdId: household.id,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: 'scranfield@gmail.com' },
+    update: {
+      role: Role.ADMIN,
+      householdId: household.id,
+    },
+    create: {
+      email: 'scranfield@gmail.com',
+      name: 'Stephen Cranfield',
       role: Role.ADMIN,
       householdId: household.id,
     },

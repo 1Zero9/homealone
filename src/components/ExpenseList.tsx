@@ -3,7 +3,7 @@ import type { ExpenseItem, CurrencyCode } from '../types/expense';
 import { CATEGORIES, CATEGORY_LIST } from '../data/categories';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle } from '../utils/formatters';
-import { Search, ArrowUpDown, Edit2, Trash2, Copy, User, Plus, Sparkles, RefreshCw, Mail } from 'lucide-react';
+import { Search, ArrowUpDown, Edit2, Trash2, Copy, User, Plus, Sparkles, RefreshCw, Mail, ChevronDown } from 'lucide-react';
 
 function isOverdue(dateStr: string): boolean {
   if (!dateStr) return false;
@@ -58,6 +58,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
   const [sortBy, setSortBy] = useState<'amount-desc' | 'amount-asc' | 'renewal' | 'name'>('amount-desc');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Filter items
   const filteredItems = expenses.filter((item) => {
@@ -332,14 +333,18 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
             const overdue = item.isActive && !item.isPaidThisCycle && isOverdue(item.nextRenewalDate);
             const daysUntilContractEnd = item.contractEndDate ? daysUntilDate(item.contractEndDate) : null;
             const showContractBadge = item.isActive && daysUntilContractEnd !== null && daysUntilContractEnd <= 60;
+            const isExpanded = expandedId === item.id;
 
             return (
+              <div key={item.id} style={{ borderBottom: '1px solid var(--ha-line)' }}>
               <div
-                key={item.id}
                 className="ha-ledger-row"
                 style={{
                   opacity: item.isActive ? 1 : 0.55,
+                  cursor: 'pointer',
+                  borderBottom: 'none',
                 }}
+                onClick={() => setExpandedId(isExpanded ? null : item.id)}
               >
                 {/* 1. Category Square Color Marker & Name */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: '1 1 280px' }}>
@@ -421,13 +426,13 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                   <span
                     className={`ha-badge ${item.isPaidThisCycle ? 'ha-badge-neutral' : overdue ? 'ha-badge-red' : 'ha-badge-blue'}`}
                     style={{ fontSize: '0.68rem', cursor: 'pointer' }}
-                    onClick={() => onTogglePaid(item.id)}
+                    onClick={(e) => { e.stopPropagation(); onTogglePaid(item.id); }}
                     title={item.isPaidThisCycle ? 'Paid — click to mark unpaid' : 'Unpaid — click to mark paid'}
                   >
                     {item.isPaidThisCycle ? 'Paid' : 'Unpaid'}
                   </span>
 
-                  <label className="toggle-switch" title={item.isActive ? 'Active — click to pause' : 'Paused — click to activate'}>
+                  <label className="toggle-switch" title={item.isActive ? 'Active — click to pause' : 'Paused — click to activate'} onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={item.isActive}
@@ -438,7 +443,8 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
 
                   {item.isVariable && (
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         const input = window.prompt(`New amount for "${item.name}" this cycle:`, String(item.amount));
                         if (input === null) return;
                         const parsed = Number(input);
@@ -455,7 +461,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
 
                   {item.vendorEmail && (
                     <button
-                      onClick={() => onContactVendor(item)}
+                      onClick={(e) => { e.stopPropagation(); onContactVendor(item); }}
                       className="btn btn-ghost"
                       style={{ padding: '0.35rem 0.45rem' }}
                       title="Draft an email to the vendor about this contract"
@@ -465,7 +471,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                   )}
 
                   <button
-                    onClick={() => onEditExpense(item)}
+                    onClick={(e) => { e.stopPropagation(); onEditExpense(item); }}
                     className="btn btn-ghost"
                     style={{ padding: '0.35rem 0.45rem' }}
                     title="Edit record"
@@ -474,7 +480,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                   </button>
 
                   <button
-                    onClick={() => onDuplicateExpense(item)}
+                    onClick={(e) => { e.stopPropagation(); onDuplicateExpense(item); }}
                     className="btn btn-ghost"
                     style={{ padding: '0.35rem 0.45rem' }}
                     title="Duplicate record"
@@ -483,14 +489,63 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                   </button>
 
                   <button
-                    onClick={() => onDeleteExpense(item.id)}
+                    onClick={(e) => { e.stopPropagation(); onDeleteExpense(item.id); }}
                     className="btn btn-ghost"
                     style={{ padding: '0.35rem 0.45rem', color: 'var(--ha-red)' }}
                     title="Delete record"
                   >
                     <Trash2 size={14} />
                   </button>
+
+                  <ChevronDown
+                    size={16}
+                    color="var(--ha-muted)"
+                    style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}
+                  />
                 </div>
+              </div>
+
+              {isExpanded && (
+                <div style={{ padding: '0 1.25rem 1rem', backgroundColor: '#fafaf7' }}>
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '0.5rem 1.75rem',
+                    fontSize: '0.8rem',
+                    color: 'var(--ha-muted)',
+                    padding: '0.85rem 0',
+                    borderTop: '1px solid var(--ha-line)',
+                  }}>
+                    <span>Category: <strong style={{ color: 'var(--ha-ink)' }}>{cat.name}</strong></span>
+                    <span>Billing cycle: <strong style={{ color: 'var(--ha-ink)' }}>{formatBillingCycle(item.billingCycle)}</strong></span>
+                    <span>Renewal day: <strong style={{ color: 'var(--ha-ink)' }}>{item.renewalDay}</strong></span>
+                    {item.paymentAccount && (
+                      <span>Paid from: <strong style={{ color: 'var(--ha-ink)' }}>{item.paymentAccount.name}</strong></span>
+                    )}
+                    {item.vendorEmail && (
+                      <span>Vendor email: <strong style={{ color: 'var(--ha-ink)' }}>{item.vendorEmail}</strong></span>
+                    )}
+                    {item.contractEndDate && (
+                      <span>Contract ends: <strong style={{ color: 'var(--ha-ink)' }}>{item.contractEndDate}</strong></span>
+                    )}
+                    {item.usageRating && (
+                      <span>Usage: <strong style={{ color: 'var(--ha-ink)', textTransform: 'capitalize' }}>{item.usageRating}</strong></span>
+                    )}
+                    {item.lastPaidAt && (
+                      <span>Last paid: <strong style={{ color: 'var(--ha-ink)' }}>{new Date(item.lastPaidAt).toLocaleDateString()}</strong></span>
+                    )}
+                    {item.createdBy && (
+                      <span>Added by: <strong style={{ color: 'var(--ha-ink)' }}>{item.createdBy.name}</strong></span>
+                    )}
+                  </div>
+
+                  {item.notes && (
+                    <div style={{ fontSize: '0.82rem', color: 'var(--ha-ink)', paddingBottom: '0.25rem', lineHeight: 1.5 }}>
+                      {item.notes}
+                    </div>
+                  )}
+                </div>
+              )}
               </div>
             );
           })}

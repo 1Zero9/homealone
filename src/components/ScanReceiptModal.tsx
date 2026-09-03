@@ -24,7 +24,7 @@ interface ScanReceiptModalProps {
   initialImage?: { dataUrl: string; base64: string; mimeType: string } | null;
 }
 
-const VALID_CATEGORIES: ExpenseCategory[] = ['entertainment', 'ai-tech', 'utilities', 'housing', 'education', 'lifestyle', 'shopping'];
+const VALID_CATEGORIES: ExpenseCategory[] = ['entertainment', 'ai-tech', 'utilities', 'housing', 'education', 'lifestyle', 'shopping', 'big-ticket'];
 const VALID_CURRENCIES: CurrencyCode[] = ['EUR', 'GBP', 'USD', 'CAD', 'AUD', 'JPY'];
 
 export const ScanReceiptModal: React.FC<ScanReceiptModalProps> = ({

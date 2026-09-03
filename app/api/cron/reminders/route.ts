@@ -45,7 +45,7 @@ export async function GET(request: Request) {
 
   try {
     const expenses = await prisma.expense.findMany({
-      where: { isActive: true, contractEndDate: { not: null } },
+      where: { isActive: true, isPending: false, contractEndDate: { not: null } },
       include: { household: { include: { users: true } } },
     });
 

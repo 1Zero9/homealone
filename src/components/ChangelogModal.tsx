@@ -1,14 +1,18 @@
 import React from 'react';
 import { X, Sparkles } from 'lucide-react';
-import { APP_VERSION, CHANGELOG } from '../data/changelog';
+import { APP_VERSION, CHANGELOG, MOBILE_APP_VERSION, MOBILE_CHANGELOG } from '../data/changelog';
 
 interface ChangelogModalProps {
   isOpen: boolean;
   onClose: () => void;
+  variant?: 'desktop' | 'mobile';
 }
 
-export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose }) => {
+export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose, variant = 'desktop' }) => {
   if (!isOpen) return null;
+
+  const version = variant === 'mobile' ? MOBILE_APP_VERSION : APP_VERSION;
+  const entries = variant === 'mobile' ? MOBILE_CHANGELOG : CHANGELOG;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -25,7 +29,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose 
               What&apos;s new
             </h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
-              Currently on version {APP_VERSION}
+              Currently on version {version}
             </p>
           </div>
 
@@ -35,7 +39,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose 
         </div>
 
         <div style={{ padding: '1.25rem 1.5rem 1.75rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {CHANGELOG.map((entry) => (
+          {entries.map((entry) => (
             <div key={entry.version}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                 <div style={{

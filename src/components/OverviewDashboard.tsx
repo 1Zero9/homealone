@@ -3,7 +3,7 @@ import type { ExpenseItem, CurrencyCode, SpendingSummary, IncomeSummary } from '
 import { CATEGORY_LIST, CATEGORIES } from '../data/categories';
 import { convertCurrency, getMonthlyEquivalent, getDaysUntilRenewal } from '../utils/calculations';
 import { formatCurrency, formatRenewalCountdown, formatDate } from '../utils/formatters';
-import { TrendingUp, Clock, PiggyBank, ArrowRight, Edit2 } from 'lucide-react';
+import { TrendingUp, Clock, PiggyBank, ArrowRight, Edit2, CalendarClock } from 'lucide-react';
 
 interface OverviewDashboardProps {
   expenses: ExpenseItem[];
@@ -15,6 +15,8 @@ interface OverviewDashboardProps {
   onOpenAddIncome: () => void;
   onViewAllSpending: () => void;
   onViewAllBills: () => void;
+  plannedExpenses?: ExpenseItem[];
+  onViewPlanned?: () => void;
 }
 
 type MobilePanel = 'recent' | 'spending' | 'bills';
@@ -29,6 +31,8 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   onOpenAddIncome,
   onViewAllSpending,
   onViewAllBills,
+  plannedExpenses = [],
+  onViewPlanned,
 }) => {
   const [mobilePanel, setMobilePanel] = React.useState<MobilePanel>('recent');
   const activeExpenses = expenses.filter((e) => e.isActive);
@@ -47,6 +51,10 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   const dueNext7Days = renewals.filter((item) => !item.isPaidThisCycle && item.daysLeft <= 7);
   const totalNext7Days = dueNext7Days.reduce((sum, item) => sum + convertCurrency(item.amount, item.currency, currency), 0);
   const upcomingBills = renewals.filter((item) => !item.isPaidThisCycle).slice(0, 5);
+
+  const nearestPlanned = plannedExpenses.length > 0
+    ? [...plannedExpenses].sort((a, b) => new Date(a.nextRenewalDate).getTime() - new Date(b.nextRenewalDate).getTime())[0]
+    : null;
 
   const recentlyAdded = [...activeExpenses]
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
@@ -141,6 +149,36 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
           )}
         </div>
       </div>
+
+      {/* Planned costs nudge — informational only, never affects totals */}
+      {nearestPlanned && onViewPlanned && (
+        <button
+          onClick={onViewPlanned}
+          className="ha-card"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            width: '100%',
+            textAlign: 'left',
+            padding: '0.9rem 1.25rem',
+            marginBottom: '1.5rem',
+            backgroundColor: '#fdf2e3',
+            border: '1px solid #f6dfb8',
+            cursor: 'pointer',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+            <CalendarClock size={18} color="#B45309" style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: '0.85rem', color: '#7C4A0B', minWidth: 0 }}>
+              <strong>{plannedExpenses.length} planned cost{plannedExpenses.length === 1 ? '' : 's'}</strong> coming up — nearest is{' '}
+              <strong>{nearestPlanned.name}</strong> ({formatCurrency(nearestPlanned.amount, nearestPlanned.currency || currency)}, expected {formatDate(nearestPlanned.nextRenewalDate)})
+            </span>
+          </div>
+          <ArrowRight size={15} color="#B45309" style={{ flexShrink: 0 }} />
+        </button>
+      )}
 
       {/* Mobile-only segmented tabs — lets each section below be viewed one at a time instead of one long stack */}
       <div className="ha-overview-mobile-tabs">
