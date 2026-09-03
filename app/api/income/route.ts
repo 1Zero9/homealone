@@ -15,6 +15,9 @@ export async function GET() {
         createdBy: {
           select: { id: true, name: true, role: true },
         },
+        depositAccount: {
+          select: { id: true, name: true, type: true, institution: true },
+        },
       },
     });
 
@@ -47,12 +50,16 @@ export async function POST(request: Request) {
         category: body.category || 'salary',
         isActive: typeof body.isActive === 'boolean' ? body.isActive : true,
         notes: body.notes || null,
+        depositAccountId: body.depositAccountId || null,
         createdById: auth.user.id,
         householdId: auth.user.householdId,
       },
       include: {
         createdBy: {
           select: { id: true, name: true, role: true },
+        },
+        depositAccount: {
+          select: { id: true, name: true, type: true, institution: true },
         },
       },
     });
@@ -101,10 +108,14 @@ export async function PUT(request: Request) {
         category: body.category,
         isActive: typeof body.isActive === 'boolean' ? body.isActive : true,
         notes: body.notes || null,
+        ...(body.depositAccountId !== undefined ? { depositAccountId: body.depositAccountId || null } : {}),
       },
       include: {
         createdBy: {
           select: { id: true, name: true, role: true },
+        },
+        depositAccount: {
+          select: { id: true, name: true, type: true, institution: true },
         },
       },
     });

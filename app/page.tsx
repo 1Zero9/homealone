@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { ExpenseItem, IncomeItem, CurrencyCode, PresetItem, UserProfile } from '@/src/types/expense';
+import type { ExpenseItem, IncomeItem, CurrencyCode, PresetItem, UserProfile, AccountItem } from '@/src/types/expense';
 import { loadCurrency, saveCurrency, resetToDefaults } from '@/src/services/storage';
 import { calculateSpendingSummary, calculateIncomeSummary } from '@/src/utils/calculations';
 import { Navbar, SPENDING_TABS } from '@/src/components/Navbar';
@@ -27,11 +27,16 @@ import { SettingsModal } from '@/src/components/SettingsModal';
 import { OverviewDashboard } from '@/src/components/OverviewDashboard';
 import { AssistantBox } from '@/src/components/AssistantBox';
 import { TallyLogo } from '@/src/components/TallyLogo';
+import { AccountsSection } from '@/src/components/AccountsSection';
+import { AccountModal } from '@/src/components/AccountModal';
+import { MoneyMap } from '@/src/components/MoneyMap';
 
 export default function HomeAlonePage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = checking
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [incomes, setIncomes] = useState<IncomeItem[]>([]);
+  const [accounts, setAccounts] = useState<AccountItem[]>([]);
+  const [encryptionConfigured, setEncryptionConfigured] = useState(false);
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -60,6 +65,8 @@ export default function HomeAlonePage() {
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<IncomeItem | null>(null);
   const [contactVendorExpense, setContactVendorExpense] = useState<ExpenseItem | null>(null);
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<AccountItem | null>(null);
 
   // Fetch users & expenses from Prisma PostgreSQL API
   const fetchDatabaseData = useCallback(async () => {
@@ -83,6 +90,14 @@ export default function HomeAlonePage() {
       const incData = await incRes.json();
       if (incData.status === 'ok' && Array.isArray(incData.incomes)) {
         setIncomes(incData.incomes);
+      }
+
+      // 4. Fetch Accounts from PostgreSQL
+      const accRes = await fetch('/api/accounts');
+      const accData = await accRes.json();
+      if (accData.status === 'ok' && Array.isArray(accData.accounts)) {
+        setAccounts(accData.accounts);
+        setEncryptionConfigured(!!accData.encryptionConfigured);
       }
     } catch (err) {
       console.error('Failed to load from database:', err);
@@ -460,6 +475,44 @@ export default function HomeAlonePage() {
     }
   };
 
+  // Save new or edited account with PostgreSQL sync
+  const handleSaveAccount = async (data: Record<string, unknown>, existingId?: string) => {
+    try {
+      const res = await fetch('/api/accounts', {
+        method: existingId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(existingId ? { ...data, id: existingId } : data),
+      });
+      const resData = await res.json();
+      if (resData.status === 'ok' && resData.account) {
+        setAccounts((prev) =>
+          existingId
+            ? prev.map((a) => (a.id === existingId ? resData.account : a))
+            : [...prev, resData.account]
+        );
+        fetchDatabaseData();
+      }
+    } catch (err) {
+      console.error('Failed to save account:', err);
+    }
+  };
+
+  // Delete an account
+  const handleDeleteAccount = async (id: string) => {
+    const item = accounts.find((a) => a.id === id);
+    if (!window.confirm(`Remove "${item?.name || 'this account'}"? Linked expenses/income will be unlinked.`)) return;
+
+    setAccounts((prev) => prev.filter((a) => a.id !== id));
+
+    try {
+      await fetch(`/api/accounts?id=${id}`, { method: 'DELETE' });
+      fetchDatabaseData();
+    } catch (err) {
+      console.error('Failed to delete account from DB:', err);
+      fetchDatabaseData();
+    }
+  };
+
   // Scroll to and focus the Ask Tally input
   const handleFocusAsk = () => {
     const input = document.getElementById('ask-tally-input');
@@ -737,6 +790,31 @@ export default function HomeAlonePage() {
           />
         )}
 
+        {activeTab === 'accounts' && (
+          <AccountsSection
+            accounts={accounts}
+            encryptionConfigured={encryptionConfigured}
+            onEditAccount={(item) => {
+              setEditingAccount(item);
+              setIsAccountModalOpen(true);
+            }}
+            onDeleteAccount={handleDeleteAccount}
+            onOpenAddModal={() => {
+              setEditingAccount(null);
+              setIsAccountModalOpen(true);
+            }}
+          />
+        )}
+
+        {activeTab === 'moneymap' && (
+          <MoneyMap
+            incomes={incomes}
+            expenses={expenses}
+            accounts={accounts}
+            currency={currency}
+          />
+        )}
+
         {activeTab === 'admin' && (
           <AdminSection
             users={users}
@@ -790,6 +868,7 @@ export default function HomeAlonePage() {
         initialCategory={initialCategory}
         users={users}
         currentUserId={currentUser?.id}
+        accounts={accounts}
       />
 
       {/* Add / Edit Income Modal */}
@@ -803,6 +882,19 @@ export default function HomeAlonePage() {
         editingIncome={editingIncome}
         users={users}
         currentUserId={currentUser?.id}
+        accounts={accounts}
+      />
+
+      {/* Add / Edit Account Modal */}
+      <AccountModal
+        isOpen={isAccountModalOpen}
+        onClose={() => {
+          setIsAccountModalOpen(false);
+          setEditingAccount(null);
+        }}
+        onSave={handleSaveAccount}
+        editingAccount={editingAccount}
+        encryptionConfigured={encryptionConfigured}
       />
 
       {/* Popular Presets Modal */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { IncomeItem, IncomeCategory, BillingCycle, CurrencyCode, UserProfile } from '../types/expense';
+import type { IncomeItem, IncomeCategory, BillingCycle, CurrencyCode, UserProfile, AccountItem } from '../types/expense';
 import { CURRENCIES } from '../utils/currencies';
 import { X } from 'lucide-react';
 
@@ -18,6 +18,7 @@ interface IncomeModalProps {
   editingIncome?: IncomeItem | null;
   users?: UserProfile[];
   currentUserId?: string;
+  accounts?: AccountItem[];
 }
 
 export const IncomeModal: React.FC<IncomeModalProps> = ({
@@ -27,6 +28,7 @@ export const IncomeModal: React.FC<IncomeModalProps> = ({
   editingIncome,
   users = [],
   currentUserId,
+  accounts = [],
 }) => {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState<number | string>('');
@@ -35,6 +37,7 @@ export const IncomeModal: React.FC<IncomeModalProps> = ({
   const [category, setCategory] = useState<IncomeCategory>('salary');
   const [assignedUserId, setAssignedUserId] = useState<string>('');
   const [notes, setNotes] = useState('');
+  const [depositAccountId, setDepositAccountId] = useState<string>('');
 
   useEffect(() => {
     if (editingIncome) {
@@ -45,6 +48,7 @@ export const IncomeModal: React.FC<IncomeModalProps> = ({
       setCategory(editingIncome.category);
       setAssignedUserId(editingIncome.createdById || currentUserId || '');
       setNotes(editingIncome.notes || '');
+      setDepositAccountId(editingIncome.depositAccountId || '');
     } else {
       setName('');
       setAmount('');
@@ -53,6 +57,7 @@ export const IncomeModal: React.FC<IncomeModalProps> = ({
       setCategory('salary');
       setAssignedUserId(currentUserId || '');
       setNotes('');
+      setDepositAccountId('');
     }
   }, [editingIncome, currentUserId, isOpen]);
 
@@ -72,6 +77,7 @@ export const IncomeModal: React.FC<IncomeModalProps> = ({
         category,
         isActive: true,
         notes: notes.trim(),
+        depositAccountId: depositAccountId || null,
         createdById: assignedUserId || currentUserId,
       },
       editingIncome?.id
@@ -215,6 +221,24 @@ export const IncomeModal: React.FC<IncomeModalProps> = ({
                   <option key={u.id} value={u.id}>
                     {u.name} ({u.role.replace('_', ' ')})
                   </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {accounts.length > 0 && (
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
+                Deposited into account (optional)
+              </label>
+              <select
+                value={depositAccountId}
+                onChange={(e) => setDepositAccountId(e.target.value)}
+                className="ha-input"
+              >
+                <option value="">Not linked</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}{a.institution ? ` — ${a.institution}` : ''}</option>
                 ))}
               </select>
             </div>

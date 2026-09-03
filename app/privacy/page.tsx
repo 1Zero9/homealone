@@ -44,6 +44,31 @@ export default function PrivacyPage() {
           household ledger.
         </li>
       </ul>
+      <h3>Financial account & credential data (optional, if you use the Accounts feature)</h3>
+      <ul>
+        <li>
+          Account metadata: account/institution name, account type (checking, savings, credit
+          union, credit card, PayPal, loan, etc.), currency, and notes.
+        </li>
+        <li>
+          <strong>Highly sensitive fields you may optionally add</strong> — account numbers,
+          routing/sort codes, login usernames, login passwords, login URLs, and free-text security
+          notes (e.g. security question answers). These fields are provided entirely at your own
+          discretion, typically to give a trusted person emergency access to your finances.
+        </li>
+        <li>
+          These sensitive fields are <strong>encrypted at the application layer (AES-256-GCM)</strong>{' '}
+          before being stored in the database, using a server-side encryption key that is never
+          exposed to the browser. They are never included in list or export views in decrypted
+          form — decrypting a single field requires an explicit, authenticated &quot;reveal&quot;
+          action, restricted to household admins.
+        </li>
+        <li>
+          If the server&apos;s encryption key is not configured, these sensitive fields cannot be
+          saved at all — the feature simply refuses to store them rather than falling back to
+          plaintext.
+        </li>
+      </ul>
       <h3>Authentication data</h3>
       <ul>
         <li>

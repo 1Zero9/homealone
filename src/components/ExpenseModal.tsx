@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { ExpenseItem, ExpenseCategory, BillingCycle, CurrencyCode, UserProfile } from '../types/expense';
+import type { ExpenseItem, ExpenseCategory, BillingCycle, CurrencyCode, UserProfile, AccountItem } from '../types/expense';
 import { CATEGORY_LIST, CATEGORIES } from '../data/categories';
 import { PRESETS } from '../data/presets';
 import { CURRENCIES } from '../utils/currencies';
@@ -14,6 +14,7 @@ interface ExpenseModalProps {
   initialCategory?: string | null;
   users?: UserProfile[];
   currentUserId?: string;
+  accounts?: AccountItem[];
 }
 
 export const ExpenseModal: React.FC<ExpenseModalProps> = ({
@@ -25,6 +26,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   initialCategory,
   users = [],
   currentUserId,
+  accounts = [],
 }) => {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState<number | string>('');
@@ -40,6 +42,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   const [vendorEmail, setVendorEmail] = useState('');
   const [usageRating, setUsageRating] = useState<'high' | 'medium' | 'low'>('high');
   const [isVariable, setIsVariable] = useState(false);
+  const [paymentAccountId, setPaymentAccountId] = useState<string>('');
 
   useEffect(() => {
     if (editingExpense) {
@@ -57,6 +60,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setVendorEmail(editingExpense.vendorEmail || '');
       setUsageRating(editingExpense.usageRating || 'high');
       setIsVariable(!!editingExpense.isVariable);
+      setPaymentAccountId(editingExpense.paymentAccountId || '');
     } else if (initialPresetId) {
       const preset = PRESETS.find((p) => p.id === initialPresetId);
       if (preset) {
@@ -71,6 +75,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         setAssignedUserId(currentUserId || '');
         setNotes(preset.description || '');
         setIsVariable(preset.category === 'shopping');
+        setPaymentAccountId('');
       }
     } else {
       setName('');
@@ -87,6 +92,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setVendorEmail('');
       setUsageRating('high');
       setIsVariable((initialCategory as ExpenseCategory) === 'shopping');
+      setPaymentAccountId('');
     }
   }, [editingExpense, initialPresetId, initialCategory, currentUserId, isOpen]);
 
@@ -132,6 +138,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         vendorEmail: vendorEmail.trim() || undefined,
         usageRating,
         isVariable,
+        paymentAccountId: paymentAccountId || null,
         createdById: assignedUserId || currentUserId,
       },
       editingExpense?.id
@@ -423,6 +430,24 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               />
             </div>
           </div>
+
+          {accounts.length > 0 && (
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
+                Paid from account (optional)
+              </label>
+              <select
+                value={paymentAccountId}
+                onChange={(e) => setPaymentAccountId(e.target.value)}
+                className="ha-input"
+              >
+                <option value="">Not linked</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}{a.institution ? ` — ${a.institution}` : ''}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Vendor email (for contract-review outreach) */}
           <div>

@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getErrorMessage } from '@/src/lib/errors';
-import { Role, Prisma } from '@prisma/client';
 import { isEmailConfigured, sendVerificationCodeEmail } from '@/src/lib/mail';
 
 const CODE_TTL_MS = 15 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 30 * 1000;
+
+// This app is single-tenant / invite-only: nobody can self-register. A code
+// is only ever issued to an email that already exists as a User record
+// (created by an admin via the "Share workspace" invite flow). We still
+// return a generic success-shaped message either way so this endpoint can't
+// be used to enumerate which emails have accounts.
+const GENERIC_MESSAGE = 'If that email has access, a verification code has been sent.';
 
 export async function POST(request: Request) {
   try {
@@ -17,6 +23,12 @@ export async function POST(request: Request) {
         { status: 'error', message: 'Please provide a valid email address.' },
         { status: 400 }
       );
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      // Don't reveal whether the account exists — just look like success.
+      return NextResponse.json({ status: 'ok', message: GENERIC_MESSAGE });
     }
 
     // Basic anti-spam: refuse to issue a new code if one was just sent.
@@ -34,54 +46,6 @@ export async function POST(request: Request) {
     // Generate 6-digit numeric OTP code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + CODE_TTL_MS);
-
-    // Ensure primary household exists
-    let household = await prisma.household.findFirst();
-    if (!household) {
-      household = await prisma.household.create({
-        data: {
-          name: body.householdName?.trim() || 'Our Household',
-          inviteCode: 'home-alone-family',
-        },
-      });
-    }
-
-    // Upsert or create user if first time
-    let user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      // Determine role: onezeronine@gmail.com is always ADMIN, everyone else defaults to MEMBER
-      const role = email === 'onezeronine@gmail.com' ? Role.ADMIN : Role.MEMBER;
-      const defaultName = body.name?.trim() || email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
-
-      user = await prisma.user.create({
-        data: {
-          email,
-          name: defaultName,
-          role,
-          householdId: household.id,
-        },
-      });
-    } else {
-      const updateData: Prisma.UserUpdateInput = {};
-      if (body.name && body.name.trim()) {
-        updateData.name = body.name.trim();
-      }
-      if (email === 'onezeronine@gmail.com' && user.role !== Role.ADMIN) {
-        updateData.role = Role.ADMIN;
-      }
-      if (!user.householdId && household) {
-        updateData.household = { connect: { id: household.id } };
-      }
-      if (Object.keys(updateData).length > 0) {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: updateData,
-        });
-      }
-    }
 
     // Invalidate any previous outstanding codes for this email, then issue a new one.
     await prisma.verificationToken.deleteMany({ where: { email } });

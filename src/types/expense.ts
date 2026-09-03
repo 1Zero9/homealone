@@ -15,6 +15,17 @@ export type CurrencyCode = 'EUR' | 'GBP' | 'USD' | 'CAD' | 'AUD' | 'JPY';
 
 export type UserRole = 'ADMIN' | 'MEMBER' | 'BACKUP_ADMIN';
 
+export type AccountType =
+  | 'CHECKING'
+  | 'SAVINGS'
+  | 'CREDIT_UNION'
+  | 'CREDIT_CARD'
+  | 'DEBIT_CARD'
+  | 'PAYPAL'
+  | 'LOAN'
+  | 'INVESTMENT'
+  | 'OTHER';
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -56,6 +67,8 @@ export interface ExpenseItem {
   usageRating?: 'high' | 'medium' | 'low';
   isVariable?: boolean;
   isPreset?: boolean;
+  paymentAccountId?: string | null;
+  paymentAccount?: AccountSummary | null;
   createdById?: string;
   createdBy?: {
     id: string;
@@ -75,11 +88,55 @@ export interface IncomeItem {
   category: IncomeCategory;
   isActive: boolean;
   notes?: string;
+  depositAccountId?: string | null;
+  depositAccount?: AccountSummary | null;
   createdById?: string;
   createdBy?: {
     id: string;
     name: string;
     role: UserRole;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AccountSummary {
+  id: string;
+  name: string;
+  type: AccountType;
+  institution?: string | null;
+}
+
+export interface AccountItem {
+  id: string;
+  name: string;
+  institution?: string | null;
+  type: AccountType;
+  currency: CurrencyCode;
+  notes?: string | null;
+  isActive: boolean;
+
+  hasAccountNumber: boolean;
+  hasRoutingNumber: boolean;
+  hasLoginUsername: boolean;
+  hasLoginPassword: boolean;
+  hasLoginUrl: boolean;
+  hasSecurityNotes: boolean;
+
+  originalAmount?: number | null;
+  interestRate?: number | null;
+  termMonths?: number | null;
+  payoffDate?: string | null;
+
+  createdById?: string | null;
+  createdBy?: {
+    id: string;
+    name: string;
+    role: UserRole;
+  } | null;
+  _count?: {
+    expenses: number;
+    incomes: number;
   };
   createdAt?: string;
   updatedAt?: string;

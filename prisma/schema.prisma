@@ -13,6 +13,18 @@ enum Role {
   BACKUP_ADMIN
 }
 
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CREDIT_UNION
+  CREDIT_CARD
+  DEBIT_CARD
+  PAYPAL
+  LOAN
+  INVESTMENT
+  OTHER
+}
+
 model Household {
   id         String   @id @default(cuid())
   name       String   @default("Our Household")
@@ -23,6 +35,7 @@ model Household {
   users    User[]
   expenses Expense[]
   incomes  Income[]
+  accounts Account[]
 }
 
 model User {
@@ -41,6 +54,7 @@ model User {
   expenses Expense[]
   incomes  Income[]
   sessions Session[]
+  accountsCreated Account[]
 }
 
 model Session {
@@ -88,10 +102,14 @@ model Expense {
   createdById     String?
   createdBy       User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
+  paymentAccountId String?
+  paymentAccount    Account? @relation("ExpensePaymentAccount", fields: [paymentAccountId], references: [id], onDelete: SetNull)
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   @@index([householdId])
+  @@index([paymentAccountId])
 }
 
 model Income {
@@ -110,8 +128,55 @@ model Income {
   createdById  String?
   createdBy    User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
+  depositAccountId String?
+  depositAccount    Account? @relation("IncomeDepositAccount", fields: [depositAccountId], references: [id], onDelete: SetNull)
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@index([householdId])
+  @@index([depositAccountId])
+}
+
+/// A financial account or payment method (bank, credit union, PayPal, credit
+/// card, loan, etc). Sensitive fields (account/routing numbers, login
+/// credentials, security notes) are stored AES-256-GCM encrypted at the
+/// application layer (see src/lib/crypto.ts) — never in plaintext.
+model Account {
+  id          String      @id @default(cuid())
+  name        String
+  institution String?
+  type        AccountType @default(OTHER)
+  currency    String      @default("EUR")
+  notes       String?
+  isActive    Boolean     @default(true)
+
+  // Encrypted sensitive fields (format: iv:authTag:ciphertext, base64) —
+  // null when not set. Never selected in list/summary API responses.
+  accountNumberEnc String?
+  routingNumberEnc String?
+  loginUsernameEnc String?
+  loginPasswordEnc String?
+  loginUrlEnc      String?
+  securityNotesEnc String?
+
+  // Loan-specific (optional, plaintext — not secret on their own)
+  originalAmount Float?
+  interestRate   Float?
+  termMonths     Int?
+  payoffDate     String?
+
+  householdId String?
+  household   Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  expenses Expense[] @relation("ExpensePaymentAccount")
+  incomes  Income[]  @relation("IncomeDepositAccount")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([householdId])
 }

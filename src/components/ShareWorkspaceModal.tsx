@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { UserProfile, UserRole } from '../types/expense';
 import { getErrorMessage } from '../lib/errors';
-import { X, Copy, Check, UserPlus, Users, Link as LinkIcon, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, UserPlus, Users, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface WorkspaceInfo {
   id: string;
@@ -27,7 +27,6 @@ export const ShareWorkspaceModal: React.FC<ShareWorkspaceModalProps> = ({
   const [inviteRole, setInviteRole] = useState<UserRole>('MEMBER');
   const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
   const [members, setMembers] = useState<UserProfile[]>([]);
-  const [isCopied, setIsCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -50,25 +49,10 @@ export const ShareWorkspaceModal: React.FC<ShareWorkspaceModalProps> = ({
       fetchWorkspace();
       setStatusMessage(null);
       setErrorMessage(null);
-      setIsCopied(false);
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const originUrl = typeof window !== 'undefined' ? window.location.origin : 'https://homealone.app';
-  const inviteCode = workspace?.inviteCode || 'home-alone-family';
-  const shareableUrl = `${originUrl}/?invite=${inviteCode}`;
-
-  const handleCopyLink = () => {
-    try {
-      navigator.clipboard.writeText(shareableUrl);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 3000);
-    } catch {
-      setIsCopied(true);
-    }
-  };
 
   const handleInviteUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,56 +167,7 @@ export const ShareWorkspaceModal: React.FC<ShareWorkspaceModalProps> = ({
             </div>
           )}
 
-          {/* 1. Shareable Invite Link */}
-          <div>
-            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ha-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.4rem' }}>
-              Shareable invite link
-            </label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <div style={{
-                flex: 1,
-                backgroundColor: '#fafaf7',
-                border: '1px solid var(--ha-line)',
-                borderRadius: 'var(--ha-radius-md)',
-                padding: '0.55rem 0.85rem',
-                fontSize: '0.82rem',
-                color: 'var(--ha-ink)',
-                fontFamily: 'monospace',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-              }}>
-                <LinkIcon size={14} color="var(--ha-muted)" style={{ flexShrink: 0 }} />
-                <span>{shareableUrl}</span>
-              </div>
-
-              <button
-                onClick={handleCopyLink}
-                className={isCopied ? 'btn btn-primary' : 'btn btn-secondary'}
-                style={{ fontSize: '0.82rem', padding: '0.55rem 0.95rem', whiteSpace: 'nowrap' }}
-              >
-                {isCopied ? (
-                  <>
-                    <Check size={14} />
-                    <span>Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy size={14} />
-                    <span>Copy link</span>
-                  </>
-                )}
-              </button>
-            </div>
-            <p style={{ fontSize: '0.72rem', color: 'var(--ha-muted)', marginTop: '0.35rem' }}>
-              Send this link to your wife or family members on WhatsApp or email so they can sign in and edit expenses.
-            </p>
-          </div>
-
-          {/* 2. Direct Invite by Email */}
+          {/* Direct Invite by Email — the only way new members are added */}
           <form onSubmit={handleInviteUser} style={{
             backgroundColor: '#fafaf7',
             border: '1px solid var(--ha-line)',

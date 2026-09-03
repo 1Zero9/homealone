@@ -1,0 +1,87 @@
+import crypto from 'crypto';
+
+/**
+ * Field-level encryption for highly sensitive data (account numbers, login
+ * credentials, security notes) stored on the Account model. This is
+ * server-only code — never import it from a client component.
+ *
+ * Uses AES-256-GCM: a random 12-byte IV per value, with the GCM auth tag
+ * appended so we can detect tampering/corruption on decrypt. Output format:
+ * `base64(iv):base64(authTag):base64(ciphertext)`.
+ *
+ * The key comes from CREDENTIALS_ENCRYPTION_KEY (32 raw bytes, base64
+ * encoded — generate with `openssl rand -base64 32`). If it's not set,
+ * encrypt/decrypt throw rather than silently storing plaintext.
+ */
+
+const ALGORITHM = 'aes-256-gcm';
+const IV_LENGTH = 12;
+
+function getKey(): Buffer {
+  const secret = process.env.CREDENTIALS_ENCRYPTION_KEY;
+  if (!secret) {
+    throw new Error(
+      'CREDENTIALS_ENCRYPTION_KEY is not set. Generate one with `openssl rand -base64 32` and add it to your environment before storing account credentials.'
+    );
+  }
+  const key = Buffer.from(secret, 'base64');
+  if (key.length !== 32) {
+    throw new Error('CREDENTIALS_ENCRYPTION_KEY must decode to exactly 32 bytes (256 bits).');
+  }
+  return key;
+}
+
+export function isEncryptionConfigured(): boolean {
+  const secret = process.env.CREDENTIALS_ENCRYPTION_KEY;
+  if (!secret) return false;
+  try {
+    return Buffer.from(secret, 'base64').length === 32;
+  } catch {
+    return false;
+  }
+}
+
+export function encryptField(plaintext: string): string {
+  const key = getKey();
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+  const ciphertext = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
+  const authTag = cipher.getAuthTag();
+  return `${iv.toString('base64')}:${authTag.toString('base64')}:${ciphertext.toString('base64')}`;
+}
+
+export function decryptField(stored: string): string {
+  const key = getKey();
+  const [ivB64, tagB64, dataB64] = stored.split(':');
+  if (!ivB64 || !tagB64 || !dataB64) {
+    throw new Error('Malformed encrypted value.');
+  }
+  const iv = Buffer.from(ivB64, 'base64');
+  const authTag = Buffer.from(tagB64, 'base64');
+  const ciphertext = Buffer.from(dataB64, 'base64');
+  const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+  decipher.setAuthTag(authTag);
+  const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+  return plaintext.toString('utf8');
+}
+
+/** Encrypts a value, or returns null/undefined unchanged (optional fields). */
+export function encryptOptional(value: string | null | undefined): string | null {
+  if (value === null || value === undefined || value === '') return null;
+  return encryptField(value);
+}
+
+export function decryptOptional(value: string | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  try {
+    return decryptField(value);
+  } catch {
+    return null;
+  }
+}
+
+/** Masks a decrypted secret for display, e.g. "••••4821" for an account number. */
+export function maskSecret(value: string, visibleTail = 4): string {
+  if (value.length <= visibleTail) return '•'.repeat(value.length);
+  return `${'•'.repeat(Math.max(4, value.length - visibleTail))}${value.slice(-visibleTail)}`;
+}

@@ -3,7 +3,7 @@ import type { UserProfile } from '../types/expense';
 import { Plus, Search, Settings, HelpCircle, LogOut, ShieldCheck, Menu, X, ChevronDown } from 'lucide-react';
 import { TallyLogo } from './TallyLogo';
 
-export type TabId = 'overview' | 'all' | 'ai-tech' | 'utilities' | 'education' | 'income' | 'calendar' | 'insights' | 'admin';
+export type TabId = 'overview' | 'all' | 'ai-tech' | 'utilities' | 'education' | 'income' | 'calendar' | 'insights' | 'accounts' | 'moneymap' | 'admin';
 
 export const SPENDING_TABS: TabId[] = ['all', 'ai-tech', 'utilities', 'education'];
 
@@ -12,6 +12,8 @@ const NAV_ITEMS: { id: TabId; label: string }[] = [
   { id: 'all', label: 'Spending' },
   { id: 'calendar', label: 'Bills' },
   { id: 'income', label: 'Income' },
+  { id: 'accounts', label: 'Accounts' },
+  { id: 'moneymap', label: 'Money Map' },
   { id: 'insights', label: 'Insights' },
 ];
 

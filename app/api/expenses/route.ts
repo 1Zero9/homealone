@@ -17,6 +17,9 @@ export async function GET() {
         createdBy: {
           select: { id: true, name: true, role: true },
         },
+        paymentAccount: {
+          select: { id: true, name: true, type: true, institution: true },
+        },
       },
     });
 
@@ -40,6 +43,9 @@ export async function GET() {
           include: {
             createdBy: {
               select: { id: true, name: true, role: true },
+            },
+            paymentAccount: {
+              select: { id: true, name: true, type: true, institution: true },
             },
           },
         });
@@ -84,12 +90,16 @@ export async function POST(request: Request) {
         vendorEmail: body.vendorEmail || null,
         usageRating: body.usageRating || 'high',
         isVariable: typeof body.isVariable === 'boolean' ? body.isVariable : false,
+        paymentAccountId: body.paymentAccountId || null,
         createdById: auth.user.id,
         householdId: auth.user.householdId,
       },
       include: {
         createdBy: {
           select: { id: true, name: true, role: true },
+        },
+        paymentAccount: {
+          select: { id: true, name: true, type: true, institution: true },
         },
       },
     });
@@ -151,6 +161,7 @@ export async function PUT(request: Request) {
         vendorEmail: body.vendorEmail || null,
         usageRating: body.usageRating || 'high',
         isVariable: typeof body.isVariable === 'boolean' ? body.isVariable : false,
+        ...(body.paymentAccountId !== undefined ? { paymentAccountId: body.paymentAccountId || null } : {}),
         ...(typeof body.isPaidThisCycle === 'boolean' ? { isPaidThisCycle: body.isPaidThisCycle } : {}),
         ...(markingPaid ? { lastPaidAt: new Date() } : {}),
         ...(markingUnpaid ? { lastPaidAt: null } : {}),
@@ -158,6 +169,9 @@ export async function PUT(request: Request) {
       include: {
         createdBy: {
           select: { id: true, name: true, role: true },
+        },
+        paymentAccount: {
+          select: { id: true, name: true, type: true, institution: true },
         },
       },
     });
