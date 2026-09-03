@@ -19,6 +19,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
       include: {
         createdBy: { select: { id: true, name: true, role: true } },
+        account: { select: { id: true, name: true, type: true, institution: true } },
         transactions: { select: { status: true } },
       },
     });
@@ -62,6 +63,14 @@ export async function POST(request: Request) {
     const fileName = typeof body.fileName === 'string' ? body.fileName : null;
     const rawRows: IncomingRow[] = Array.isArray(body.transactions) ? body.transactions : [];
 
+    let accountId: string | null = typeof body.accountId === 'string' && body.accountId ? body.accountId : null;
+    if (accountId) {
+      const account = await prisma.account.findUnique({ where: { id: accountId } });
+      if (!account || account.householdId !== auth.user.householdId) {
+        accountId = null;
+      }
+    }
+
     const rows = rawRows.filter(
       (r) => r && typeof r.date === 'string' && r.date && typeof r.rawDescription === 'string' && r.rawDescription.trim() && typeof r.amount === 'number' && !Number.isNaN(r.amount) && r.amount !== 0
     );
@@ -78,11 +87,23 @@ export async function POST(request: Request) {
 
     const [expenses, transfers, aliases] = await Promise.all([
       prisma.expense.findMany({
-        where: { householdId: auth.user.householdId, isActive: true },
+        where: {
+          householdId: auth.user.householdId,
+          isActive: true,
+          // Scoped to the chosen account when known — an expense either
+          // isn't linked to any account yet, or must match this one, so we
+          // don't cross-match a bill paid from a different account.
+          ...(accountId ? { OR: [{ paymentAccountId: accountId }, { paymentAccountId: null }] } : {}),
+        },
         select: { id: true, name: true, vendor: true, amount: true, currency: true, renewalDay: true },
       }),
       prisma.transfer.findMany({
-        where: { householdId: auth.user.householdId },
+        where: {
+          householdId: auth.user.householdId,
+          // A transfer only makes sense as a match for this statement if it
+          // actually touches the account the statement came from.
+          ...(accountId ? { OR: [{ fromAccountId: accountId }, { toAccountId: accountId }] } : {}),
+        },
         select: { id: true, amount: true, currency: true, date: true, externalLabel: true },
       }),
       prisma.merchantAlias.findMany({
@@ -95,6 +116,7 @@ export async function POST(request: Request) {
       data: {
         label,
         fileName,
+        accountId,
         createdById: auth.user.id,
         householdId: auth.user.householdId,
       },

@@ -12,7 +12,7 @@ import {
   AlertTriangle,
   ArrowLeft,
 } from 'lucide-react';
-import type { ExpenseItem, StatementTransactionItem, CurrencyCode } from '../types/expense';
+import type { ExpenseItem, StatementTransactionItem, CurrencyCode, AccountItem } from '../types/expense';
 import { formatCurrency } from '../utils/formatters';
 import { parseCsv, guessColumns, parseAmount, parseDateFlexible, type ColumnGuess } from '../lib/statementMatching';
 
@@ -20,6 +20,7 @@ interface StatementImportModalProps {
   isOpen: boolean;
   onClose: () => void;
   expenses: ExpenseItem[];
+  accounts: AccountItem[];
   householdCurrency: CurrencyCode;
   onImported: () => void;
   initialImportId?: string | null;
@@ -46,6 +47,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   isOpen,
   onClose,
   expenses,
+  accounts,
   householdCurrency,
   onImported,
   initialImportId,
@@ -53,6 +55,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const [step, setStep] = useState<Step>('upload');
   const [fileName, setFileName] = useState('');
   const [label, setLabel] = useState('');
+  const [accountId, setAccountId] = useState('');
+  const [importAccount, setImportAccount] = useState<{ id: string; name: string; institution?: string | null } | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
   const [dateCol, setDateCol] = useState<number | null>(null);
@@ -80,6 +84,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     setStep('upload');
     setFileName('');
     setLabel('');
+    setAccountId('');
+    setImportAccount(null);
     setHeaders([]);
     setRows([]);
     setDateCol(null);
@@ -117,6 +123,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
           if (data.status === 'ok') {
             setImportId(initialImportId);
             setImportLabel(data.import?.label || 'Statement import');
+            setImportAccount(data.import?.account || null);
             setTransactions(data.transactions || []);
             setStep('review');
           }
@@ -213,6 +220,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
         body: JSON.stringify({
           label,
           fileName,
+          accountId: accountId || null,
           transactions: preparedRows.map((r) => ({ ...r, currency: householdCurrency })),
         }),
       });
@@ -223,6 +231,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
       }
       setImportId(data.import.id);
       setImportLabel(data.import.label);
+      setImportAccount(accounts.find((a) => a.id === accountId) || null);
       setTransactions(data.transactions);
       setStep('review');
       onImported();
@@ -288,7 +297,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
             <p style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
               {step === 'upload' && 'Upload a bank or credit-card CSV export to cross-check against your bills.'}
               {step === 'map' && `${rows.length} rows found — tell us which columns are which.`}
-              {step === 'review' && 'Confirm matches, link forgotten payments, or ignore what you don\'t need.'}
+              {step === 'review' && (importAccount ? `${importAccount.name}${importAccount.institution ? ` — ${importAccount.institution}` : ''} · Confirm matches, link forgotten payments, or ignore what you don't need.` : 'Confirm matches, link forgotten payments, or ignore what you don\'t need.')}
             </p>
           </div>
           <button onClick={handleClose} className="btn btn-ghost" style={{ padding: '0.35rem' }}>
@@ -347,11 +356,30 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
 
           {step === 'map' && (
             <>
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.3rem' }}>
-                  Label for this import
-                </label>
-                <input className="ha-input" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. AIB Credit Card — September" />
+              <div style={{ display: 'grid', gridTemplateColumns: accounts.length > 0 ? '1.4fr 1fr' : '1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.3rem' }}>
+                    Label for this import
+                  </label>
+                  <input className="ha-input" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. AIB Credit Card — September" />
+                </div>
+
+                {accounts.length > 0 && (
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.3rem' }}>
+                      Which account is this?
+                    </label>
+                    <select className="ha-input" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+                      <option value="">Not sure / mixed</option>
+                      {accounts.map((a) => (
+                        <option key={a.id} value={a.id}>{a.name}{a.institution ? ` — ${a.institution}` : ''}</option>
+                      ))}
+                    </select>
+                    <p style={{ fontSize: '0.72rem', color: 'var(--ha-muted)', marginTop: '0.3rem' }}>
+                      Helps matching stay accurate when you have more than one account.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

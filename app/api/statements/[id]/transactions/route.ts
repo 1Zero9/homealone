@@ -9,7 +9,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   try {
     const { id } = await params;
-    const statementImport = await prisma.statementImport.findUnique({ where: { id } });
+    const statementImport = await prisma.statementImport.findUnique({
+      where: { id },
+      include: { account: { select: { id: true, name: true, type: true, institution: true } } },
+    });
     if (!statementImport || statementImport.householdId !== auth.user.householdId) {
       return NextResponse.json({ status: 'error', message: 'Statement import not found' }, { status: 404 });
     }

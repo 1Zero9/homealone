@@ -213,6 +213,8 @@ model Account {
   transfersIn  Transfer[] @relation("TransferToAccount")
   goals        Goal[]     @relation("GoalAccount")
 
+  statementImports StatementImport[] @relation("StatementImportAccount")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -302,6 +304,11 @@ model StatementImport {
   label    String
   fileName String?
 
+  // Which of the household's Accounts this statement was exported from —
+  // scopes automatic matching to expenses/transfers that touch that account.
+  accountId String?
+  account   Account? @relation("StatementImportAccount", fields: [accountId], references: [id], onDelete: SetNull)
+
   householdId String?
   household   Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
@@ -313,6 +320,7 @@ model StatementImport {
   createdAt DateTime @default(now())
 
   @@index([householdId])
+  @@index([accountId])
 }
 
 /// A single row from an imported statement, after normalization and an

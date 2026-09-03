@@ -8,17 +8,20 @@ export type TabId = 'overview' | 'all' | 'ai-tech' | 'utilities' | 'education' |
 
 export const SPENDING_TABS: TabId[] = ['all', 'ai-tech', 'utilities', 'education', 'big-ticket'];
 
-const NAV_ITEMS: { id: TabId; label: string }[] = [
+const PRIMARY_NAV_ITEMS: { id: TabId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'all', label: 'Spending' },
   { id: 'calendar', label: 'Bills' },
   { id: 'income', label: 'Income' },
   { id: 'accounts', label: 'Accounts' },
+  { id: 'insights', label: 'Insights' },
+];
+
+const JOURNEY_NAV_ITEMS: { id: TabId; label: string }[] = [
   { id: 'flow', label: 'Flow' },
   { id: 'goals', label: 'Goals' },
   { id: 'planned', label: 'Planned' },
   { id: 'moneymap', label: 'Money Map' },
-  { id: 'insights', label: 'Insights' },
 ];
 
 interface NavbarProps {
@@ -52,29 +55,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const isAdmin = currentUser?.role === 'ADMIN';
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
+  const [isJourneyMenuOpen, setIsJourneyMenuOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const handleNav = (tab: TabId) => {
     onTabChange(tab);
     setIsDrawerOpen(false);
+    setIsJourneyMenuOpen(false);
   };
+
+  const isJourneyActive = JOURNEY_NAV_ITEMS.some((item) => item.id === activeTab);
 
   return (
     <div style={{ position: 'sticky', top: 0, zIndex: 50 }}>
-      {isAdmin && (
-        <div style={{
-          backgroundColor: 'var(--ha-blue)',
-          color: 'var(--ha-white)',
-          fontSize: '0.7rem',
-          fontWeight: 600,
-          letterSpacing: '0.04em',
-          textTransform: 'uppercase',
-          textAlign: 'center',
-          padding: '0.25rem 0.5rem',
-        }}>
-          Admin workspace
-        </div>
-      )}
       <header style={{
         backgroundColor: 'var(--ha-paper)',
         borderBottom: '1px solid var(--ha-line)',
@@ -132,7 +125,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Primary Nav Links (desktop) */}
           <nav className="desktop-only" style={{ alignItems: 'center', gap: '1.5rem', flex: 1, justifyContent: 'center' }}>
-            {NAV_ITEMS.map((item) => {
+            {PRIMARY_NAV_ITEMS.map((item) => {
               const isActive = item.id === 'all' ? SPENDING_TABS.includes(activeTab) : activeTab === item.id;
               return (
                 <button
@@ -144,6 +137,35 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               );
             })}
+
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setIsJourneyMenuOpen((v) => !v)}
+                className={`ha-nav-link${isJourneyActive ? ' active' : ''}`}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+              >
+                <span>Money Journey</span>
+                <ChevronDown size={13} />
+              </button>
+
+              {isJourneyMenuOpen && (
+                <>
+                  <div className="ha-dropdown-overlay" onClick={() => setIsJourneyMenuOpen(false)} />
+                  <div className="ha-dropdown" style={{ left: '50%', transform: 'translateX(-50%)' }}>
+                    {JOURNEY_NAV_ITEMS.map((item) => (
+                      <button
+                        key={item.id}
+                        className="ha-dropdown-item"
+                        onClick={() => handleNav(item.id)}
+                        style={{ fontWeight: activeTab === item.id ? 700 : 500, color: activeTab === item.id ? 'var(--ha-blue)' : undefined }}
+                      >
+                        <span>{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </nav>
 
           {/* Right Actions (desktop) */}
@@ -310,8 +332,32 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
 
             <div style={{ padding: '0.75rem 0.5rem', display: 'flex', flexDirection: 'column' }}>
-              {NAV_ITEMS.map((item) => {
+              {PRIMARY_NAV_ITEMS.map((item) => {
                 const isActive = item.id === 'all' ? SPENDING_TABS.includes(activeTab) : activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNav(item.id)}
+                    className="ha-dropdown-item"
+                    style={{ fontSize: '0.95rem', fontWeight: 600, color: isActive ? 'var(--ha-blue)' : 'var(--ha-ink)' }}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+
+              <div style={{
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                color: 'var(--ha-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                padding: '0.75rem 0.9rem 0.25rem',
+              }}>
+                Money Journey
+              </div>
+              {JOURNEY_NAV_ITEMS.map((item) => {
+                const isActive = activeTab === item.id;
                 return (
                   <button
                     key={item.id}

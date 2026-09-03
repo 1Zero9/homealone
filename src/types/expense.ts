@@ -240,6 +240,8 @@ export interface StatementImportSummary {
   fileName?: string | null;
   createdAt: string;
   createdBy?: { id: string; name: string; role: UserRole } | null;
+  accountId?: string | null;
+  account?: AccountSummary | null;
   total: number;
   matched: number;
   unmatched: number;

@@ -1059,7 +1059,7 @@ export default function TallyPage() {
 
         {activeTab === 'flow' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-            <StatementsSection expenses={liveExpenses} householdCurrency={currency} />
+            <StatementsSection expenses={liveExpenses} accounts={accounts} householdCurrency={currency} />
             <TransfersSection
               transfers={transfers}
               onEditTransfer={(item) => {

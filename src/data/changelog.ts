@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.11.0';
+export const APP_VERSION = '1.12.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,22 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.12.0',
+    date: '2026-09-03',
+    changes: [
+      'Statement imports now ask which account a statement is from — matching is scoped to that account so bills and transfers on other accounts don\'t get cross-matched by mistake, which matters once you\'re importing statements for more than one account.',
+      'The account is now shown alongside each past statement import in the list.',
+    ],
+  },
+  {
+    version: '1.11.1',
+    date: '2026-09-03',
+    changes: [
+      'Tidied up the top navigation — Flow, Goals, Planned and Money Map are now grouped under a single "Money Journey" menu instead of crowding the main bar.',
+      'Removed the blue "Admin workspace" banner that sat above the header for admin accounts.',
+    ],
+  },
   {
     version: '1.11.0',
     date: '2026-09-03',

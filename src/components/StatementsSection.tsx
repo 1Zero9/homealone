@@ -1,14 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { FileSpreadsheet, Upload, Trash2, ChevronRight } from 'lucide-react';
-import type { ExpenseItem, StatementImportSummary, CurrencyCode } from '../types/expense';
+import type { ExpenseItem, StatementImportSummary, CurrencyCode, AccountItem } from '../types/expense';
 import { StatementImportModal } from './StatementImportModal';
 
 interface StatementsSectionProps {
   expenses: ExpenseItem[];
+  accounts: AccountItem[];
   householdCurrency: CurrencyCode;
 }
 
-export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, householdCurrency }) => {
+export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, accounts, householdCurrency }) => {
   const [imports, setImports] = useState<StatementImportSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -81,6 +82,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
                     {imp.label}
                   </div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--ha-muted)' }}>
+                    {imp.account && <span style={{ fontWeight: 600, color: 'var(--ha-ink)' }}>{imp.account.name} • </span>}
                     {imp.total} rows • {imp.matched} matched
                     {imp.unmatched > 0 && <span style={{ color: 'var(--ha-red)', fontWeight: 600 }}> • {imp.unmatched} need review</span>}
                   </div>
@@ -106,6 +108,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         expenses={expenses}
+        accounts={accounts}
         householdCurrency={householdCurrency}
         onImported={fetchImports}
       />
@@ -114,6 +117,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
         isOpen={!!reviewImportId}
         onClose={() => { setReviewImportId(null); fetchImports(); }}
         expenses={expenses}
+        accounts={accounts}
         householdCurrency={householdCurrency}
         onImported={fetchImports}
         initialImportId={reviewImportId}
