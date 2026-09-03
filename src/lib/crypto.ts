@@ -17,6 +17,14 @@ import crypto from 'crypto';
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
 
+function parseKey(secret: string, envVarName: string): Buffer {
+  const key = Buffer.from(secret, 'base64');
+  if (key.length !== 32) {
+    throw new Error(`${envVarName} must decode to exactly 32 bytes (256 bits).`);
+  }
+  return key;
+}
+
 function getKey(): Buffer {
   const secret = process.env.CREDENTIALS_ENCRYPTION_KEY;
   if (!secret) {
@@ -24,11 +32,7 @@ function getKey(): Buffer {
       'CREDENTIALS_ENCRYPTION_KEY is not set. Generate one with `openssl rand -base64 32` and add it to your environment before storing account credentials.'
     );
   }
-  const key = Buffer.from(secret, 'base64');
-  if (key.length !== 32) {
-    throw new Error('CREDENTIALS_ENCRYPTION_KEY must decode to exactly 32 bytes (256 bits).');
-  }
-  return key;
+  return parseKey(secret, 'CREDENTIALS_ENCRYPTION_KEY');
 }
 
 export function isEncryptionConfigured(): boolean {
@@ -41,8 +45,7 @@ export function isEncryptionConfigured(): boolean {
   }
 }
 
-export function encryptField(plaintext: string): string {
-  const key = getKey();
+export function encryptField(plaintext: string, key: Buffer = getKey()): string {
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
   const ciphertext = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
@@ -50,8 +53,7 @@ export function encryptField(plaintext: string): string {
   return `${iv.toString('base64')}:${authTag.toString('base64')}:${ciphertext.toString('base64')}`;
 }
 
-export function decryptField(stored: string): string {
-  const key = getKey();
+export function decryptField(stored: string, key: Buffer = getKey()): string {
   const [ivB64, tagB64, dataB64] = stored.split(':');
   if (!ivB64 || !tagB64 || !dataB64) {
     throw new Error('Malformed encrypted value.');
@@ -63,6 +65,19 @@ export function decryptField(stored: string): string {
   decipher.setAuthTag(authTag);
   const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
   return plaintext.toString('utf8');
+}
+
+/**
+ * Parses a base64-encoded 32-byte key from an arbitrary env var name.
+ * Used by the key-rotation script to load the OLD key distinctly from
+ * CREDENTIALS_ENCRYPTION_KEY (the new/current key used everywhere else).
+ */
+export function loadKeyFromEnv(envVarName: string): Buffer {
+  const secret = process.env[envVarName];
+  if (!secret) {
+    throw new Error(`${envVarName} is not set.`);
+  }
+  return parseKey(secret, envVarName);
 }
 
 /** Encrypts a value, or returns null/undefined unchanged (optional fields). */
