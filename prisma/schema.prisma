@@ -338,6 +338,12 @@ model StatementTransaction {
   matchConfidence       Float?
   notes                 String?
 
+  // A spending category inferred from a previously-learned MerchantAlias for
+  // this description pattern, if any — used to pre-fill the category picker
+  // when the household categorizes this row as a new one-off expense, so
+  // repeat merchants get faster (and more consistent) categorization over time.
+  suggestedCategory     String?
+
   importId String
   import   StatementImport @relation(fields: [importId], references: [id], onDelete: Cascade)
 

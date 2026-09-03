@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.18.0';
+export const APP_VERSION = '1.19.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.19.0',
+    date: '2026-09-03',
+    changes: [
+      'Statement import is smarter about what it decides on its own: a row only gets auto-marked "Matched" when it fits a merchant you\'ve personally confirmed before — every other suggested match (however confident) now waits in "Needs review" for you to hit "Confirm match" first.',
+      'Possible matches against an existing transfer (not just a bill) now show up with their own "Confirm match" button, instead of only bills getting that treatment.',
+      'Added "Add as expense" for statement rows that aren\'t linked to a bill — pick a spending category and it\'s logged as a proper one-off expense (not just an anonymous transfer), so it shows up correctly in Spending and category breakdowns.',
+      'Tally remembers the category you picked for a merchant and suggests it automatically next time that description shows up on a statement.',
+    ],
+  },
   {
     version: '1.18.0',
     date: '2026-09-03',

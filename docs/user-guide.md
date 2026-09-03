@@ -87,7 +87,8 @@ Under Flow, **Statement imports** lets you cross-check a real bank or credit-car
 - **Upload a CSV, PDF, or photo/screenshot** — CSV works best, but Tally reads PDFs and photos with AI, so there's no need to convert a bank PDF to CSV first.
 - For CSV, tell Tally which column is the date, description and amount. Either way, pick which **Account** the statement is from — this keeps matching accurate once you have more than one account.
 - From a PDF or photo, Tally also extracts whatever account-level details are printed — bank name, account holder, account number, sort code/IBAN, statement period, opening/closing balance — and, once you pick the account, checks the account number and sort code against what's saved for it. A mismatch is flagged; if the account has nothing saved yet, you can save the extracted value in one click.
-- Tally auto-matches rows against your existing bills and transfers, flags recurring-but-untracked charges worth checking, and remembers your confirmations so cryptic statement references are recognised automatically next time.
+- Tally suggests matches against your existing bills and transfers and flags recurring-but-untracked charges worth checking — but only ever auto-confirms a merchant you've personally confirmed before; everything else waits in **Needs review** for an explicit "Confirm match".
+- For anything that isn't a bill you've tracked, **Add as expense** logs it with a proper spending category (remembered per merchant for next time) instead of an anonymous transfer — or use **Log as transfer** for a quick, uncategorized entry.
 - Clicking outside the import dialog never discards anything — only the visible buttons (Back, Import, Done, the X) can close or navigate it.
 
 ## 8. Goals

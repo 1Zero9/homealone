@@ -108,7 +108,7 @@ export async function POST(request: Request) {
       }),
       prisma.merchantAlias.findMany({
         where: { householdId: auth.user.householdId },
-        select: { id: true, pattern: true, vendorName: true, expenseId: true },
+        select: { id: true, pattern: true, vendorName: true, expenseId: true, category: true },
       }),
     ]);
 
@@ -154,6 +154,7 @@ export async function POST(request: Request) {
             matchedExpenseId: p.match.matchedExpenseId || null,
             matchedTransferId: p.match.matchedTransferId || null,
             matchConfidence: p.match.matchConfidence ?? null,
+            suggestedCategory: p.match.suggestedCategory ?? null,
             notes: recurringFlags.has(String(idx))
               ? 'Appears more than once and looks untracked — worth checking.'
               : p.match.suggestedVendorName

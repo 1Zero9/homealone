@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Link2,
   PlusCircle,
+  Tag,
   EyeOff,
   Loader2,
   RotateCcw,
@@ -14,10 +15,11 @@ import {
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
-import type { ExpenseItem, StatementTransactionItem, CurrencyCode, AccountItem } from '../types/expense';
+import type { ExpenseItem, StatementTransactionItem, CurrencyCode, AccountItem, ExpenseCategory } from '../types/expense';
 import { formatCurrency } from '../utils/formatters';
 import { parseCsv, guessColumns, parseAmount, parseDateFlexible, type ColumnGuess } from '../lib/statementMatching';
 import type { StatementAccountInfo } from '../lib/ai';
+import { CATEGORY_LIST } from '../data/categories';
 
 type FieldMatch = 'match' | 'mismatch' | 'not_set' | 'no_data';
 
@@ -87,6 +89,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const [busyTxId, setBusyTxId] = useState<string | null>(null);
   const [linkingTxId, setLinkingTxId] = useState<string | null>(null);
   const [selectedExpenseId, setSelectedExpenseId] = useState<Record<string, string>>({});
+  const [categorizingTxId, setCategorizingTxId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Record<string, ExpenseCategory | ''>>({});
   const [isLoadingReview, setIsLoadingReview] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [busyGroupKey, setBusyGroupKey] = useState<string | null>(null);
@@ -124,6 +128,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     setBusyTxId(null);
     setLinkingTxId(null);
     setSelectedExpenseId({});
+    setCategorizingTxId(null);
+    setSelectedCategory({});
     setCollapsedGroups(new Set());
     setBusyGroupKey(null);
     setAiRows(null);
@@ -391,6 +397,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
       if (data.status === 'ok') {
         setTransactions((prev) => prev.map((t) => (t.id === txId ? data.transaction : t)));
         setLinkingTxId(null);
+        setCategorizingTxId(null);
       }
     } finally {
       setBusyTxId(null);
@@ -987,6 +994,12 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                                   {typeof tx.matchConfidence === 'number' && <span style={{ color: 'var(--ha-muted)' }}> ({Math.round(tx.matchConfidence * 100)}% confident)</span>}
                                 </div>
                               )}
+                              {!tx.matchedExpense && tx.matchedTransfer && (
+                                <div style={{ fontSize: '0.78rem', color: 'var(--ha-ink)', marginBottom: '0.4rem' }}>
+                                  Possible match: transfer <strong>{tx.matchedTransfer.externalLabel || 'logged payment'}</strong>
+                                  {typeof tx.matchConfidence === 'number' && <span style={{ color: 'var(--ha-muted)' }}> ({Math.round(tx.matchConfidence * 100)}% confident)</span>}
+                                </div>
+                              )}
 
                               {linkingTxId === tx.id ? (
                                 <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -1011,9 +1024,35 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                                     Cancel
                                   </button>
                                 </div>
+                              ) : categorizingTxId === tx.id ? (
+                                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                  <select
+                                    className="ha-input"
+                                    style={{ fontSize: '0.78rem', padding: '0.4rem 0.6rem' }}
+                                    value={selectedCategory[tx.id] ?? tx.suggestedCategory ?? ''}
+                                    onChange={(e) => setSelectedCategory((prev) => ({ ...prev, [tx.id]: e.target.value as ExpenseCategory }))}
+                                  >
+                                    <option value="">— Choose a category —</option>
+                                    {CATEGORY_LIST.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                  </select>
+                                  <button
+                                    disabled={!(selectedCategory[tx.id] || tx.suggestedCategory) || isBusy}
+                                    onClick={() => resolveTx(tx.id, 'categorize', {
+                                      category: selectedCategory[tx.id] || tx.suggestedCategory,
+                                      vendorName: tx.rawDescription,
+                                    })}
+                                    className="btn btn-primary"
+                                    style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
+                                  >
+                                    {isBusy ? <Loader2 size={12} className="spin" /> : <Tag size={12} />} Log as expense
+                                  </button>
+                                  <button onClick={() => setCategorizingTxId(null)} className="btn btn-ghost" style={{ fontSize: '0.75rem', padding: '0.4rem 0.5rem' }}>
+                                    Cancel
+                                  </button>
+                                </div>
                               ) : (
                                 <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                                  {tx.matchedExpense && (
+                                  {(tx.matchedExpense || tx.matchedTransfer) && (
                                     <button
                                       disabled={isBusy}
                                       onClick={() => resolveTx(tx.id, 'confirm')}
@@ -1033,11 +1072,19 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                                   </button>
                                   <button
                                     disabled={isBusy}
-                                    onClick={() => resolveTx(tx.id, 'log_transfer', { vendorName: tx.rawDescription })}
+                                    onClick={() => setCategorizingTxId(tx.id)}
                                     className="btn btn-secondary"
                                     style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
                                   >
-                                    <PlusCircle size={12} /> Log as one-off
+                                    <Tag size={12} /> Add as expense
+                                  </button>
+                                  <button
+                                    disabled={isBusy}
+                                    onClick={() => resolveTx(tx.id, 'log_transfer', { vendorName: tx.rawDescription })}
+                                    className="btn btn-ghost"
+                                    style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
+                                  >
+                                    <PlusCircle size={12} /> Log as transfer
                                   </button>
                                   <button
                                     disabled={isBusy}

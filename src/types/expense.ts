@@ -224,6 +224,7 @@ export interface StatementTransactionItem {
   status: StatementTxStatus;
   matchConfidence?: number | null;
   notes?: string | null;
+  suggestedCategory?: ExpenseCategory | null;
 
   matchedExpenseId?: string | null;
   matchedExpense?: { id: string; name: string; vendor?: string | null; category: ExpenseCategory } | null;

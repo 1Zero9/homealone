@@ -241,6 +241,7 @@ export interface MatchCandidateAlias {
   pattern: string;
   vendorName: string;
   expenseId: string | null;
+  category: string | null;
 }
 
 export interface StatementRowInput {
@@ -257,6 +258,7 @@ export interface MatchResult {
   matchedTransferId?: string | null;
   matchConfidence?: number | null;
   suggestedVendorName?: string | null;
+  suggestedCategory?: string | null;
 }
 
 function daysBetween(a: string, b: string): number {
@@ -329,8 +331,14 @@ export function matchTransaction(
   }
 ): MatchResult {
   const alias = findAliasMatch(tx, context.aliases);
+  const suggestedCategory = alias?.category ?? null;
 
   if (tx.direction === 'DEBIT') {
+    // A learned alias that already points at a specific Expense means the
+    // household has confirmed this exact merchant pattern before — safe to
+    // auto-accept. Everything else below is only ever a *suggestion*: it
+    // always lands as UNMATCHED ("needs review") so nothing gets silently
+    // logged without an explicit confirm/log/ignore from the household.
     if (alias?.expenseId) {
       const expense = context.expenses.find((e) => e.id === alias.expenseId);
       if (expense) {
@@ -339,6 +347,7 @@ export function matchTransaction(
           matchedExpenseId: expense.id,
           matchConfidence: 0.97,
           suggestedVendorName: alias.vendorName,
+          suggestedCategory,
         };
       }
     }
@@ -351,10 +360,11 @@ export function matchTransaction(
 
     if (bestExpense && bestExpense.score >= 0.75) {
       return {
-        status: 'MATCHED',
+        status: 'UNMATCHED',
         matchedExpenseId: bestExpense.id,
         matchConfidence: bestExpense.score,
         suggestedVendorName: alias?.vendorName ?? null,
+        suggestedCategory,
       };
     }
 
@@ -365,7 +375,12 @@ export function matchTransaction(
     }
 
     if (bestTransfer && bestTransfer.score >= 0.75) {
-      return { status: 'MATCHED', matchedTransferId: bestTransfer.id, matchConfidence: bestTransfer.score };
+      return {
+        status: 'UNMATCHED',
+        matchedTransferId: bestTransfer.id,
+        matchConfidence: bestTransfer.score,
+        suggestedCategory,
+      };
     }
 
     if (bestExpense && bestExpense.score >= 0.5) {
@@ -374,22 +389,28 @@ export function matchTransaction(
         matchedExpenseId: bestExpense.id,
         matchConfidence: bestExpense.score,
         suggestedVendorName: alias?.vendorName ?? null,
+        suggestedCategory,
       };
     }
 
-    return { status: 'UNMATCHED', suggestedVendorName: alias?.vendorName ?? null };
+    return { status: 'UNMATCHED', suggestedVendorName: alias?.vendorName ?? null, suggestedCategory };
   }
 
-  // CREDIT rows: only try to recognize as an already-logged transfer (e.g. salary landing).
+  // CREDIT rows: only try to recognize as an already-logged transfer (e.g. salary landing) — a suggestion, never auto-confirmed.
   let bestTransfer: { id: string; score: number } | null = null;
   for (const transfer of context.transfers) {
     const score = scoreTransferMatch(tx, transfer);
     if (!bestTransfer || score > bestTransfer.score) bestTransfer = { id: transfer.id, score };
   }
   if (bestTransfer && bestTransfer.score >= 0.75) {
-    return { status: 'MATCHED', matchedTransferId: bestTransfer.id, matchConfidence: bestTransfer.score };
+    return {
+      status: 'UNMATCHED',
+      matchedTransferId: bestTransfer.id,
+      matchConfidence: bestTransfer.score,
+      suggestedCategory,
+    };
   }
-  return { status: 'UNMATCHED', suggestedVendorName: alias?.vendorName ?? null };
+  return { status: 'UNMATCHED', suggestedVendorName: alias?.vendorName ?? null, suggestedCategory };
 }
 
 /**
