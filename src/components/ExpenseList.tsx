@@ -402,7 +402,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                 </div>
 
                 {/* 2. Tabular Amount */}
-                <div style={{ textAlign: 'right', minWidth: '130px' }}>
+                <div className="ha-ledger-amount" style={{ textAlign: 'right', minWidth: '130px' }}>
                   <div className="tabular-nums" style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
                     {formatCurrency(item.amount, item.currency)}
                     <span style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', fontWeight: 400, marginLeft: '2px' }}>
@@ -417,7 +417,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                 </div>
 
                 {/* 3. Paid/Active Status Toggles & Inline Actions */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '1rem' }}>
+                <div className="ha-ledger-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '1rem' }}>
                   <span
                     className={`ha-badge ${item.isPaidThisCycle ? 'ha-badge-neutral' : overdue ? 'ha-badge-red' : 'ha-badge-blue'}`}
                     style={{ fontSize: '0.68rem', cursor: 'pointer' }}
