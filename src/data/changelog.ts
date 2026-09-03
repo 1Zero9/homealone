@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.14.0';
+export const APP_VERSION = '1.14.1';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.14.1',
+    date: '2026-09-03',
+    changes: [
+      'Fixed the "Money Journey" nav dropdown shifting position instead of staying put under the button.',
+    ],
+  },
   {
     version: '1.14.0',
     date: '2026-09-03',
