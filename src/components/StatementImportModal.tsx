@@ -129,6 +129,14 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     onClose();
   };
 
+  const requestClose = () => {
+    const hasUnsavedData = step === 'map' && (aiRows !== null ? aiRows.length > 0 : rows.length > 0);
+    if (hasUnsavedData && !confirm('Discard this import? The transactions read from your file will be lost.')) {
+      return;
+    }
+    handleClose();
+  };
+
   useEffect(() => {
     if (isOpen && initialImportId && !loadedInitialRef.current) {
       loadedInitialRef.current = true;
@@ -390,7 +398,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   })();
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
+    <div className="modal-overlay" onClick={requestClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: step === 'review' ? '760px' : '540px' }}>
         <div style={{
           display: 'flex',
@@ -409,7 +417,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
               {step === 'review' && (importAccount ? `${importAccount.name}${importAccount.institution ? ` — ${importAccount.institution}` : ''} · Confirm matches, link forgotten payments, or ignore what you don't need.` : 'Confirm matches, link forgotten payments, or ignore what you don\'t need.')}
             </p>
           </div>
-          <button onClick={handleClose} className="btn btn-ghost" style={{ padding: '0.35rem' }}>
+          <button onClick={requestClose} className="btn btn-ghost" style={{ padding: '0.35rem' }}>
             <X size={18} />
           </button>
         </div>

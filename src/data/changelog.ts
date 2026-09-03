@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.17.0';
+export const APP_VERSION = '1.17.1';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.17.1',
+    date: '2026-09-03',
+    changes: [
+      'Fixed the statement import dialog discarding everything it just read from a PDF/photo the instant you clicked outside it — it now asks first if you have unimported transactions on screen.',
+    ],
+  },
   {
     version: '1.17.0',
     date: '2026-09-03',
