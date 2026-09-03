@@ -45,7 +45,7 @@ export const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
               Utilities & essential bills
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--ha-muted)', maxWidth: '600px', marginTop: '0.25rem' }}>
-              Fixed direct debits for electricity, heating, water, fiber broadband and municipal taxes.
+              Fixed direct debits for electricity, heating, water, fibre broadband and municipal taxes.
             </p>
           </div>
 
@@ -166,7 +166,7 @@ export const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
           {[
             { id: 'electricity-gas', name: 'Dual Fuel Power & Gas (€155)' },
-            { id: 'broadband-fiber', name: 'Fiber Broadband (€39.99)' },
+            { id: 'broadband-fiber', name: 'Fibre Broadband (€39.99)' },
             { id: 'water-utility', name: 'Water & Sewerage (€32.50)' },
             { id: 'municipal-tax', name: 'Municipal Tax (€185)' },
             { id: 'home-insurance', name: 'Home Insurance (€26)' },

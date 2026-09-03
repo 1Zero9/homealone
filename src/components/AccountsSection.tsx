@@ -3,7 +3,7 @@ import type { AccountItem } from '../types/expense';
 import { Edit2, Trash2, Plus, Landmark, Eye, EyeOff, Copy, Check, ShieldAlert, Link as LinkIcon } from 'lucide-react';
 
 const TYPE_LABELS: Record<string, string> = {
-  CHECKING: 'Checking',
+  CHECKING: 'Current',
   SAVINGS: 'Savings',
   CREDIT_UNION: 'Credit union',
   CREDIT_CARD: 'Credit card',

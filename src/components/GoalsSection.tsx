@@ -34,7 +34,7 @@ export const GoalsSection: React.FC<GoalsSectionProps> = ({
               Goals
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--ha-muted)', maxWidth: '600px', marginTop: '0.25rem' }}>
-              Emergency funds, deposits, or anything else you&apos;re saving toward.
+              Emergency funds, deposits, or anything else you&apos;re saving towards.
             </p>
           </div>
           <button onClick={onOpenAddModal} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>

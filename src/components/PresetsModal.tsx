@@ -53,7 +53,7 @@ export const PresetsModal: React.FC<PresetsModalProps> = ({
         }}>
           <div>
             <h3 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
-              Preset catalog
+              Preset catalogue
             </h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
               Standard household utilities, streaming and software subscriptions

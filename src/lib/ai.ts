@@ -124,16 +124,16 @@ export async function analyzeMoneyFlow(context: unknown): Promise<MoneyFlowAnaly
   const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
 
   const prompt = `You are a sharp, practical household finance analyst inside the "Tally" app.
-Analyze the JSON data below — this household's real accounts, logged money-transfer history, savings goals, and recurring bills/income — and find concrete opportunities to streamline their money flow.
+Analyse the JSON data below — this household's real accounts, logged money-transfer history, savings goals, and recurring bills/income — and find concrete opportunities to streamline their money flow.
 
 Look specifically for:
 - idle_cash: money sitting in low/no-interest current or savings accounts that could work harder.
 - timing_risk: direct debits / recurring bills that land before income typically arrives in the same account, risking overdraft or late fees.
 - consolidation: overlapping or fragmented accounts that could be simplified (e.g. too many accounts with small balances, or bills spread across many accounts unnecessarily).
-- savings: concrete ways to redirect money toward their savings goals faster, based on actual surplus/idle cash seen in the data.
+- savings: concrete ways to redirect money towards their savings goals faster, based on actual surplus/idle cash seen in the data.
 - general: anything else notable about their money movement worth flagging.
 
-Only use the data provided — do not invent account names, amounts, or dates that aren't in it. If there isn't enough data for a category, skip it rather than guessing. Return at most 5 insights, prioritized by real financial impact.
+Only use the data provided — do not invent account names, amounts, or dates that aren't in it. If there isn't enough data for a category, skip it rather than guessing. Return at most 5 insights, prioritised by real financial impact.
 
 HOUSEHOLD DATA:
 ${JSON.stringify(context)}
@@ -146,12 +146,12 @@ Respond with ONLY valid JSON in this exact shape, no markdown fences:
 
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    throw new Error('Failed to analyze money flow. Please try again.');
+    throw new Error('Failed to analyse money flow. Please try again.');
   }
 
   const parsed = JSON.parse(jsonMatch[0]);
   if (!parsed.summary || !Array.isArray(parsed.insights)) {
-    throw new Error('Failed to analyze money flow. Please try again.');
+    throw new Error('Failed to analyse money flow. Please try again.');
   }
 
   const validTypes: MoneyFlowInsightType[] = ['idle_cash', 'timing_risk', 'consolidation', 'savings', 'general'];

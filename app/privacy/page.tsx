@@ -47,7 +47,7 @@ export default function PrivacyPage() {
       <h3>Financial account & credential data (optional, if you use the Accounts feature)</h3>
       <ul>
         <li>
-          Account metadata: account/institution name, account type (checking, savings, credit
+          Account metadata: account/institution name, account type (current, savings, credit
           union, credit card, PayPal, loan, etc.), currency, and notes.
         </li>
         <li>
@@ -154,7 +154,7 @@ export default function PrivacyPage() {
       <p>
         Some of our subprocessors (for example Google) may process data outside your country of
         residence, including in the United States. Where this occurs, we rely on the
-        subprocessor&apos;s standard contractual clauses or equivalent safeguards recognized under
+        subprocessor&apos;s standard contractual clauses or equivalent safeguards recognised under
         GDPR Chapter V. <span className="ha-placeholder">[Confirm and name the specific transfer mechanism used for each subprocessor.]</span>
       </p>
 

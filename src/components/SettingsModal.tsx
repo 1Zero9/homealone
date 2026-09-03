@@ -46,7 +46,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               Settings & preferences
             </h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
-              Currency, catalog, sharing and backups
+              Currency, catalogue, sharing and backups
             </p>
           </div>
 

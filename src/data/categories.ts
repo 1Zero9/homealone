@@ -22,7 +22,7 @@ export const CATEGORIES: Record<ExpenseCategory, CategoryInfo> = {
   'utilities': {
     id: 'utilities',
     name: 'Home Utilities',
-    description: 'Electricity, Gas/Heating, Water, Fiber Broadband & Mobile bills',
+    description: 'Electricity, Gas/Heating, Water, Fibre Broadband & Mobile bills',
     color: '#1a3299', // Deep Blue
     bgColor: '#eef2fc',
     borderColor: '#d0daf7',

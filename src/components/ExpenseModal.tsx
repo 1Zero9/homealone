@@ -5,6 +5,18 @@ import { PRESETS } from '../data/presets';
 import { CURRENCIES } from '../utils/currencies';
 import { X } from 'lucide-react';
 
+const PAYMENT_METHODS = [
+  'SEPA Direct Debit',
+  'Standing Order',
+  'Debit Card',
+  'Credit Card',
+  'Bank Transfer',
+  'Cash',
+  'PayPal',
+  'Cheque',
+  'Other',
+];
+
 interface ExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -98,17 +110,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleApplyPreset = (presetId: string) => {
-    const preset = PRESETS.find((p) => p.id === presetId);
-    if (!preset) return;
-    setName(preset.name);
-    setAmount(preset.defaultAmount);
-    setBillingCycle(preset.defaultCycle);
-    setCategory(preset.category);
-    setPaymentMethod(preset.defaultPaymentMethod);
-    setNotes(preset.description || '');
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -149,7 +150,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   const currencySymbol = CURRENCIES[currency]?.symbol || '€';
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div style={{
@@ -174,41 +175,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Quick presets strip (only when adding new) */}
-          {!editingExpense && (
-            <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ha-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block', letterSpacing: '0.03em' }}>
-                Quick autofill
-              </label>
-              <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
-                {PRESETS.filter((p) => p.popular).slice(0, 7).map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => handleApplyPreset(preset.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      padding: '0.3rem 0.6rem',
-                      borderRadius: 'var(--ha-radius-sm)',
-                      backgroundColor: '#fafaf7',
-                      border: '1px solid var(--ha-line)',
-                      color: 'var(--ha-ink)',
-                      fontSize: '0.75rem',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    <span className="ha-color-marker" style={{ backgroundColor: preset.color }} />
-                    <span>{preset.name.split(' ')[0]}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Amount first & largest input with visible currency prefix */}
           <div>
             <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
@@ -276,45 +242,18 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
           {/* Category selection */}
           <div>
-            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.4rem' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
               Category
             </label>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-              gap: '0.5rem',
-            }}>
-              {CATEGORY_LIST.map((c) => {
-                const isSelected = category === c.id;
-                return (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setCategory(c.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.6rem 0.75rem',
-                      borderRadius: 'var(--ha-radius-sm)',
-                      border: '1px solid',
-                      borderColor: isSelected ? 'var(--ha-blue)' : 'var(--ha-line)',
-                      backgroundColor: isSelected ? 'var(--ha-blue-light)' : '#fafaf7',
-                      color: isSelected ? 'var(--ha-blue)' : 'var(--ha-ink)',
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <span className="ha-color-marker" style={{ backgroundColor: c.color }} />
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {c.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
+              className="ha-input"
+            >
+              {CATEGORY_LIST.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
           </div>
 
           {/* Member Assignment & Renewal Day */}
@@ -408,13 +347,18 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
                 Payment method
               </label>
-              <input
-                type="text"
-                placeholder="e.g. SEPA Direct Debit, Credit Card, Cash"
+              <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className="ha-input"
-              />
+              >
+                {!PAYMENT_METHODS.includes(paymentMethod) && paymentMethod && (
+                  <option value={paymentMethod}>{paymentMethod}</option>
+                )}
+                {PAYMENT_METHODS.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
             </div>
 
             <div>

@@ -21,7 +21,7 @@ export default function TermsPage() {
 
       <h2>2. What Tally is — and isn&apos;t</h2>
       <p>
-        Tally is a household budgeting and expense-tracking tool that helps you record, organize,
+        Tally is a household budgeting and expense-tracking tool that helps you record, organise,
         and review your household&apos;s expenses and income, and optionally uses AI to answer
         questions about your data or draft vendor emails.
       </p>

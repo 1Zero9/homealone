@@ -4,7 +4,7 @@ import { CURRENCIES } from '../utils/currencies';
 import { X, Lock, ShieldAlert } from 'lucide-react';
 
 const ACCOUNT_TYPES: { id: AccountType; label: string }[] = [
-  { id: 'CHECKING', label: 'Checking' },
+  { id: 'CHECKING', label: 'Current' },
   { id: 'SAVINGS', label: 'Savings' },
   { id: 'CREDIT_UNION', label: 'Credit union' },
   { id: 'CREDIT_CARD', label: 'Credit card' },
@@ -177,7 +177,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
               <input
                 type="text"
                 required
-                placeholder="e.g. Main Checking, Car Loan — XYZ Credit Union"
+                placeholder="e.g. Main Current Account, Car Loan — XYZ Credit Union"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="ha-input"

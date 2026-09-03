@@ -24,8 +24,8 @@ See [`docs/user-guide.md`](./docs/user-guide.md) for a full walkthrough of every
 - **AI & Tech Redundancy Intelligence**: Audits active models and alerts on multi-frontier subscription overlap (e.g. concurrent ChatGPT + Claude subscriptions).
 - **Household Utilities & Contracts**: Direct debit schedules, energy provider rates, and contract expiry tracking.
 - **Upcoming Renewals Schedule**: 31-day renewal calendar with 7-day payment urgency indicators.
-- **Budget Optimization**: Automated analysis calculating annual tier discounts (~16% / 2 months free) and rotation strategies.
-- **Data Portability & Backups**: Preset subscription catalog, CSV spreadsheet export, and full database JSON snapshots.
+- **Budget Optimisation**: Automated analysis calculating annual tier discounts (~16% / 2 months free) and rotation strategies.
+- **Data Portability & Backups**: Preset subscription catalogue, CSV spreadsheet export, and full database JSON snapshots.
 
 ---
 

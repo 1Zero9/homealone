@@ -141,7 +141,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
         </div>
 
         <div style={{ fontSize: '0.8rem', color: 'var(--ha-muted)' }}>
-          Power, heating, water and fiber broadband
+          Power, heating, water and fibre broadband
         </div>
       </div>
     </div>

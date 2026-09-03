@@ -30,10 +30,10 @@ export const MoneyFlowInsights: React.FC = () => {
       if (data.status === 'ok' && data.analysis) {
         setAnalysis(data.analysis);
       } else {
-        setError(data.message || 'Failed to analyze money flow.');
+        setError(data.message || 'Failed to analyse money flow.');
       }
     } catch {
-      setError('Failed to analyze money flow. Please try again.');
+      setError('Failed to analyse money flow. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -55,7 +55,7 @@ export const MoneyFlowInsights: React.FC = () => {
         </div>
         <button onClick={runAnalysis} disabled={loading} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>
           {loading ? <Loader2 size={15} className="ha-spin" /> : <Sparkles size={15} />}
-          <span>{loading ? 'Analyzing…' : analysis ? 'Re-analyze' : 'Analyze my money flow'}</span>
+          <span>{loading ? 'Analysing…' : analysis ? 'Re-analyse' : 'Analyse my money flow'}</span>
         </button>
       </div>
 

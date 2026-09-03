@@ -73,7 +73,7 @@ Supported account types: **Checking, Savings, Credit Union, Credit Card, Debit C
 **Flow** is where you log every real movement of money — the household's transfer ledger. Each entry has a **From** and a **To**:
 
 - **Income landing**: From = *External (income source)*, To = one of your accounts.
-- **Moving money between accounts**: From = one account, To = another account (e.g. sweeping savings into checking).
+- **Moving money between accounts**: From = one account, To = another account (e.g. sweeping savings into current).
 - **Payments and one-off spending**: From = the account paying, To = *External (payment / one-off spend)*. This covers recurring direct debits **and** one-off costs like a car repair, a doctor's visit, or a heating repair — just pick which account paid for it and add a note (e.g. "Car repair", "Netflix DD", "Doctor visit").
 
 You can optionally link a transfer to an existing recurring Expense or Income record, or just use a free-text label for anything ad hoc. Every transfer is dated, so Flow becomes a real, searchable history of where your money actually went — not just a projection.

@@ -111,7 +111,7 @@ export async function POST() {
   } catch (error: unknown) {
     console.error('Money-flow analysis failed:', error);
     return NextResponse.json(
-      { status: 'error', message: getErrorMessage(error, 'Failed to analyze money flow right now') },
+      { status: 'error', message: getErrorMessage(error, 'Failed to analyse money flow right now') },
       { status: 500 }
     );
   }
