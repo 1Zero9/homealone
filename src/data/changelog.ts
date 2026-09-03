@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.9.0';
+export const APP_VERSION = '1.9.1';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.9.1',
+    date: '2026-09-03',
+    changes: [
+      'Tightened up the Add/Edit expense window so it fits on laptop screens with far less scrolling — Save and Cancel now stay pinned in view.',
+    ],
+  },
   {
     version: '1.9.0',
     date: '2026-09-03',

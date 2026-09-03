@@ -197,14 +197,20 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '1.25rem 1.5rem',
+          padding: '0.9rem 1.5rem',
           borderBottom: '1px solid var(--ha-line)',
+          position: 'sticky',
+          top: 0,
+          backgroundColor: 'var(--ha-white)',
+          zIndex: 2,
+          borderTopLeftRadius: 'var(--ha-radius-lg)',
+          borderTopRightRadius: 'var(--ha-radius-lg)',
         }}>
           <div>
-            <h3 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
               {editingExpense ? 'Edit expense' : 'Add expense'}
             </h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
+            <p style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
               {draftExpense && !editingExpense
                 ? 'Review the details read from your screenshot before saving'
                 : 'Record household bill, subscription, college, school or sports cost'}
@@ -216,10 +222,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <form onSubmit={handleSubmit} style={{ padding: '1.1rem 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           {/* Amount first & largest input with visible currency prefix */}
           <div>
-            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.3rem' }}>
               Amount *
             </label>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -305,7 +311,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             alignItems: 'flex-start',
             gap: '0.6rem',
             cursor: 'pointer',
-            padding: '0.75rem',
+            padding: '0.6rem 0.75rem',
             borderRadius: 'var(--ha-radius-sm)',
             border: '1px solid var(--ha-line)',
             backgroundColor: isPending ? '#fdf2e3' : '#fafaf7',
@@ -539,9 +545,16 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             alignItems: 'center',
             justifyContent: 'flex-end',
             gap: '0.75rem',
-            marginTop: '0.5rem',
-            paddingTop: '1rem',
+            marginLeft: '-1.5rem',
+            marginRight: '-1.5rem',
+            padding: '0.85rem 1.5rem',
             borderTop: '1px solid var(--ha-line)',
+            position: 'sticky',
+            bottom: 0,
+            backgroundColor: 'var(--ha-white)',
+            zIndex: 2,
+            borderBottomLeftRadius: 'var(--ha-radius-lg)',
+            borderBottomRightRadius: 'var(--ha-radius-lg)',
           }}>
             <button
               type="button"
