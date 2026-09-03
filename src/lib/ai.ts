@@ -6,9 +6,10 @@ export function isAiConfigured(): boolean {
 
 /**
  * Asks a household-scoped question against a compact JSON context of the
- * household's own expense data. Never sends data for any other household.
+ * household's own expense data, and/or a static guide to how the Tally app
+ * itself works. Never sends data for any other household.
  */
-export async function askAboutHouseholdData(question: string, context: unknown): Promise<string> {
+export async function askAboutHouseholdData(question: string, context: unknown, helpGuide?: unknown): Promise<string> {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) {
     throw new Error('AI assistant is not configured yet. Ask an admin to set GOOGLE_AI_API_KEY.');
@@ -17,13 +18,17 @@ export async function askAboutHouseholdData(question: string, context: unknown):
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
 
-  const prompt = `You are a helpful household finance assistant inside the "Tally" app.
-Answer the user's question using ONLY the JSON data below — it is this household's real income and bill/subscription data.
-Be concise (2-4 sentences unless a list is clearly needed), friendly, and use the currency symbols already present in the data.
-If the data doesn't contain enough information to answer, say so plainly instead of guessing.
+  const prompt = `You are a helpful assistant inside the "Tally" household finance app. Questions fall into two kinds:
+1. Questions about the household's own money (e.g. "what's going out this week", "where can I save") — answer these using ONLY the HOUSEHOLD DATA JSON below, which is this household's real income and bill/subscription data. If the data doesn't contain enough information to answer, say so plainly instead of guessing.
+2. "How do I..." / help questions about using the Tally app itself (e.g. "how do I import a statement", "how do I assign a bill to someone") — answer these using ONLY the HELP GUIDE JSON below, which describes Tally's real features. Do not invent features, buttons or tabs that aren't listed in it.
+
+If a question touches both, answer each part from the right source. Be concise (2-4 sentences unless a short list is clearly needed), friendly, and use the currency symbols already present in the data where relevant.
 
 HOUSEHOLD DATA:
 ${JSON.stringify(context)}
+
+HELP GUIDE:
+${JSON.stringify(helpGuide || [])}
 
 QUESTION: ${question}`;
 

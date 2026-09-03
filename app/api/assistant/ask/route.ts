@@ -5,6 +5,7 @@ import { requireHouseholdUser } from '@/src/lib/auth';
 import { askAboutHouseholdData, isAiConfigured } from '@/src/lib/ai';
 import { getMonthlyEquivalent } from '@/src/utils/calculations';
 import type { BillingCycle } from '@/src/types/expense';
+import { HELP_GUIDE_SECTIONS } from '@/src/data/helpGuide';
 
 export async function POST(request: Request) {
   const auth = await requireHouseholdUser();
@@ -86,7 +87,11 @@ export async function POST(request: Request) {
       },
     };
 
-    const answer = await askAboutHouseholdData(question, context);
+    const helpGuide = HELP_GUIDE_SECTIONS
+      .filter((s) => !s.adminOnly || auth.user.role === 'ADMIN')
+      .map((s) => ({ topic: s.title, details: s.body }));
+
+    const answer = await askAboutHouseholdData(question, context, helpGuide);
 
     return NextResponse.json({ status: 'ok', answer });
   } catch (error: unknown) {

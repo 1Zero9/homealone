@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { CurrencyCode } from '../types/expense';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { getErrorMessage } from '../lib/errors';
-import { Sparkles, Search, Loader2 } from 'lucide-react';
+import { Sparkles, Search, Loader2, HelpCircle } from 'lucide-react';
 
 interface InsightsData {
   monthlyTotal: number;
@@ -38,6 +38,12 @@ const QUICK_ACTIONS: { id: string; label: string }[] = [
   { id: 'month-ahead', label: 'Going out next 30 days' },
   { id: 'save', label: 'Where can I save' },
   { id: 'cashflow', label: 'Money in vs money out' },
+];
+
+const HELP_QUICK_ACTIONS: { id: string; label: string; question: string }[] = [
+  { id: 'help-statement', label: 'How do I import a statement?', question: 'How do I import a bank or credit-card statement?' },
+  { id: 'help-assign', label: 'How do I assign a bill to someone?', question: 'How do I assign a bill to a household member?' },
+  { id: 'help-account', label: 'How do I add an account?', question: 'How do I add an account?' },
 ];
 
 export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = true }) => {
@@ -129,9 +135,8 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
     }
   };
 
-  const handleAsk = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!question.trim() || isLoading) return;
+  const askQuestion = async (text: string) => {
+    if (!text.trim() || isLoading) return;
 
     setIsLoading(true);
     setErrorMessage(null);
@@ -141,18 +146,28 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
       const res = await fetch('/api/assistant/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: question.trim() }),
+        body: JSON.stringify({ question: text.trim() }),
       });
       const data = await res.json();
       if (data.status !== 'ok') {
         throw new Error(data.message || 'Failed to get an answer');
       }
-      setAnswer({ title: question.trim(), lines: [data.answer] });
+      setAnswer({ title: text.trim(), lines: [data.answer] });
     } catch (err: unknown) {
       setErrorMessage(getErrorMessage(err, 'Failed to get an answer'));
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleAsk = (e: React.FormEvent) => {
+    e.preventDefault();
+    askQuestion(question);
+  };
+
+  const runHelpAction = (helpQuestion: string) => {
+    setQuestion(helpQuestion);
+    askQuestion(helpQuestion);
   };
 
   return (
@@ -172,7 +187,7 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
           type="text"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder={hasData ? 'Ask about your household spending...' : 'Add an expense to start asking questions...'}
+          placeholder={hasData ? 'Ask about your spending, or how to use Tally...' : 'Ask how to use Tally...'}
           className="ha-input"
           style={{
             width: '100%',
@@ -186,7 +201,7 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
         )}
       </form>
 
-      <div style={{ display: hasData && isExpanded ? 'flex' : 'none', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginBottom: answer || errorMessage ? '1.25rem' : 0 }}>
+      <div style={{ display: hasData && isExpanded ? 'flex' : 'none', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
         {QUICK_ACTIONS.map((action) => (
           <button
             key={action.id}
@@ -197,6 +212,22 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
             style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}
           >
             <Sparkles size={13} color="var(--ha-blue)" />
+            <span>{action.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: isExpanded ? 'flex' : 'none', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginTop: hasData ? '0.5rem' : 0, marginBottom: answer || errorMessage ? '1.25rem' : 0 }}>
+        {HELP_QUICK_ACTIONS.map((action) => (
+          <button
+            key={action.id}
+            type="button"
+            onClick={() => runHelpAction(action.question)}
+            disabled={isLoading}
+            className="btn btn-secondary"
+            style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}
+          >
+            <HelpCircle size={13} color="var(--ha-muted)" />
             <span>{action.label}</span>
           </button>
         ))}

@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.12.0';
+export const APP_VERSION = '1.13.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.13.0',
+    date: '2026-09-03',
+    changes: [
+      'The "Ask about your spending" box can now answer how-to questions too — try "how do I import a statement" or "how do I assign a bill to someone" alongside your usual spending questions.',
+      'Added quick How do I... buttons under the ask box for common setup questions.',
+    ],
+  },
   {
     version: '1.12.0',
     date: '2026-09-03',
