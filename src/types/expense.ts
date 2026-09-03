@@ -208,6 +208,44 @@ export interface GoalItem {
   updatedAt?: string;
 }
 
+export type StatementTxStatus = 'UNMATCHED' | 'MATCHED' | 'IGNORED';
+export type StatementTxDirection = 'DEBIT' | 'CREDIT';
+
+export interface StatementTransactionItem {
+  id: string;
+  importId: string;
+  date: string;
+  rawDescription: string;
+  normalizedDescription: string;
+  amount: number;
+  currency: CurrencyCode;
+  direction: StatementTxDirection;
+  status: StatementTxStatus;
+  matchConfidence?: number | null;
+  notes?: string | null;
+
+  matchedExpenseId?: string | null;
+  matchedExpense?: { id: string; name: string; vendor?: string | null; category: ExpenseCategory } | null;
+
+  matchedTransferId?: string | null;
+  matchedTransfer?: { id: string; externalLabel?: string | null } | null;
+
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StatementImportSummary {
+  id: string;
+  label: string;
+  fileName?: string | null;
+  createdAt: string;
+  createdBy?: { id: string; name: string; role: UserRole } | null;
+  total: number;
+  matched: number;
+  unmatched: number;
+  ignored: number;
+}
+
 export interface IncomeSummary {
   monthlyTotal: number;
   annualTotal: number;

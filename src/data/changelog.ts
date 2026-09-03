@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.10.0';
+export const APP_VERSION = '1.11.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.11.0',
+    date: '2026-09-03',
+    changes: [
+      'New: import a bank or credit-card statement (CSV) on the Flow tab to cross-check it against your bills — Tally auto-matches what it recognises, flags recurring-but-untracked charges worth checking, and remembers your confirmations so cryptic statement references get recognised automatically next time.',
+    ],
+  },
   {
     version: '1.10.0',
     date: '2026-09-03',

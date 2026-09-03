@@ -25,6 +25,17 @@ enum AccountType {
   OTHER
 }
 
+enum StatementTxStatus {
+  UNMATCHED
+  MATCHED
+  IGNORED
+}
+
+enum StatementTxDirection {
+  DEBIT
+  CREDIT
+}
+
 model Household {
   id         String   @id @default(cuid())
   name       String   @default("Our Household")
@@ -38,6 +49,10 @@ model Household {
   accounts  Account[]
   transfers Transfer[]
   goals     Goal[]
+
+  statementImports      StatementImport[]
+  statementTransactions StatementTransaction[]
+  merchantAliases       MerchantAlias[]
 }
 
 model User {
@@ -59,6 +74,8 @@ model User {
   accountsCreated Account[]
   transfersCreated Transfer[]
   goalsCreated     Goal[]
+
+  statementImportsCreated StatementImport[]
 }
 
 model Session {
@@ -115,6 +132,9 @@ model Expense {
   linkedGoal   Goal?   @relation("ExpenseLinkedGoal", fields: [linkedGoalId], references: [id], onDelete: SetNull)
 
   transfers Transfer[]
+
+  statementTransactions StatementTransaction[]
+  merchantAliases       MerchantAlias[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -234,6 +254,8 @@ model Transfer {
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
+  statementTransactions StatementTransaction[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -269,6 +291,87 @@ model Goal {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([householdId])
+}
+
+/// A single upload of a bank/credit-card statement (CSV), used to cross-check
+/// real-world transactions against the household's tracked Expenses/Transfers
+/// to surface missed bills, forgotten subscriptions, and ad-hoc payments.
+model StatementImport {
+  id       String  @id @default(cuid())
+  label    String
+  fileName String?
+
+  householdId String?
+  household   Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  transactions StatementTransaction[]
+
+  createdAt DateTime @default(now())
+
+  @@index([householdId])
+}
+
+/// A single row from an imported statement, after normalization and an
+/// attempt to automatically match it against existing Expenses/Transfers or
+/// a learned MerchantAlias.
+model StatementTransaction {
+  id                    String                @id @default(cuid())
+  date                  String
+  rawDescription        String
+  normalizedDescription String
+  amount                Float
+  currency              String                @default("EUR")
+  direction             StatementTxDirection  @default(DEBIT)
+  status                StatementTxStatus     @default(UNMATCHED)
+  matchConfidence       Float?
+  notes                 String?
+
+  importId String
+  import   StatementImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  householdId String?
+  household   Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  matchedExpenseId String?
+  matchedExpense   Expense? @relation(fields: [matchedExpenseId], references: [id], onDelete: SetNull)
+
+  matchedTransferId String?
+  matchedTransfer   Transfer? @relation(fields: [matchedTransferId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([householdId])
+  @@index([importId])
+  @@index([matchedExpenseId])
+  @@index([matchedTransferId])
+  @@index([status])
+}
+
+/// A learned association between a normalized statement-description pattern
+/// and a real vendor/expense, built up as the household confirms matches —
+/// so cryptic statement references get recognized automatically next time.
+model MerchantAlias {
+  id         String   @id @default(cuid())
+  pattern    String
+  vendorName String
+  category   String?
+  matchCount Int      @default(1)
+
+  householdId String?
+  household   Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  expenseId String?
+  expense   Expense? @relation(fields: [expenseId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([householdId, pattern])
   @@index([householdId])
 }
 

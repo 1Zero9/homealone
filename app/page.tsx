@@ -36,6 +36,7 @@ import { AccountModal } from '@/src/components/AccountModal';
 import { MoneyMap } from '@/src/components/MoneyMap';
 import { TransfersSection } from '@/src/components/TransfersSection';
 import { TransferModal } from '@/src/components/TransferModal';
+import { StatementsSection } from '@/src/components/StatementsSection';
 import { GoalsSection } from '@/src/components/GoalsSection';
 import { GoalModal } from '@/src/components/GoalModal';
 import { PrivacyBlurOverlay } from '@/src/components/PrivacyBlurOverlay';
@@ -1057,18 +1058,21 @@ export default function TallyPage() {
         )}
 
         {activeTab === 'flow' && (
-          <TransfersSection
-            transfers={transfers}
-            onEditTransfer={(item) => {
-              setEditingTransfer(item);
-              setIsTransferModalOpen(true);
-            }}
-            onDeleteTransfer={handleDeleteTransfer}
-            onOpenAddModal={() => {
-              setEditingTransfer(null);
-              setIsTransferModalOpen(true);
-            }}
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+            <StatementsSection expenses={liveExpenses} householdCurrency={currency} />
+            <TransfersSection
+              transfers={transfers}
+              onEditTransfer={(item) => {
+                setEditingTransfer(item);
+                setIsTransferModalOpen(true);
+              }}
+              onDeleteTransfer={handleDeleteTransfer}
+              onOpenAddModal={() => {
+                setEditingTransfer(null);
+                setIsTransferModalOpen(true);
+              }}
+            />
+          </div>
         )}
 
         {activeTab === 'goals' && (
