@@ -231,6 +231,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 onChange={(e) => setBillingCycle(e.target.value as BillingCycle)}
                 className="ha-input"
               >
+                <option value="once">One-off (single payment)</option>
                 <option value="monthly">Monthly</option>
                 <option value="termly">Termly (3 terms/year)</option>
                 <option value="annual">Annual</option>
@@ -280,7 +281,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
             <div>
               <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
-                Next due date
+                {billingCycle === 'once' ? 'Payment date' : 'Next due date'}
               </label>
               <input
                 type="date"
@@ -312,37 +313,39 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   onChange={(e) => setIsPaidThisCycle(e.target.checked)}
                 />
                 <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
-                  Paid this cycle
+                  {billingCycle === 'once' ? 'Paid' : 'Paid this cycle'}
                 </span>
               </label>
             )}
 
-            <label style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              cursor: 'pointer',
-              padding: '0.6rem 0.75rem',
-              borderRadius: 'var(--ha-radius-sm)',
-              border: '1px solid var(--ha-line)',
-              backgroundColor: isVariable ? 'var(--ha-blue-light)' : '#fafaf7',
-              width: 'fit-content',
-            }}
-              title="For bills that change each cycle, like electric, gas or shopping — lets you quickly update just the amount from the ledger"
-            >
-              <input
-                type="checkbox"
-                checked={isVariable}
-                onChange={(e) => setIsVariable(e.target.checked)}
-              />
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
-                This amount varies each cycle
-              </span>
-            </label>
+            {billingCycle !== 'once' && (
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                cursor: 'pointer',
+                padding: '0.6rem 0.75rem',
+                borderRadius: 'var(--ha-radius-sm)',
+                border: '1px solid var(--ha-line)',
+                backgroundColor: isVariable ? 'var(--ha-blue-light)' : '#fafaf7',
+                width: 'fit-content',
+              }}
+                title="For bills that change each cycle, like electric, gas or shopping — lets you quickly update just the amount from the ledger"
+              >
+                <input
+                  type="checkbox"
+                  checked={isVariable}
+                  onChange={(e) => setIsVariable(e.target.checked)}
+                />
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                  This amount varies each cycle
+                </span>
+              </label>
+            )}
           </div>
 
           {/* Payment Method & Contract End Date */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: billingCycle === 'once' ? '1fr' : '1.4fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
                 Payment method
@@ -361,18 +364,20 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               </select>
             </div>
 
-            <div>
-              <label style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', display: 'block', marginBottom: '0.35rem' }}>
-                Contract end date (optional)
-              </label>
-              <input
-                type="date"
-                value={contractEndDate}
-                onChange={(e) => setContractEndDate(e.target.value)}
-                className="ha-input"
-                style={{ fontSize: '0.82rem' }}
-              />
-            </div>
+            {billingCycle !== 'once' && (
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', display: 'block', marginBottom: '0.35rem' }}>
+                  Contract end date (optional)
+                </label>
+                <input
+                  type="date"
+                  value={contractEndDate}
+                  onChange={(e) => setContractEndDate(e.target.value)}
+                  className="ha-input"
+                  style={{ fontSize: '0.82rem' }}
+                />
+              </div>
+            )}
           </div>
 
           {accounts.length > 0 && (

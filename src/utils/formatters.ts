@@ -49,6 +49,8 @@ export function formatCycleTitle(cycle: BillingCycle): string {
       return 'Quarterly';
     case 'weekly':
       return 'Weekly';
+    case 'once':
+      return 'One-off';
     default:
       return cycle;
   }
@@ -61,6 +63,9 @@ export function formatRenewalCountdown(days: number): {
   text: string;
   urgency: 'critical' | 'warning' | 'normal' | 'distant';
 } {
+  if (days < 0) {
+    return { text: 'Overdue', urgency: 'critical' };
+  }
   if (days === 0) {
     return { text: 'Due today', urgency: 'critical' };
   }

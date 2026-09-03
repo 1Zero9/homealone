@@ -18,7 +18,7 @@ export const UpcomingRenewals: React.FC<UpcomingRenewalsProps> = ({
   const activeItems = expenses.filter((e) => e.isActive);
 
   const sortedRenewals = activeItems.map((item) => {
-    const daysLeft = getDaysUntilRenewal(item.nextRenewalDate || `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${item.renewalDay}`);
+    const daysLeft = getDaysUntilRenewal(item.nextRenewalDate || `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${item.renewalDay}`, item.billingCycle);
     return {
       ...item,
       daysLeft,

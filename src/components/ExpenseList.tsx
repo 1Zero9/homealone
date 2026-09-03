@@ -404,7 +404,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                       {formatBillingCycle(item.billingCycle)}
                     </span>
                   </div>
-                  {item.billingCycle !== 'monthly' && (
+                  {item.billingCycle !== 'monthly' && item.billingCycle !== 'once' && (
                     <div className="tabular-nums" style={{ fontSize: '0.72rem', color: 'var(--ha-muted)' }}>
                       ≈ {formatCurrency(monthlyAmount, currency)}/mo
                     </div>

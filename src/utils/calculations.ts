@@ -7,6 +7,10 @@ import { CATEGORIES } from '../data/categories';
  */
 export function getMonthlyEquivalent(amount: number, cycle: ExpenseItem['billingCycle']): number {
   switch (cycle) {
+    case 'once':
+      // A single one-off payment isn't a recurring monthly commitment,
+      // so it's excluded from the recurring monthly/annual run-rate.
+      return 0;
     case 'weekly':
       return (amount * 52) / 12;
     case 'monthly':
@@ -153,7 +157,7 @@ export function calculateIncomeSummary(
 /**
  * Calculates days remaining until the next renewal.
  */
-export function getDaysUntilRenewal(renewalDateStr: string): number {
+export function getDaysUntilRenewal(renewalDateStr: string, cycle?: ExpenseItem['billingCycle']): number {
   if (!renewalDateStr) return 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -161,6 +165,14 @@ export function getDaysUntilRenewal(renewalDateStr: string): number {
   const [year, month, day] = renewalDateStr.split('-').map(Number);
   let renewal = new Date(year, month - 1, day);
   renewal.setHours(0, 0, 0, 0);
+
+  // One-off payments have a fixed date that never recurs, so if it's in
+  // the past we report the real (negative) day count instead of rolling
+  // it forward to a fictional future month.
+  if (cycle === 'once') {
+    const diffTime = renewal.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
 
   // If renewal date is in the past, roll forward to next month/cycle
   if (renewal < today) {

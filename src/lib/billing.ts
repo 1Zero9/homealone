@@ -25,6 +25,9 @@ export function advanceByCycle(dateStr: string, cycle: BillingCycle): string {
   let next: Date;
 
   switch (cycle) {
+    case 'once':
+      // One-off payments never recur — leave the date as-is.
+      return dateStr;
     case 'weekly':
       next = new Date(current.getFullYear(), current.getMonth(), current.getDate() + 7);
       break;
@@ -65,6 +68,14 @@ export interface RolloverResult {
  */
 export function rolloverIfDue(item: RolloverInput): RolloverResult {
   let { nextRenewalDate, isPaidThisCycle } = item;
+
+  // One-off payments don't recur, so they should never roll forward —
+  // once the date passes it just sits there as overdue/unpaid until the
+  // user marks it paid or deletes it.
+  if (item.billingCycle === 'once') {
+    return { changed: false, nextRenewalDate, isPaidThisCycle };
+  }
+
   const t = today();
   let changed = false;
   let guard = 0;

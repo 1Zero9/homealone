@@ -29,7 +29,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   const netAfterBills = incomeSummary.monthlyTotal - summary.monthlyTotal;
 
   const renewals = activeExpenses.map((item) => {
-    const daysLeft = getDaysUntilRenewal(item.nextRenewalDate || `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${item.renewalDay}`);
+    const daysLeft = getDaysUntilRenewal(item.nextRenewalDate || `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${item.renewalDay}`, item.billingCycle);
     return { ...item, daysLeft, urgencyInfo: formatRenewalCountdown(daysLeft) };
   }).sort((a, b) => a.daysLeft - b.daysLeft);
 

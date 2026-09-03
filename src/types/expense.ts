@@ -9,7 +9,7 @@ export type ExpenseCategory =
 
 export type IncomeCategory = 'salary' | 'freelance' | 'rental' | 'benefits' | 'other';
 
-export type BillingCycle = 'monthly' | 'annual' | 'quarterly' | 'weekly' | 'termly';
+export type BillingCycle = 'monthly' | 'annual' | 'quarterly' | 'weekly' | 'termly' | 'once';
 
 export type CurrencyCode = 'EUR' | 'GBP' | 'USD' | 'CAD' | 'AUD' | 'JPY';
 
