@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { X, ScanLine, Upload, CheckCircle2, Sparkles } from 'lucide-react';
+import { X, ScanLine, Upload, CheckCircle2, Sparkles, ArrowRightLeft, Loader2 } from 'lucide-react';
 import type { ExpenseItem, ExpenseCategory, BillingCycle, CurrencyCode } from '../types/expense';
 import { CATEGORIES } from '../data/categories';
 import { formatCurrency } from '../utils/formatters';
@@ -22,6 +22,15 @@ interface ScanReceiptModalProps {
   onUseMatch: (mergedExpense: ExpenseItem) => void;
   onUseNew: (draft: Partial<ExpenseItem>) => void;
   initialImage?: { dataUrl: string; base64: string; mimeType: string } | null;
+  householdCurrency?: CurrencyCode;
+}
+
+interface ConversionResult {
+  from: CurrencyCode;
+  to: CurrencyCode;
+  rate: number;
+  date: string;
+  convertedAmount: number;
 }
 
 const VALID_CATEGORIES: ExpenseCategory[] = ['entertainment', 'ai-tech', 'utilities', 'housing', 'education', 'lifestyle', 'shopping', 'big-ticket'];
@@ -33,12 +42,17 @@ export const ScanReceiptModal: React.FC<ScanReceiptModalProps> = ({
   onUseMatch,
   onUseNew,
   initialImage,
+  householdCurrency = 'EUR',
 }) => {
   const [image, setImage] = useState<{ dataUrl: string; base64: string; mimeType: string } | null>(initialImage || null);
   const [isDragging, setIsDragging] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ extracted: ReceiptScanResult; matchedExpense: ExpenseItem | null } | null>(null);
+  const [conversion, setConversion] = useState<ConversionResult | null>(null);
+  const [isConverting, setIsConverting] = useState(false);
+  const [conversionError, setConversionError] = useState('');
+  const [useConverted, setUseConverted] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scannedRef = useRef(false);
 
@@ -47,6 +61,10 @@ export const ScanReceiptModal: React.FC<ScanReceiptModalProps> = ({
     setIsScanning(false);
     setError('');
     setResult(null);
+    setConversion(null);
+    setIsConverting(false);
+    setConversionError('');
+    setUseConverted(true);
     scannedRef.current = false;
   }, []);
 
@@ -71,10 +89,49 @@ export const ScanReceiptModal: React.FC<ScanReceiptModalProps> = ({
         return;
       }
       setResult({ extracted: data.extracted, matchedExpense: data.matchedExpense });
+      setConversion(null);
+      setConversionError('');
+      setUseConverted(true);
+
+      const detectedCurrency = data.extracted?.currency as CurrencyCode | null;
+      if (
+        detectedCurrency &&
+        VALID_CURRENCIES.includes(detectedCurrency) &&
+        detectedCurrency !== householdCurrency &&
+        typeof data.extracted?.amount === 'number'
+      ) {
+        void convertAmount(detectedCurrency, householdCurrency, data.extracted.amount);
+      }
     } catch {
       setError('Failed to read that image. Please try again.');
     } finally {
       setIsScanning(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [householdCurrency]);
+
+  const convertAmount = useCallback(async (from: CurrencyCode, to: CurrencyCode, amount: number) => {
+    setIsConverting(true);
+    setConversionError('');
+    try {
+      const res = await fetch(`/api/exchange-rate?from=${from}&to=${to}`);
+      const data = await res.json();
+      if (data.status !== 'ok') {
+        setConversionError(data.message || 'Could not fetch a live rate.');
+        return;
+      }
+      setConversion({
+        from,
+        to,
+        rate: data.rate,
+        date: data.date,
+        convertedAmount: Math.round(amount * data.rate * 100) / 100,
+      });
+      setUseConverted(true);
+    } catch {
+      setConversionError('Could not fetch a live rate. Try again in a moment.');
+    } finally {
+      setIsConverting(false);
     }
   }, []);
 
@@ -111,14 +168,20 @@ export const ScanReceiptModal: React.FC<ScanReceiptModalProps> = ({
     if (file) loadFile(file);
   };
 
+  const applyConversion = useConverted && conversion;
+
   const handleUseMatch = () => {
     if (!result?.matchedExpense) return;
     const { extracted, matchedExpense } = result;
     onUseMatch({
       ...matchedExpense,
       vendor: matchedExpense.vendor || extracted.vendor,
-      amount: extracted.amount ?? matchedExpense.amount,
-      currency: (extracted.currency as CurrencyCode) && VALID_CURRENCIES.includes(extracted.currency as CurrencyCode)
+      amount: applyConversion
+        ? conversion.convertedAmount
+        : extracted.amount ?? matchedExpense.amount,
+      currency: applyConversion
+        ? conversion.to
+        : (extracted.currency as CurrencyCode) && VALID_CURRENCIES.includes(extracted.currency as CurrencyCode)
         ? (extracted.currency as CurrencyCode)
         : matchedExpense.currency,
       nextRenewalDate: extracted.date || matchedExpense.nextRenewalDate,
@@ -133,8 +196,10 @@ export const ScanReceiptModal: React.FC<ScanReceiptModalProps> = ({
     onUseNew({
       name: extracted.vendor,
       vendor: extracted.vendor,
-      amount: extracted.amount ?? undefined,
-      currency: VALID_CURRENCIES.includes(extracted.currency as CurrencyCode) ? (extracted.currency as CurrencyCode) : 'EUR',
+      amount: applyConversion ? conversion.convertedAmount : extracted.amount ?? undefined,
+      currency: applyConversion
+        ? conversion.to
+        : VALID_CURRENCIES.includes(extracted.currency as CurrencyCode) ? (extracted.currency as CurrencyCode) : 'EUR',
       billingCycle: extracted.billingCycleGuess || 'monthly',
       category: VALID_CATEGORIES.includes(extracted.categoryGuess as ExpenseCategory) ? (extracted.categoryGuess as ExpenseCategory) : 'utilities',
       nextRenewalDate: extracted.date || undefined,
@@ -261,6 +326,69 @@ export const ScanReceiptModal: React.FC<ScanReceiptModalProps> = ({
                 <span>{result.extracted.isPaid ? 'Detected as already paid' : 'Detected as not yet paid'}</span>
                 {result.extracted.notes && <span style={{ fontStyle: 'italic' }}>{result.extracted.notes}</span>}
               </div>
+
+              {result.extracted.amount != null &&
+                VALID_CURRENCIES.includes(result.extracted.currency as CurrencyCode) &&
+                (result.extracted.currency as CurrencyCode) !== householdCurrency && (
+                <div style={{
+                  marginBottom: '0.85rem',
+                  padding: '0.65rem 0.75rem',
+                  borderRadius: 'var(--ha-radius-sm)',
+                  backgroundColor: '#fdf2e3',
+                  border: '1px solid #f6dfb8',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#7C4A0B' }}>
+                    <ArrowRightLeft size={14} color="#B45309" style={{ flexShrink: 0 }} />
+                    <span style={{ fontWeight: 600 }}>
+                      Detected in {result.extracted.currency} — your household uses {householdCurrency}
+                    </span>
+                  </div>
+
+                  {isConverting && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: '#7C4A0B', marginTop: '0.5rem' }}>
+                      <Loader2 size={13} className="spin" />
+                      Fetching live exchange rate…
+                    </div>
+                  )}
+
+                  {!isConverting && conversion && conversion.from === result.extracted.currency && (
+                    <>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--ha-ink)', marginTop: '0.5rem' }}>
+                        ≈ <strong>{formatCurrency(conversion.convertedAmount, conversion.to)}</strong>
+                        <span style={{ color: '#7C4A0B', fontWeight: 400 }}>
+                          {' '}(1 {conversion.from} = {conversion.rate.toFixed(4)} {conversion.to}, ECB rate {conversion.date})
+                        </span>
+                      </div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: '#7C4A0B', marginTop: '0.4rem', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={useConverted}
+                          onChange={(e) => setUseConverted(e.target.checked)}
+                        />
+                        Use converted amount
+                      </label>
+                    </>
+                  )}
+
+                  {!isConverting && conversionError && (
+                    <div style={{ fontSize: '0.78rem', color: 'var(--ha-red)', marginTop: '0.5rem' }}>
+                      {conversionError}
+                    </div>
+                  )}
+
+                  {!isConverting && (!conversion || conversion.from !== result.extracted.currency) && (
+                    <button
+                      type="button"
+                      onClick={() => convertAmount(result.extracted.currency as CurrencyCode, householdCurrency, result.extracted.amount!)}
+                      className="btn btn-secondary"
+                      style={{ fontSize: '0.78rem', padding: '0.4rem 0.7rem', marginTop: '0.5rem' }}
+                    >
+                      <ArrowRightLeft size={12} />
+                      Convert to {householdCurrency} (live rate)
+                    </button>
+                  )}
+                </div>
+              )}
 
               {result.matchedExpense ? (
                 <button onClick={handleUseMatch} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>

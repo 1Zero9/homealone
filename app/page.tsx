@@ -1212,6 +1212,7 @@ export default function TallyPage() {
           setScanInitialImage(null);
         }}
         initialImage={scanInitialImage}
+        householdCurrency={currency}
         onUseMatch={(mergedExpense) => {
           setDraftExpense(null);
           setInitialPresetId(null);

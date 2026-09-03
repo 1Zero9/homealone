@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.9.2';
+export const APP_VERSION = '1.10.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.10.0',
+    date: '2026-09-03',
+    changes: [
+      'Scanning a bill in a foreign currency now offers a one-click live conversion to your household currency, using daily ECB exchange rates.',
+    ],
+  },
   {
     version: '1.9.2',
     date: '2026-09-03',
