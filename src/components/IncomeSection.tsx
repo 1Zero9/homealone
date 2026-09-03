@@ -1,7 +1,7 @@
 import React from 'react';
 import type { IncomeItem, CurrencyCode } from '../types/expense';
-import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
-import { formatCurrency, formatBillingCycle } from '../utils/formatters';
+import { convertCurrency, getMonthlyEquivalent, getDaysUntilRenewal } from '../utils/calculations';
+import { formatCurrency, formatBillingCycle, formatDate } from '../utils/formatters';
 import { Edit2, Trash2, Plus, Wallet, User } from 'lucide-react';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -121,11 +121,25 @@ export const IncomeSection: React.FC<IncomeSectionProps> = ({
                           </span>
                         )}
                       </div>
-                      {item.notes && (
-                        <div style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
-                          {item.notes}
-                        </div>
-                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '2px' }}>
+                        {item.nextPayDate && (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--ha-muted)' }}>
+                            Next pay {formatDate(item.nextPayDate)}
+                            {(() => {
+                              const days = getDaysUntilRenewal(item.nextPayDate!, item.frequency);
+                              if (days === 0) return ' — today';
+                              if (days === 1) return ' — tomorrow';
+                              if (days > 0) return ` — in ${days} days`;
+                              return '';
+                            })()}
+                          </span>
+                        )}
+                        {item.notes && (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--ha-muted)' }}>
+                            {item.nextPayDate ? '• ' : ''}{item.notes}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 

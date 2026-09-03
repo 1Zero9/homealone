@@ -753,7 +753,7 @@ export default function TallyPage() {
         style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
       >
       {/* Main Container Content */}
-      <main style={{
+      <main className="ha-main" style={{
         maxWidth: '1280px',
         width: '100%',
         margin: '0 auto',
@@ -761,7 +761,7 @@ export default function TallyPage() {
         flex: 1,
       }}>
         {/* Ask Bar — the "Google box" for this household's spending */}
-        <div style={{ padding: hasData ? '0.5rem 0 2rem' : '3rem 0 2.5rem' }}>
+        <div className="ha-ask-wrap" style={{ padding: hasData ? '0.5rem 0 2rem' : '3rem 0 2.5rem' }}>
           <h2 style={{
             textAlign: 'center',
             fontFamily: 'var(--ha-font-display)',
@@ -801,6 +801,11 @@ export default function TallyPage() {
               setEditingIncome(null);
               setIsIncomeModalOpen(true);
             }}
+            onViewAllSpending={() => {
+              setSelectedCategory(null);
+              setActiveTab('all');
+            }}
+            onViewAllBills={() => setActiveTab('calendar')}
           />
         )}
 

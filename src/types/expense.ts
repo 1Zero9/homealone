@@ -86,6 +86,7 @@ export interface IncomeItem {
   amount: number;
   currency: CurrencyCode;
   frequency: BillingCycle;
+  nextPayDate?: string;
   category: IncomeCategory;
   isActive: boolean;
   notes?: string;

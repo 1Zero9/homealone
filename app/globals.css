@@ -494,6 +494,11 @@ input:checked + .slider:before {
   align-items: start;
 }
 
+/* Mobile-only segmented tabs for switching between Overview panels */
+.ha-overview-mobile-tabs {
+  display: none;
+}
+
 /* Mobile & Responsive Utilities */
 .mobile-menu-btn {
   display: none;
@@ -546,5 +551,62 @@ input:checked + .slider:before {
 
   .ha-overview-grid {
     grid-template-columns: 1fr !important;
+  }
+
+  /* Segmented tabs replace the stacked 3-card layout — one panel visible at a time */
+  .ha-overview-mobile-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+  }
+
+  .ha-overview-mobile-tabs .ha-chip {
+    flex-shrink: 0;
+  }
+
+  .ha-overview-right {
+    display: contents;
+  }
+
+  .ha-overview-panel-recent,
+  .ha-overview-panel-spending,
+  .ha-overview-panel-bills {
+    display: none;
+  }
+
+  .ha-overview-panel-recent.active,
+  .ha-overview-panel-spending.active,
+  .ha-overview-panel-bills.active {
+    display: block;
+  }
+
+  /* Stat cards become a swipeable horizontal row instead of 3 stacked full-width cards */
+  .ha-stat-row {
+    display: flex !important;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 0.25rem;
+    margin-bottom: 1rem !important;
+  }
+
+  .ha-stat-row > div {
+    flex: 0 0 80%;
+    scroll-snap-align: start;
+  }
+
+  /* Only show the first 4 "Recently added" rows on mobile — View all links to the full list */
+  .ha-recent-list > div:nth-child(n+5) {
+    display: none;
+  }
+
+  .ha-main {
+    padding: 1rem !important;
+  }
+
+  .ha-ask-wrap {
+    padding-top: 0.25rem !important;
+    padding-bottom: 1.25rem !important;
   }
 }

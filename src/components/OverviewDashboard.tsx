@@ -13,7 +13,11 @@ interface OverviewDashboardProps {
   onEditExpense: (item: ExpenseItem) => void;
   onFilterCategory: (category: string) => void;
   onOpenAddIncome: () => void;
+  onViewAllSpending: () => void;
+  onViewAllBills: () => void;
 }
+
+type MobilePanel = 'recent' | 'spending' | 'bills';
 
 export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   expenses,
@@ -23,7 +27,10 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   onEditExpense,
   onFilterCategory,
   onOpenAddIncome,
+  onViewAllSpending,
+  onViewAllBills,
 }) => {
+  const [mobilePanel, setMobilePanel] = React.useState<MobilePanel>('recent');
   const activeExpenses = expenses.filter((e) => e.isActive);
   const hasIncome = incomeSummary.monthlyTotal > 0;
   const netAfterBills = incomeSummary.monthlyTotal - summary.monthlyTotal;
@@ -74,7 +81,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   return (
     <div>
       {/* Stat Cards */}
-      <div style={{
+      <div className="ha-stat-row" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
         gap: '1rem',
@@ -135,17 +142,55 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
         </div>
       </div>
 
+      {/* Mobile-only segmented tabs — lets each section below be viewed one at a time instead of one long stack */}
+      <div className="ha-overview-mobile-tabs">
+        <button
+          onClick={() => setMobilePanel('recent')}
+          className={`ha-chip${mobilePanel === 'recent' ? ' active' : ''}`}
+        >
+          Recently added
+        </button>
+        <button
+          onClick={() => setMobilePanel('spending')}
+          className={`ha-chip${mobilePanel === 'spending' ? ' active' : ''}`}
+        >
+          Spending
+        </button>
+        <button
+          onClick={() => setMobilePanel('bills')}
+          className={`ha-chip${mobilePanel === 'bills' ? ' active' : ''}`}
+        >
+          Upcoming bills
+        </button>
+      </div>
+
       {/* 2-Column Layout */}
       <div className="ha-overview-grid">
         {/* Left: Recently added */}
-        <div className="ha-card" style={{ overflow: 'hidden' }}>
-          <div style={{ padding: '1.1rem 1.4rem', borderBottom: '1px solid var(--ha-line)' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
-              Recently added
-            </h3>
+        <div
+          className={`ha-card ha-overview-panel-recent${mobilePanel === 'recent' ? ' active' : ''}`}
+          style={{ overflow: 'hidden' }}
+        >
+          <div style={{ padding: '1.1rem 1.4rem', borderBottom: '1px solid var(--ha-line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
+                Recently added
+              </h3>
+              <p style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
+                Showing {recentlyAdded.length} of {activeExpenses.length} active — Spending has the full list
+              </p>
+            </div>
+            <button
+              onClick={onViewAllSpending}
+              className="btn btn-ghost"
+              style={{ fontSize: '0.78rem', padding: '0.3rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem', flexShrink: 0 }}
+            >
+              View all
+              <ArrowRight size={13} />
+            </button>
           </div>
           {recentlyAdded.length > 0 ? (
-            <div>
+            <div className="ha-recent-list">
               {recentlyAdded.map((item) => {
                 const overdue = !item.isPaidThisCycle && item.daysLeft < 0;
                 return (
@@ -197,8 +242,11 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
         </div>
 
         {/* Right: Donut chart + Upcoming bills */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="ha-card" style={{ padding: '1.4rem' }}>
+        <div className="ha-overview-right" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div
+            className={`ha-card ha-overview-panel-spending${mobilePanel === 'spending' ? ' active' : ''}`}
+            style={{ padding: '1.4rem' }}
+          >
             <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--ha-ink)', marginBottom: '1.1rem' }}>
               Spending this month
             </h3>
@@ -261,6 +309,14 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                       </button>
                     );
                   })}
+                  {categoryData.length > 5 && (
+                    <button
+                      onClick={onViewAllSpending}
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', fontSize: '0.75rem', color: 'var(--ha-muted)', marginTop: '0.15rem' }}
+                    >
+                      +{categoryData.length - 5} more categories — view all in Spending
+                    </button>
+                  )}
                 </div>
               </>
             ) : (
@@ -270,13 +326,38 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
             )}
           </div>
 
-          <div className="ha-card" style={{ overflow: 'hidden' }}>
-            <div style={{ padding: '1.1rem 1.4rem', borderBottom: '1px solid var(--ha-line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
-                Upcoming bills
-              </h3>
+          <div
+            className={`ha-card ha-overview-panel-bills${mobilePanel === 'bills' ? ' active' : ''}`}
+            style={{ overflow: 'hidden' }}
+          >
+            <button
+              onClick={onViewAllBills}
+              style={{
+                width: '100%',
+                padding: '1.1rem 1.4rem',
+                borderBottom: '1px solid var(--ha-line)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'none',
+                border: 'none',
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
+                borderBottomColor: 'var(--ha-line)',
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <div>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
+                  Upcoming bills
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
+                  Unpaid only — see Bills for everything
+                </p>
+              </div>
               <ArrowRight size={15} color="var(--ha-muted)" />
-            </div>
+            </button>
             {upcomingBills.length > 0 ? (
               <div>
                 {upcomingBills.map((item) => (

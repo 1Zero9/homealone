@@ -34,6 +34,7 @@ export const IncomeModal: React.FC<IncomeModalProps> = ({
   const [amount, setAmount] = useState<number | string>('');
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [frequency, setFrequency] = useState<BillingCycle>('monthly');
+  const [nextPayDate, setNextPayDate] = useState('');
   const [category, setCategory] = useState<IncomeCategory>('salary');
   const [assignedUserId, setAssignedUserId] = useState<string>('');
   const [notes, setNotes] = useState('');
@@ -45,6 +46,7 @@ export const IncomeModal: React.FC<IncomeModalProps> = ({
       setAmount(editingIncome.amount);
       setCurrency(editingIncome.currency || 'EUR');
       setFrequency(editingIncome.frequency);
+      setNextPayDate(editingIncome.nextPayDate || new Date().toISOString().split('T')[0]);
       setCategory(editingIncome.category);
       setAssignedUserId(editingIncome.createdById || currentUserId || '');
       setNotes(editingIncome.notes || '');
@@ -54,6 +56,7 @@ export const IncomeModal: React.FC<IncomeModalProps> = ({
       setAmount('');
       setCurrency('EUR');
       setFrequency('monthly');
+      setNextPayDate(new Date().toISOString().split('T')[0]);
       setCategory('salary');
       setAssignedUserId(currentUserId || '');
       setNotes('');
@@ -74,6 +77,7 @@ export const IncomeModal: React.FC<IncomeModalProps> = ({
         amount: numAmount,
         currency,
         frequency,
+        nextPayDate: nextPayDate || new Date().toISOString().split('T')[0],
         category,
         isActive: true,
         notes: notes.trim(),
@@ -172,6 +176,22 @@ export const IncomeModal: React.FC<IncomeModalProps> = ({
                 <option value="annual">Annual</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
+              Next pay date *
+            </label>
+            <input
+              type="date"
+              required
+              value={nextPayDate}
+              onChange={(e) => setNextPayDate(e.target.value)}
+              className="ha-input tabular-nums"
+            />
+            <p style={{ fontSize: '0.72rem', color: 'var(--ha-muted)', marginTop: '0.3rem' }}>
+              Sets the day of the {frequency === 'weekly' ? 'week' : frequency === 'monthly' ? 'month' : 'cycle'} this repeats on — Tally rolls it forward automatically.
+            </p>
           </div>
 
           <div>

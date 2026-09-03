@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getErrorMessage } from '@/src/lib/errors';
 import { requireHouseholdUser } from '@/src/lib/auth';
+import { advanceByCycle } from '@/src/lib/billing';
+import type { BillingCycle } from '@/src/types/expense';
 
 export async function GET() {
   const auth = await requireHouseholdUser();
@@ -21,9 +23,45 @@ export async function GET() {
       },
     });
 
+    // Lazily roll forward any income whose next pay date has passed — same
+    // approach as expense rollover, just without a "paid" flag to reset.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const results = await Promise.all(
+      incomes.map(async (income) => {
+        if (!income.nextPayDate || income.frequency === 'once') return income;
+
+        let nextPayDate = income.nextPayDate;
+        let changed = false;
+        let guard = 0;
+        const [y, m, d] = nextPayDate.split('-').map(Number);
+        let dueDate = new Date(y, (m || 1) - 1, d || 1);
+
+        while (dueDate < today && guard < 24) {
+          nextPayDate = advanceByCycle(nextPayDate, income.frequency as BillingCycle);
+          const [ny, nm, nd] = nextPayDate.split('-').map(Number);
+          dueDate = new Date(ny, (nm || 1) - 1, nd || 1);
+          changed = true;
+          guard += 1;
+        }
+
+        if (!changed) return income;
+
+        return prisma.income.update({
+          where: { id: income.id },
+          data: { nextPayDate },
+          include: {
+            createdBy: { select: { id: true, name: true, role: true } },
+            depositAccount: { select: { id: true, name: true, type: true, institution: true } },
+          },
+        });
+      })
+    );
+
     return NextResponse.json({
       status: 'ok',
-      incomes,
+      incomes: results,
     });
   } catch (error: unknown) {
     console.error('Failed to fetch income from PostgreSQL:', error);
@@ -47,6 +85,7 @@ export async function POST(request: Request) {
         amount: Number(body.amount),
         currency: body.currency || 'EUR',
         frequency: body.frequency || 'monthly',
+        nextPayDate: body.nextPayDate || new Date().toISOString().split('T')[0],
         category: body.category || 'salary',
         isActive: typeof body.isActive === 'boolean' ? body.isActive : true,
         notes: body.notes || null,
@@ -105,6 +144,7 @@ export async function PUT(request: Request) {
         amount: Number(body.amount),
         currency: body.currency,
         frequency: body.frequency,
+        nextPayDate: body.nextPayDate || existing.nextPayDate,
         category: body.category,
         isActive: typeof body.isActive === 'boolean' ? body.isActive : true,
         notes: body.notes || null,

@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.3.0';
+export const APP_VERSION = '1.5.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,22 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.5.0',
+    date: '2026-09-03',
+    changes: [
+      'Overview on mobile is much shorter — Recently Added, Spending and Upcoming Bills are now quick-switch tabs instead of one long stacked page.',
+      'Stat cards (This month spent, Coming up, Left after bills) swipe horizontally on mobile instead of stacking.',
+    ],
+  },
+  {
+    version: '1.4.0',
+    date: '2026-09-03',
+    changes: [
+      'Income now has a "Next pay date" so monthly, weekly, quarterly and annual income repeats on a specific day, just like bills — Tally rolls it forward automatically after each payday.',
+      'Overview dashboard cards now show how many items they\'re displaying out of the total, with "View all" links through to Spending or Bills — makes it clear why Overview shows fewer items than the full ledger.',
+    ],
+  },
   {
     version: '1.3.0',
     date: '2026-09-03',

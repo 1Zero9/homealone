@@ -125,6 +125,7 @@ model Income {
   amount       Float
   currency     String   @default("EUR")
   frequency    String   @default("monthly")
+  nextPayDate  String?
   category     String   @default("salary")
   isActive     Boolean  @default(true)
   notes        String?
