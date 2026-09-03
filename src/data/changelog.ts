@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.2.0';
+export const APP_VERSION = '1.3.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,19 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.3.0',
+    date: '2026-09-03',
+    changes: [
+      'Added "Scan a bill": paste, drag-and-drop, or upload a screenshot/photo of a bill or receipt anywhere in the app and Tally will read it and match it to an existing bill or pre-fill a new one for you to review.',
+      'Added a separate vendor/provider name field on expenses, distinct from the item name and vendor email (e.g. item "Broadband", vendor "Vodafone").',
+      'Sessions now stay signed in as long as you use the app at least once a month, instead of requiring a fresh magic-code login every time.',
+      'Added a confirmation prompt before logging out, and a floating quick-hide button for instantly blurring the screen.',
+      'Recently Added on the Overview dashboard now shows category, paid status and due date at a glance.',
+      'You can now mark a bill as paid right when you add it, not just when editing.',
+      'Fixed bills showing as "Overdue" in Bills/Overview after already being marked paid in Spending.',
+    ],
+  },
   {
     version: '1.2.0',
     date: '2026-09-03',

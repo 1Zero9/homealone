@@ -7,3 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# Workflow conventions
+
+- Whenever a set of user-facing changes is complete and about to be committed, bump the version in `package.json` and add a matching entry to `src/data/changelog.ts` (`APP_VERSION` + a new `CHANGELOG` entry) describing what changed, before committing.
