@@ -94,7 +94,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
               This month spent
             </span>
           </div>
-          <div className="tabular-nums" style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
+          <div className="tabular-nums ha-stat-amount" style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
             {formatCurrency(summary.monthlyTotal, currency)}
             <span style={{ fontSize: '0.85rem', color: 'var(--ha-muted)', fontWeight: 500 }}>/mo</span>
           </div>
@@ -110,7 +110,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
               Coming up
             </span>
           </div>
-          <div className="tabular-nums" style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
+          <div className="tabular-nums ha-stat-amount" style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
             {formatCurrency(totalNext7Days, currency)}
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', marginTop: '0.35rem' }}>
@@ -130,7 +130,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
             </span>
           </div>
           {hasIncome ? (
-            <div className="tabular-nums" style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
+            <div className="tabular-nums ha-stat-amount" style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
               {netAfterBills >= 0 ? '+' : ''}{formatCurrency(netAfterBills, currency)}
               <span style={{ fontSize: '0.85rem', color: 'var(--ha-muted)', fontWeight: 500 }}>/mo</span>
             </div>

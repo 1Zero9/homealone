@@ -582,18 +582,24 @@ input:checked + .slider:before {
     display: block;
   }
 
-  /* Stat cards become a swipeable horizontal row instead of 3 stacked full-width cards */
+  /* Stat cards become a compact swipeable horizontal row instead of 3 tall stacked full-width cards */
   .ha-stat-row {
     display: flex !important;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     padding-bottom: 0.25rem;
     margin-bottom: 1rem !important;
+    gap: 0.6rem !important;
   }
 
   .ha-stat-row > div {
-    flex: 0 0 80%;
+    flex: 0 0 68%;
     scroll-snap-align: start;
+    padding: 0.85rem !important;
+  }
+
+  .ha-stat-amount {
+    font-size: 1.35rem !important;
   }
 
   /* Only show the first 4 "Recently added" rows on mobile — View all links to the full list */
