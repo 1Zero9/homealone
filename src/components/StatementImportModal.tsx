@@ -11,6 +11,8 @@ import {
   RotateCcw,
   AlertTriangle,
   ArrowLeft,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import type { ExpenseItem, StatementTransactionItem, CurrencyCode, AccountItem } from '../types/expense';
 import { formatCurrency } from '../utils/formatters';
@@ -34,6 +36,12 @@ interface PreparedRow {
   rawDescription: string;
   amount: number;
   direction: 'DEBIT' | 'CREDIT';
+}
+
+interface TxGroup {
+  key: string;
+  label: string;
+  items: StatementTransactionItem[];
 }
 
 const FILTERS: { id: ReviewFilter; label: string }[] = [
@@ -77,6 +85,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const [linkingTxId, setLinkingTxId] = useState<string | null>(null);
   const [selectedExpenseId, setSelectedExpenseId] = useState<Record<string, string>>({});
   const [isLoadingReview, setIsLoadingReview] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [busyGroupKey, setBusyGroupKey] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadedInitialRef = useRef(false);
 
@@ -105,6 +115,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     setBusyTxId(null);
     setLinkingTxId(null);
     setSelectedExpenseId({});
+    setCollapsedGroups(new Set());
+    setBusyGroupKey(null);
     loadedInitialRef.current = false;
   }, []);
 
@@ -261,6 +273,28 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     }
   };
 
+  const toggleGroup = (key: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const resolveGroup = async (group: TxGroup, action: 'ignore' | 'log_transfer') => {
+    setBusyGroupKey(group.key);
+    try {
+      const unmatched = group.items.filter((t) => t.status === 'UNMATCHED');
+      await Promise.all(
+        unmatched.map((tx) =>
+          resolveTx(tx.id, action, action === 'log_transfer' ? { vendorName: tx.rawDescription } : undefined)
+        )
+      );
+    } finally {
+      setBusyGroupKey(null);
+    }
+  };
+
   if (!isOpen) return null;
 
   const handleDrop = (e: React.DragEvent) => {
@@ -279,6 +313,16 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const needsReviewCount = transactions.filter((t) => t.status === 'UNMATCHED').length;
   const matchedCount = transactions.filter((t) => t.status === 'MATCHED').length;
   const ignoredCount = transactions.filter((t) => t.status === 'IGNORED').length;
+
+  const groupedTransactions: TxGroup[] = (() => {
+    const map = new Map<string, StatementTransactionItem[]>();
+    for (const tx of filteredTransactions) {
+      const key = tx.normalizedDescription || tx.rawDescription;
+      const arr = map.get(key);
+      if (arr) arr.push(tx); else map.set(key, [tx]);
+    }
+    return Array.from(map.entries()).map(([key, items]) => ({ key, label: key, items }));
+  })();
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
@@ -525,14 +569,91 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                     })}
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '440px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', maxHeight: '440px', overflowY: 'auto' }}>
                     {filteredTransactions.length === 0 && (
                       <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--ha-muted)', fontSize: '0.85rem' }}>
                         Nothing here.
                       </div>
                     )}
 
-                    {filteredTransactions.map((tx) => {
+                    {groupedTransactions.map((group) => {
+                      const isMultiple = group.items.length > 1;
+                      const isCollapsed = isMultiple && collapsedGroups.has(group.key);
+                      const isGroupBusy = busyGroupKey === group.key;
+                      const groupHasUnmatched = group.items.some((t) => t.status === 'UNMATCHED');
+                      const groupTotal = group.items.reduce(
+                        (sum, t) => sum + (t.direction === 'DEBIT' ? -t.amount : t.amount),
+                        0
+                      );
+                      const groupCurrency = group.items[0].currency;
+
+                      return (
+                        <div key={group.key} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {isMultiple && (
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '0.5rem',
+                                padding: '0.45rem 0.75rem',
+                                borderRadius: 'var(--ha-radius-sm)',
+                                backgroundColor: '#f0f0ec',
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              <button
+                                onClick={() => toggleGroup(group.key)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.4rem',
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 700,
+                                  color: 'var(--ha-ink)',
+                                  padding: 0,
+                                  minWidth: 0,
+                                }}
+                              >
+                                {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.label}</span>
+                                <span style={{ fontWeight: 500, color: 'var(--ha-muted)', flexShrink: 0 }}>× {group.items.length}</span>
+                              </button>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                                <span
+                                  className="tabular-nums"
+                                  style={{ fontSize: '0.82rem', fontWeight: 700, color: groupTotal < 0 ? 'var(--ha-red)' : 'var(--ha-blue)' }}
+                                >
+                                  {groupTotal < 0 ? '−' : '+'}{formatCurrency(Math.abs(groupTotal), groupCurrency)}
+                                </span>
+                                {groupHasUnmatched && (
+                                  <>
+                                    <button
+                                      disabled={isGroupBusy}
+                                      onClick={() => resolveGroup(group, 'log_transfer')}
+                                      className="btn btn-secondary"
+                                      style={{ fontSize: '0.72rem', padding: '0.3rem 0.5rem' }}
+                                    >
+                                      {isGroupBusy ? <Loader2 size={11} className="spin" /> : <PlusCircle size={11} />} Log all
+                                    </button>
+                                    <button
+                                      disabled={isGroupBusy}
+                                      onClick={() => resolveGroup(group, 'ignore')}
+                                      className="btn btn-ghost"
+                                      style={{ fontSize: '0.72rem', padding: '0.3rem 0.5rem' }}
+                                    >
+                                      <EyeOff size={11} /> Ignore all
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {!isCollapsed && group.items.map((tx) => {
                       const isBusy = busyTxId === tx.id;
                       const isRecurringFlag = !!tx.notes?.startsWith('Appears more than once');
                       return (
@@ -671,6 +792,9 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                               )}
                             </div>
                           )}
+                        </div>
+                      );
+                          })}
                         </div>
                       );
                     })}

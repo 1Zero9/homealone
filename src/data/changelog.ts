@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.13.0';
+export const APP_VERSION = '1.14.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.14.0',
+    date: '2026-09-03',
+    changes: [
+      'Statement import review now groups transactions from the same merchant together (e.g. all your SuperValu trips) with a running total, instead of listing every single line separately.',
+      'Added "Log all" and "Ignore all" bulk actions for a merchant group, so you can clear out repeat charges in one click instead of one at a time.',
+    ],
+  },
   {
     version: '1.13.0',
     date: '2026-09-03',
