@@ -1,6 +1,6 @@
 import React from 'react';
 import type { UserProfile } from '../types/expense';
-import { X, Sparkles, Plus, UserPlus, Download, Bell, Mail, ShieldCheck } from 'lucide-react';
+import { X, Sparkles, Plus, UserPlus, Download, Bell, Mail, ShieldCheck, Landmark, ArrowLeftRight, Target, Activity } from 'lucide-react';
 
 interface HelpGuideModalProps {
   isOpen: boolean;
@@ -31,6 +31,37 @@ const SECTIONS: GuideSection[] = [
       'Click "Add expense" in the top bar to record a bill, subscription or one-off cost. Set the amount, billing cycle, category and payment method.',
       'Use "Catalog" to add common household bills (Netflix, electricity, broadband, etc.) in one click instead of typing them from scratch.',
       'Switch to the "Income" tab to record salary, freelance or rental income and see your money in vs money out.',
+    ],
+  },
+  {
+    icon: <Landmark size={16} color="var(--ha-blue)" />,
+    title: 'Accounts',
+    body: [
+      'Add your bank accounts, cards and loans in the "Accounts" tab. Sensitive details like account numbers and logins are encrypted and only shown when you click "reveal".',
+      'Link your expenses and income to the account they\'re paid from or deposited into — this powers Money Map and the AI money-flow analysis.',
+    ],
+  },
+  {
+    icon: <ArrowLeftRight size={16} color="var(--ha-blue)" />,
+    title: 'Flow — log every money movement',
+    body: [
+      'Use "Flow" to log real transfers: income landing in an account, money moving between accounts, or payments going out.',
+      'One-off spending (a car repair, a doctor\'s visit) works here too — set "From" to the account that paid, leave "To" as External, and add a note.',
+    ],
+  },
+  {
+    icon: <Target size={16} color="var(--ha-blue)" />,
+    title: 'Goals',
+    body: [
+      'Track savings targets like an emergency fund or a holiday. Link a goal to the account the money is actually sitting in and watch the progress bar fill up.',
+    ],
+  },
+  {
+    icon: <Activity size={16} color="var(--ha-blue)" />,
+    title: 'Money Map & AI insights',
+    body: [
+      'The "Money Map" tab visualizes the real journey your money takes, built from your logged Flow entries — or a projected monthly view if you haven\'t logged transfers yet.',
+      'In "Insights", click "Analyze my money flow" for an on-demand AI review of idle cash, direct-debit timing risk, account consolidation, and savings opportunities.',
     ],
   },
   {

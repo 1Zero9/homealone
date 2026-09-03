@@ -3,8 +3,13 @@ import { INITIAL_EXPENSES } from '../data/sampleExpenses';
 import { CATEGORIES } from '../data/categories';
 import { getMonthlyEquivalent, getAnnualEquivalent } from '../utils/calculations';
 
-const STORAGE_KEY_EXPENSES = 'homealone_expenses_v3';
-const STORAGE_KEY_CURRENCY = 'homealone_currency_v3';
+const STORAGE_KEY_EXPENSES = 'tally_expenses_v3';
+const STORAGE_KEY_CURRENCY = 'tally_currency_v3';
+
+// Legacy keys from the app's previous "Home Alone" name — migrated once,
+// then cleared, so returning users don't lose locally-cached data.
+const LEGACY_STORAGE_KEY_EXPENSES = 'homealone_expenses_v3';
+const LEGACY_STORAGE_KEY_CURRENCY = 'homealone_currency_v3';
 
 export function loadExpenses(): ExpenseItem[] {
   try {
@@ -16,6 +21,16 @@ export function loadExpenses(): ExpenseItem[] {
     if (localStorage.getItem('homealone_expenses_v2')) {
       localStorage.removeItem('homealone_expenses_v2');
       localStorage.removeItem('homealone_currency_v2');
+    }
+
+    // One-time migration from the old "homealone" key names to "tally".
+    if (!localStorage.getItem(STORAGE_KEY_EXPENSES) && localStorage.getItem(LEGACY_STORAGE_KEY_EXPENSES)) {
+      const legacyExpenses = localStorage.getItem(LEGACY_STORAGE_KEY_EXPENSES);
+      const legacyCurrency = localStorage.getItem(LEGACY_STORAGE_KEY_CURRENCY);
+      if (legacyExpenses) localStorage.setItem(STORAGE_KEY_EXPENSES, legacyExpenses);
+      if (legacyCurrency) localStorage.setItem(STORAGE_KEY_CURRENCY, legacyCurrency);
+      localStorage.removeItem(LEGACY_STORAGE_KEY_EXPENSES);
+      localStorage.removeItem(LEGACY_STORAGE_KEY_CURRENCY);
     }
 
     const raw = localStorage.getItem(STORAGE_KEY_EXPENSES);

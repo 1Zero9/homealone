@@ -77,7 +77,7 @@ export default function PrivacyPage() {
         </li>
         <li>
           A session token stored in an <strong>httpOnly, secure</strong> cookie
-          (<code>homealone_session</code>) once you&apos;re signed in, valid for up to 30 days.
+          (<code>tally_session</code>) once you&apos;re signed in, valid for up to 30 days.
         </li>
         <li>
           A copy of your basic profile (name, email, role) cached in your browser&apos;s local

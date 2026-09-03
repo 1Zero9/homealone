@@ -65,7 +65,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       const data = await res.json();
       if (data.status === 'ok' && data.user) {
         try {
-          localStorage.setItem('homealone_user', JSON.stringify(data.user));
+          localStorage.setItem('tally_user', JSON.stringify(data.user));
         } catch {}
         onLoginSuccess(data.user);
       } else {

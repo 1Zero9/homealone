@@ -32,10 +32,12 @@ model Household {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  users    User[]
-  expenses Expense[]
-  incomes  Income[]
-  accounts Account[]
+  users     User[]
+  expenses  Expense[]
+  incomes   Income[]
+  accounts  Account[]
+  transfers Transfer[]
+  goals     Goal[]
 }
 
 model User {
@@ -55,6 +57,8 @@ model User {
   incomes  Income[]
   sessions Session[]
   accountsCreated Account[]
+  transfersCreated Transfer[]
+  goalsCreated     Goal[]
 }
 
 model Session {
@@ -105,6 +109,8 @@ model Expense {
   paymentAccountId String?
   paymentAccount    Account? @relation("ExpensePaymentAccount", fields: [paymentAccountId], references: [id], onDelete: SetNull)
 
+  transfers Transfer[]
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -130,6 +136,8 @@ model Income {
 
   depositAccountId String?
   depositAccount    Account? @relation("IncomeDepositAccount", fields: [depositAccountId], references: [id], onDelete: SetNull)
+
+  transfers Transfer[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -174,6 +182,81 @@ model Account {
 
   expenses Expense[] @relation("ExpensePaymentAccount")
   incomes  Income[]  @relation("IncomeDepositAccount")
+
+  transfersOut Transfer[] @relation("TransferFromAccount")
+  transfersIn  Transfer[] @relation("TransferToAccount")
+  goals        Goal[]     @relation("GoalAccount")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([householdId])
+}
+
+/// A single money-movement event — one hop in the "money journey". Either
+/// side can be an internal Account, or left null to represent money
+/// crossing the household boundary (e.g. salary landing, or a direct debit
+/// going out to a vendor). Optionally linked to the recurring Expense/Income
+/// record it corresponds to, so the recurring definition and the actual
+/// dated movement stay connected.
+model Transfer {
+  id       String   @id @default(cuid())
+  amount   Float
+  currency String   @default("EUR")
+  date     String
+  note     String?
+
+  // Free-text label for whichever side is external (fromAccountId/toAccountId
+  // is null) — e.g. "Salary — Acme Corp" or "Netflix direct debit".
+  externalLabel String?
+
+  fromAccountId String?
+  fromAccount   Account? @relation("TransferFromAccount", fields: [fromAccountId], references: [id], onDelete: SetNull)
+
+  toAccountId String?
+  toAccount   Account? @relation("TransferToAccount", fields: [toAccountId], references: [id], onDelete: SetNull)
+
+  linkedExpenseId String?
+  linkedExpense   Expense? @relation(fields: [linkedExpenseId], references: [id], onDelete: SetNull)
+
+  linkedIncomeId String?
+  linkedIncome   Income?  @relation(fields: [linkedIncomeId], references: [id], onDelete: SetNull)
+
+  householdId String?
+  household   Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([householdId])
+  @@index([fromAccountId])
+  @@index([toAccountId])
+  @@index([date])
+}
+
+/// A savings/financial goal — optionally tied to an Account (e.g. a savings
+/// pot), with a manually-tracked current amount and an optional target date.
+model Goal {
+  id            String   @id @default(cuid())
+  name          String
+  targetAmount  Float
+  currentAmount Float    @default(0)
+  currency      String   @default("EUR")
+  targetDate    String?
+  notes         String?
+  isActive      Boolean  @default(true)
+
+  linkedAccountId String?
+  linkedAccount   Account? @relation("GoalAccount", fields: [linkedAccountId], references: [id], onDelete: SetNull)
+
+  householdId String?
+  household   Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

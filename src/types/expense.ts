@@ -142,6 +142,59 @@ export interface AccountItem {
   updatedAt?: string;
 }
 
+export interface TransferItem {
+  id: string;
+  amount: number;
+  currency: CurrencyCode;
+  date: string;
+  note?: string | null;
+  externalLabel?: string | null;
+
+  fromAccountId?: string | null;
+  fromAccount?: AccountSummary | null;
+
+  toAccountId?: string | null;
+  toAccount?: AccountSummary | null;
+
+  linkedExpenseId?: string | null;
+  linkedExpense?: { id: string; name: string } | null;
+
+  linkedIncomeId?: string | null;
+  linkedIncome?: { id: string; name: string } | null;
+
+  createdById?: string | null;
+  createdBy?: {
+    id: string;
+    name: string;
+    role: UserRole;
+  } | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface GoalItem {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  currency: CurrencyCode;
+  targetDate?: string | null;
+  notes?: string | null;
+  isActive: boolean;
+
+  linkedAccountId?: string | null;
+  linkedAccount?: AccountSummary | null;
+
+  createdById?: string | null;
+  createdBy?: {
+    id: string;
+    name: string;
+    role: UserRole;
+  } | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface IncomeSummary {
   monthlyTotal: number;
   annualTotal: number;

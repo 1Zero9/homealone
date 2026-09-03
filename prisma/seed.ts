@@ -11,7 +11,7 @@ async function main() {
     household = await prisma.household.create({
       data: {
         name: 'Our Household',
-        inviteCode: 'home-alone-family',
+        inviteCode: 'tally-family',
       },
     });
   }
@@ -35,14 +35,14 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { email: 'wife@homealone.local' },
+    where: { email: 'wife@tally.local' },
     update: {
       name: 'Wife / Partner',
       role: Role.MEMBER,
       householdId: household.id,
     },
     create: {
-      email: 'wife@homealone.local',
+      email: 'wife@tally.local',
       name: 'Wife / Partner',
       role: Role.MEMBER,
       householdId: household.id,
@@ -50,14 +50,14 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { email: 'backup-admin@homealone.local' },
+    where: { email: 'backup-admin@tally.local' },
     update: {
       name: 'Admin Backup',
       role: Role.BACKUP_ADMIN,
       householdId: household.id,
     },
     create: {
-      email: 'backup-admin@homealone.local',
+      email: 'backup-admin@tally.local',
       name: 'Admin Backup',
       role: Role.BACKUP_ADMIN,
       householdId: household.id,

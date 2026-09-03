@@ -39,22 +39,17 @@ export const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
   }).sort((a, b) => b.monthlyAmount - a.monthlyAmount);
 
   return (
-    <div className="ha-card" style={{ padding: '1.5rem', marginBottom: '1.75rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-        <div>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ha-ink)', marginBottom: '0.15rem' }}>
-            Category distribution
-          </h3>
-          <p style={{ fontSize: '0.82rem', color: 'var(--ha-muted)' }}>
-            Monthly obligations by category
-          </p>
-        </div>
+    <div className="ha-card" style={{ padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <h3 style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ha-muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+          Category distribution
+        </h3>
 
         {selectedCategory && (
           <button
             onClick={() => onSelectCategory(null)}
             className="btn btn-secondary"
-            style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
+            style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
           >
             Show all categories
           </button>
@@ -63,12 +58,12 @@ export const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
 
       {/* Horizontal Stacked Proportion Track */}
       <div style={{
-        height: '10px',
+        height: '8px',
         backgroundColor: 'var(--ha-line)',
         borderRadius: 'var(--ha-radius-sm)',
         display: 'flex',
         overflow: 'hidden',
-        marginBottom: '1.5rem',
+        marginBottom: '0.75rem',
       }}>
         {categoryData.map((cat) => {
           if (cat.percentage <= 0) return null;
@@ -87,64 +82,38 @@ export const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
         })}
       </div>
 
-      {/* Category Rows with Horizontal Relative Bars */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {categoryData.map((cat) => {
+      {/* Compact Category Legend / Filter Chips */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+        {categoryData.filter((cat) => cat.itemCount > 0).map((cat) => {
           const isSelected = selectedCategory === cat.id;
-          const maxAmount = categoryData[0]?.monthlyAmount || 1;
-          const relativeBarWidth = (cat.monthlyAmount / maxAmount) * 100;
 
           return (
-            <div
+            <button
               key={cat.id}
               onClick={() => onSelectCategory(isSelected ? null : cat.id)}
               style={{
-                padding: '0.75rem 1rem',
-                borderRadius: 'var(--ha-radius-md)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.3rem 0.6rem',
+                borderRadius: 'var(--ha-radius-sm)',
                 backgroundColor: isSelected ? 'var(--ha-blue-light)' : '#fafaf7',
                 border: isSelected ? '1px solid var(--ha-blue)' : '1px solid var(--ha-line)',
                 cursor: 'pointer',
                 transition: 'background-color 0.12s ease',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <span className="ha-color-marker" style={{ backgroundColor: cat.color }} />
-                  <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
-                      {cat.name}
-                    </span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', marginLeft: '0.5rem' }}>
-                      ({cat.itemCount} {cat.itemCount === 1 ? 'item' : 'items'})
-                    </span>
-                  </div>
-                </div>
-
-                <div style={{ textAlign: 'right' }}>
-                  <span className="tabular-nums" style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
-                    {formatCurrency(cat.monthlyAmount, currency)}
-                  </span>
-                  <span className="tabular-nums" style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginLeft: '0.5rem' }}>
-                    {cat.percentage}%
-                  </span>
-                </div>
-              </div>
-
-              {/* Relative bar track */}
-              <div style={{
-                height: '4px',
-                backgroundColor: 'var(--ha-line)',
-                borderRadius: '2px',
-                overflow: 'hidden',
-              }}>
-                <div style={{
-                  width: `${relativeBarWidth}%`,
-                  height: '100%',
-                  backgroundColor: cat.color,
-                  borderRadius: '2px',
-                }} />
-              </div>
-            </div>
+              <span className="ha-color-marker" style={{ backgroundColor: cat.color }} />
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                {cat.name}
+              </span>
+              <span className="tabular-nums" style={{ fontSize: '0.78rem', color: 'var(--ha-muted)' }}>
+                {formatCurrency(cat.monthlyAmount, currency)}
+              </span>
+              <span className="tabular-nums" style={{ fontSize: '0.72rem', color: 'var(--ha-muted)' }}>
+                {cat.percentage}%
+              </span>
+            </button>
           );
         })}
       </div>

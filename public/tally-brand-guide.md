@@ -1,8 +1,8 @@
-# Home Alone — Brand and Interface Guide
+# Tally — Brand and Interface Guide
 
 ## 1. Brand direction
 
-Home Alone is a light-mode household expense and budgeting app. Its identity should feel clear, independent and deliberately designed: closer to an editorial utility than a bank, lifestyle product or generic fintech dashboard.
+Tally is a light-mode household expense and budgeting app. Its identity should feel clear, independent and deliberately designed: closer to an editorial utility than a bank, lifestyle product or generic fintech dashboard.
 
 The product should be quick to scan, fast to operate and calm without becoming soft or cosy.
 
@@ -225,4 +225,4 @@ The interface must not drift back towards the rejected first concept. Do not use
 
 ## 14. Implementation brief
 
-Build Home Alone as a crisp, light-mode household expense tracker using the supplied tokens. Start with the monthly summary, expense list and add-expense flow. Establish typography, spacing and colour tokens before building components. Keep the visual hierarchy driven by numbers, alignment and rules rather than illustration or decorative cards. Treat this document and the standalone H mark as the source of truth for the initial product identity.
+Build Tally as a crisp, light-mode household expense tracker using the supplied tokens. Start with the monthly summary, expense list and add-expense flow. Establish typography, spacing and colour tokens before building components. Keep the visual hierarchy driven by numbers, alignment and rules rather than illustration or decorative cards. Treat this document and the standalone H mark as the source of truth for the initial product identity.

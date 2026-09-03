@@ -1,8 +1,10 @@
-# Home Alone
+# Tally
 
 > Simple records. Clearer days.
 
-Home Alone is an editorial light-mode household expense, subscription, and utility tracking web application built with Next.js App Router (15+), TypeScript, React 19, and PostgreSQL via Prisma ORM.
+Tally is an editorial light-mode household expense, subscription, and utility tracking web application built with Next.js App Router (15+), TypeScript, React 19, and PostgreSQL via Prisma ORM.
+
+See [`docs/user-guide.md`](./docs/user-guide.md) for a full walkthrough of every feature.
 
 ---
 
@@ -15,7 +17,9 @@ Home Alone is an editorial light-mode household expense, subscription, and utili
   - **Member** (Normal user/family): Ability to view, log, categorize, and edit household expenses.
   - **Backup Admin**: Disaster recovery and emergency failover role.
 - **Collaborative Sharing**: Shareable workspace invite links and direct email invitations for partners, spouses, or family members.
-- **Light-Mode Editorial Design System**: Custom Home Alone design system tokens (`--ha-*`), Barlow Condensed display headings, Inter UI typography, and tabular figures for financial accuracy.
+- **Light-Mode Editorial Design System**: Custom Tally design system tokens (`--ha-*`), Barlow Condensed display headings, Inter UI typography, and tabular figures for financial accuracy.
+- **Money Journey**: Log real transfers between accounts and to/from external payees (Flow), track savings Goals with progress bars, and visualize the actual multi-hop money journey (Money Map).
+- **AI Money-Flow Insights**: On-demand AI analysis of idle cash, direct-debit timing risk, account consolidation opportunities, and savings suggestions.
 - **Euro (€ / EUR) Standardized**: Default European financial ledger with multi-currency conversion (£ GBP, $ USD, CAD, AUD, JPY).
 - **AI & Tech Redundancy Intelligence**: Audits active models and alerts on multi-frontier subscription overlap (e.g. concurrent ChatGPT + Claude subscriptions).
 - **Household Utilities & Contracts**: Direct debit schedules, energy provider rates, and contract expiry tracking.

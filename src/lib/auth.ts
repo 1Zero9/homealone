@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { prisma } from '@/src/lib/prisma';
 import type { Role } from '@prisma/client';
 
-export const SESSION_COOKIE = 'homealone_session';
+export const SESSION_COOKIE = 'tally_session';
 
 export interface SessionUser {
   id: string;

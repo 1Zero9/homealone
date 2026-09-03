@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { ExpenseItem, IncomeItem, CurrencyCode, PresetItem, UserProfile, AccountItem } from '@/src/types/expense';
+import type { ExpenseItem, IncomeItem, CurrencyCode, PresetItem, UserProfile, AccountItem, TransferItem, GoalItem } from '@/src/types/expense';
 import { loadCurrency, saveCurrency, resetToDefaults } from '@/src/services/storage';
 import { calculateSpendingSummary, calculateIncomeSummary } from '@/src/utils/calculations';
 import { Navbar, SPENDING_TABS } from '@/src/components/Navbar';
@@ -15,6 +15,7 @@ import { UtilitiesSection } from '@/src/components/UtilitiesSection';
 import { EducationSection } from '@/src/components/EducationSection';
 import { UpcomingRenewals } from '@/src/components/UpcomingRenewals';
 import { OptimizationInsights } from '@/src/components/OptimizationInsights';
+import { MoneyFlowInsights } from '@/src/components/MoneyFlowInsights';
 import { AdminSection } from '@/src/components/AdminSection';
 import { LoginScreen } from '@/src/components/LoginScreen';
 import { ExpenseModal } from '@/src/components/ExpenseModal';
@@ -30,13 +31,19 @@ import { TallyLogo } from '@/src/components/TallyLogo';
 import { AccountsSection } from '@/src/components/AccountsSection';
 import { AccountModal } from '@/src/components/AccountModal';
 import { MoneyMap } from '@/src/components/MoneyMap';
+import { TransfersSection } from '@/src/components/TransfersSection';
+import { TransferModal } from '@/src/components/TransferModal';
+import { GoalsSection } from '@/src/components/GoalsSection';
+import { GoalModal } from '@/src/components/GoalModal';
 
-export default function HomeAlonePage() {
+export default function TallyPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = checking
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [incomes, setIncomes] = useState<IncomeItem[]>([]);
   const [accounts, setAccounts] = useState<AccountItem[]>([]);
   const [encryptionConfigured, setEncryptionConfigured] = useState(false);
+  const [transfers, setTransfers] = useState<TransferItem[]>([]);
+  const [goals, setGoals] = useState<GoalItem[]>([]);
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -67,6 +74,10 @@ export default function HomeAlonePage() {
   const [contactVendorExpense, setContactVendorExpense] = useState<ExpenseItem | null>(null);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<AccountItem | null>(null);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [editingTransfer, setEditingTransfer] = useState<TransferItem | null>(null);
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<GoalItem | null>(null);
 
   // Fetch users & expenses from Prisma PostgreSQL API
   const fetchDatabaseData = useCallback(async () => {
@@ -99,6 +110,20 @@ export default function HomeAlonePage() {
         setAccounts(accData.accounts);
         setEncryptionConfigured(!!accData.encryptionConfigured);
       }
+
+      // 5. Fetch Transfers from PostgreSQL
+      const transRes = await fetch('/api/transfers');
+      const transData = await transRes.json();
+      if (transData.status === 'ok' && Array.isArray(transData.transfers)) {
+        setTransfers(transData.transfers);
+      }
+
+      // 6. Fetch Goals from PostgreSQL
+      const goalRes = await fetch('/api/goals');
+      const goalData = await goalRes.json();
+      if (goalData.status === 'ok' && Array.isArray(goalData.goals)) {
+        setGoals(goalData.goals);
+      }
     } catch (err) {
       console.error('Failed to load from database:', err);
     }
@@ -110,7 +135,7 @@ export default function HomeAlonePage() {
 
     // Check localStorage first for instant display
     try {
-      const savedUserStr = localStorage.getItem('homealone_user');
+      const savedUserStr = localStorage.getItem('tally_user');
       if (savedUserStr) {
         const savedUser = JSON.parse(savedUserStr);
         if (savedUser && savedUser.id) {
@@ -128,11 +153,11 @@ export default function HomeAlonePage() {
           setIsAuthenticated(true);
           setCurrentUser(data.user);
           try {
-            localStorage.setItem('homealone_user', JSON.stringify(data.user));
+            localStorage.setItem('tally_user', JSON.stringify(data.user));
           } catch {}
           fetchDatabaseData();
         } else {
-          const hasLocal = typeof window !== 'undefined' && localStorage.getItem('homealone_user');
+          const hasLocal = typeof window !== 'undefined' && localStorage.getItem('tally_user');
           if (!hasLocal) {
             setIsAuthenticated(false);
           } else {
@@ -141,7 +166,7 @@ export default function HomeAlonePage() {
         }
       })
       .catch(() => {
-        const hasLocal = typeof window !== 'undefined' && localStorage.getItem('homealone_user');
+        const hasLocal = typeof window !== 'undefined' && localStorage.getItem('tally_user');
         if (!hasLocal) {
           setIsAuthenticated(false);
         } else {
@@ -156,7 +181,7 @@ export default function HomeAlonePage() {
 
   const handleLoginSuccess = (user: UserProfile) => {
     try {
-      localStorage.setItem('homealone_user', JSON.stringify(user));
+      localStorage.setItem('tally_user', JSON.stringify(user));
     } catch {}
     setIsAuthenticated(true);
     setCurrentUser(user);
@@ -165,7 +190,7 @@ export default function HomeAlonePage() {
 
   const handleLogout = async () => {
     try {
-      localStorage.removeItem('homealone_user');
+      localStorage.removeItem('tally_user');
     } catch {}
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
@@ -513,6 +538,79 @@ export default function HomeAlonePage() {
     }
   };
 
+  // Save new or edited transfer with PostgreSQL sync
+  const handleSaveTransfer = async (data: Record<string, unknown>, existingId?: string) => {
+    try {
+      const res = await fetch('/api/transfers', {
+        method: existingId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(existingId ? { ...data, id: existingId } : data),
+      });
+      const resData = await res.json();
+      if (resData.status === 'ok' && resData.transfer) {
+        setTransfers((prev) =>
+          existingId
+            ? prev.map((t) => (t.id === existingId ? resData.transfer : t))
+            : [resData.transfer, ...prev]
+        );
+        fetchDatabaseData();
+      }
+    } catch (err) {
+      console.error('Failed to save transfer:', err);
+    }
+  };
+
+  // Delete a transfer
+  const handleDeleteTransfer = async (id: string) => {
+    if (!window.confirm('Remove this transfer record?')) return;
+
+    setTransfers((prev) => prev.filter((t) => t.id !== id));
+
+    try {
+      await fetch(`/api/transfers?id=${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete transfer from DB:', err);
+      fetchDatabaseData();
+    }
+  };
+
+  // Save new or edited goal with PostgreSQL sync
+  const handleSaveGoal = async (data: Record<string, unknown>, existingId?: string) => {
+    try {
+      const res = await fetch('/api/goals', {
+        method: existingId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(existingId ? { ...data, id: existingId } : data),
+      });
+      const resData = await res.json();
+      if (resData.status === 'ok' && resData.goal) {
+        setGoals((prev) =>
+          existingId
+            ? prev.map((g) => (g.id === existingId ? resData.goal : g))
+            : [...prev, resData.goal]
+        );
+        fetchDatabaseData();
+      }
+    } catch (err) {
+      console.error('Failed to save goal:', err);
+    }
+  };
+
+  // Delete a goal
+  const handleDeleteGoal = async (id: string) => {
+    const item = goals.find((g) => g.id === id);
+    if (!window.confirm(`Remove "${item?.name || 'this goal'}"?`)) return;
+
+    setGoals((prev) => prev.filter((g) => g.id !== id));
+
+    try {
+      await fetch(`/api/goals?id=${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete goal from DB:', err);
+      fetchDatabaseData();
+    }
+  };
+
   // Scroll to and focus the Ask Tally input
   const handleFocusAsk = () => {
     const input = document.getElementById('ask-tally-input');
@@ -784,10 +882,13 @@ export default function HomeAlonePage() {
         )}
 
         {activeTab === 'insights' && (
-          <OptimizationInsights
-            expenses={expenses}
-            currency={currency}
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+            <MoneyFlowInsights />
+            <OptimizationInsights
+              expenses={expenses}
+              currency={currency}
+            />
+          </div>
         )}
 
         {activeTab === 'accounts' && (
@@ -811,7 +912,38 @@ export default function HomeAlonePage() {
             incomes={incomes}
             expenses={expenses}
             accounts={accounts}
+            transfers={transfers}
             currency={currency}
+          />
+        )}
+
+        {activeTab === 'flow' && (
+          <TransfersSection
+            transfers={transfers}
+            onEditTransfer={(item) => {
+              setEditingTransfer(item);
+              setIsTransferModalOpen(true);
+            }}
+            onDeleteTransfer={handleDeleteTransfer}
+            onOpenAddModal={() => {
+              setEditingTransfer(null);
+              setIsTransferModalOpen(true);
+            }}
+          />
+        )}
+
+        {activeTab === 'goals' && (
+          <GoalsSection
+            goals={goals}
+            onEditGoal={(item) => {
+              setEditingGoal(item);
+              setIsGoalModalOpen(true);
+            }}
+            onDeleteGoal={handleDeleteGoal}
+            onOpenAddModal={() => {
+              setEditingGoal(null);
+              setIsGoalModalOpen(true);
+            }}
           />
         )}
 
@@ -895,6 +1027,32 @@ export default function HomeAlonePage() {
         onSave={handleSaveAccount}
         editingAccount={editingAccount}
         encryptionConfigured={encryptionConfigured}
+      />
+
+      {/* Add / Edit Transfer Modal */}
+      <TransferModal
+        isOpen={isTransferModalOpen}
+        onClose={() => {
+          setIsTransferModalOpen(false);
+          setEditingTransfer(null);
+        }}
+        onSave={handleSaveTransfer}
+        editingTransfer={editingTransfer}
+        accounts={accounts}
+        expenses={expenses}
+        incomes={incomes}
+      />
+
+      {/* Add / Edit Goal Modal */}
+      <GoalModal
+        isOpen={isGoalModalOpen}
+        onClose={() => {
+          setIsGoalModalOpen(false);
+          setEditingGoal(null);
+        }}
+        onSave={handleSaveGoal}
+        editingGoal={editingGoal}
+        accounts={accounts}
       />
 
       {/* Popular Presets Modal */}

@@ -1,0 +1,141 @@
+# Tally User Guide
+
+*Simple records. Clearer days.*
+
+Tally is a shared household ledger for expenses, income, accounts, and the real journey your money takes — plus AI-assisted insights to help you save. This guide walks through every part of the app.
+
+---
+
+## Contents
+
+1. [Signing in](#1-signing-in)
+2. [Overview](#2-overview)
+3. [Spending](#3-spending)
+4. [Bills (calendar)](#4-bills-calendar)
+5. [Income](#5-income)
+6. [Accounts](#6-accounts)
+7. [Flow (the money journey ledger)](#7-flow-the-money-journey-ledger)
+8. [Goals](#8-goals)
+9. [Money Map](#9-money-map)
+10. [Insights](#10-insights)
+11. [Asking Tally a question](#11-asking-tally-a-question)
+12. [Settings & preferences](#12-settings--preferences)
+13. [Sharing your household workspace](#13-sharing-your-household-workspace)
+14. [Admin & users](#14-admin--users)
+15. [Data export & backup](#15-data-export--backup)
+16. [Privacy & security](#16-privacy--security)
+
+---
+
+## 1. Signing in
+
+Tally uses **passwordless sign-in**: enter your email address and you'll receive a 6-digit code valid for 15 minutes. Enter the code to sign in — there's no password to remember or leak.
+
+- New to a household? Use **Create Account** on the logon screen, or accept an email invite / shareable link from an existing member (see [Sharing your household workspace](#13-sharing-your-household-workspace)).
+- Sessions last up to 30 days and are stored in a secure, httpOnly cookie — nothing you can access from other browser scripts.
+- A copy of your basic profile is cached in your browser's local storage purely so the app can greet you instantly on return visits; it is not used for authentication.
+
+## 2. Overview
+
+The landing dashboard once you sign in. It shows your household's current-period totals at a glance: money in, money out, and how your budget is tracking. Use this as your starting point before drilling into a specific area.
+
+## 3. Spending
+
+The **Spending** tab (and its sub-views: **All**, **AI & Tech**, **Utilities**, **Education**) is your recurring-bill ledger — subscriptions, utilities, and household costs.
+
+- **Add expense**: set the amount, currency, billing cycle (`weekly`, `monthly`, `quarterly`, `termly`, `annual`), category, payment method, and optional contract end date.
+- **Catalog**: add common household bills (Netflix, electricity, broadband, etc.) in one click instead of typing them from scratch.
+- **Usage rating**: mark a subscription as low/medium/high usage — low-usage items are flagged as cancellation candidates in Insights.
+- **Pause / resume**: pause a subscription instead of deleting it, so you keep the history and see it counted in your "already saving" total.
+- **Contract renewal reminders**: once an expense's contract end date is within 60 days, a badge appears on it, and the household is emailed automatically at 30, 14 and 7 days before it ends.
+- **Contact a vendor**: if an expense has a vendor email saved, click the mail icon to have Tally draft a polite email (negotiate a better rate, cancel, or ask about renewal terms). You always review and send it yourself — nothing is emailed automatically.
+
+## 4. Bills (calendar)
+
+A 31-day renewal calendar showing what's due and when, with urgency indicators for anything renewing within 7 days. Use it to plan cash flow around due dates.
+
+## 5. Income
+
+Record salary, freelance, rental, or other recurring income with an amount, currency, and frequency. Link each income source to the account it lands in (see [Accounts](#6-accounts)) so Money Map and money-flow analysis can use it.
+
+## 6. Accounts
+
+Your household's bank accounts, cards, and loans, stored with sensitive fields (account/routing numbers, online banking logins, security notes) **encrypted at rest** — never sent to the browser in plain text, only revealed on demand.
+
+Supported account types: **Checking, Savings, Credit Union, Credit Card, Debit Card, PayPal, Loan, Investment, Other**.
+
+- Link expenses to the account they're paid from, and income to the account it's deposited into — this powers Money Map and the Insights AI analysis.
+- For a **Loan**, you can track the original amount, interest rate, term, and payoff date.
+- Sensitive fields are masked in list views (`hasAccountNumber`, `hasLoginPassword`, etc.) and only decrypted when you explicitly click "reveal."
+
+## 7. Flow (the money journey ledger)
+
+**Flow** is where you log every real movement of money — the household's transfer ledger. Each entry has a **From** and a **To**:
+
+- **Income landing**: From = *External (income source)*, To = one of your accounts.
+- **Moving money between accounts**: From = one account, To = another account (e.g. sweeping savings into checking).
+- **Payments and one-off spending**: From = the account paying, To = *External (payment / one-off spend)*. This covers recurring direct debits **and** one-off costs like a car repair, a doctor's visit, or a heating repair — just pick which account paid for it and add a note (e.g. "Car repair", "Netflix DD", "Doctor visit").
+
+You can optionally link a transfer to an existing recurring Expense or Income record, or just use a free-text label for anything ad hoc. Every transfer is dated, so Flow becomes a real, searchable history of where your money actually went — not just a projection.
+
+## 8. Goals
+
+Track savings targets — an emergency fund, a holiday, a deposit. Each goal has a name, target amount, current amount, optional target date, and can be linked to the account the money is actually sitting in. Progress bars show percentage complete and days remaining until the target date.
+
+## 9. Money Map
+
+A visual diagram of your money's journey, with two modes:
+
+- **Actual journey** (default once you've logged transfers in Flow): built from your real dated Transfer records. Three columns — money in (external sources) → your accounts → money out (external destinations) — plus a distinct violet path for direct account-to-account transfers. Filter by **All time / 90 days / 30 days**.
+- **Projected**: the original monthly-equivalent view, built from your recurring Expenses/Income linked to accounts — useful before you've logged any real transfers, or to see a "typical month" projection alongside the real history.
+
+Hover any connection to see the exact amount. Account circles are colored blue when net-positive and red when net-negative or a loan.
+
+## 10. Insights
+
+Two sections, side by side:
+
+- **Money flow analysis (AI)**: click **Analyze my money flow** for an on-demand AI review of your accounts, transfers, and goals — flagging idle cash sitting in low-interest accounts, direct-debit **timing risk** (bills landing before income arrives), account **consolidation** opportunities, and concrete **savings** suggestions. This is opt-in per click, not automatic, and only ever uses your own household's data.
+- **What could we save?**: a rule-based (non-AI) breakdown of savings opportunities — switching monthly subscriptions to annual billing, rarely-used subscriptions worth cancelling, and a running total of what you're already saving from paused subscriptions. Toggle the horizon between 1 month, 1 year, 3 years, and 5 years.
+
+## 11. Asking Tally a question
+
+Click the search icon in the top bar to ask a plain-English question about your own household data — e.g. *"where can I save"* or *"what's going out this week"*. Tally answers using only your household's expense and income records; it never sees or uses data from any other household.
+
+## 12. Settings & preferences
+
+Open via the gear icon in the top bar. Set your preferred display currency (EUR, GBP, USD, CAD, AUD, JPY — amounts convert automatically), and manage other household-wide preferences.
+
+## 13. Sharing your household workspace
+
+Click **Share** to:
+
+- Send a direct email invite to a partner or family member, or
+- Copy a shareable invite link / invite code for them to join.
+
+Everyone in the same household sees the same shared ledger — accounts, expenses, income, transfers, and goals are all shared, not per-person.
+
+## 14. Admin & users
+
+Available to **Admin** and **Backup Admin** roles via the avatar menu. Manage household member accounts, change roles, and remove accounts that no longer belong. A household must always keep at least one Admin — Tally won't let you remove the last one. Admins can also trigger a full database backup export.
+
+Roles:
+- **Admin** — full control: users, workspace sharing, backups.
+- **Member** — day-to-day use: log, categorize, and edit household expenses, income, accounts, transfers, and goals.
+- **Backup Admin** — a disaster-recovery role for emergency failover if the primary Admin is unavailable.
+
+## 15. Data export & backup
+
+Click **Export** at any time to download your records as a CSV spreadsheet or a full JSON backup. Admins can also trigger a full database backup from the Admin tab.
+
+## 16. Privacy & security
+
+- Passwordless sign-in via one-time 6-digit codes — no passwords stored anywhere.
+- Session tokens live in a secure, httpOnly cookie, valid up to 30 days.
+- Sensitive account fields (account numbers, online banking logins, security notes) are encrypted at rest and only decrypted on an explicit "reveal" action.
+- AI features (the Ask box and Money flow analysis) only ever send your own household's data, and only when you actively trigger them — nothing runs automatically in the background.
+- Full details: see the in-app **Privacy** page (footer link) and the **AI transparency** page.
+
+---
+
+*Still stuck? Use the in-app Help guide (avatar menu → Help guide) for a quick tour, or reach out to whoever set up your household workspace.*

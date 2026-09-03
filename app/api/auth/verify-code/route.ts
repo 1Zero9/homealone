@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getErrorMessage } from '@/src/lib/errors';
+import { SESSION_COOKIE } from '@/src/lib/auth';
 import crypto from 'crypto';
 
 // Max wrong-code guesses allowed per issued code before it's invalidated.
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
 
     // Set secure cookie
     response.cookies.set({
-      name: 'homealone_session',
+      name: SESSION_COOKIE,
       value: sessionToken,
       httpOnly: true,
       path: '/',
