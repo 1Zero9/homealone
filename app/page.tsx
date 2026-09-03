@@ -4,10 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import type { ExpenseItem, IncomeItem, CurrencyCode, PresetItem, UserProfile } from '@/src/types/expense';
 import { loadCurrency, saveCurrency, resetToDefaults } from '@/src/services/storage';
 import { calculateSpendingSummary, calculateIncomeSummary } from '@/src/utils/calculations';
-import { Navbar } from '@/src/components/Navbar';
+import { Navbar, SPENDING_TABS } from '@/src/components/Navbar';
 import type { TabId } from '@/src/components/Navbar';
-import { DashboardStats } from '@/src/components/DashboardStats';
-import { CashFlowSummary } from '@/src/components/CashFlowSummary';
 import { CategoryBreakdownChart } from '@/src/components/CategoryBreakdownChart';
 import { ExpenseList } from '@/src/components/ExpenseList';
 import { IncomeSection } from '@/src/components/IncomeSection';
@@ -25,6 +23,8 @@ import { ExportImportModal } from '@/src/components/ExportImportModal';
 import { ShareWorkspaceModal } from '@/src/components/ShareWorkspaceModal';
 import { ContactVendorModal } from '@/src/components/ContactVendorModal';
 import { HelpGuideModal } from '@/src/components/HelpGuideModal';
+import { SettingsModal } from '@/src/components/SettingsModal';
+import { OverviewDashboard } from '@/src/components/OverviewDashboard';
 import { AssistantBox } from '@/src/components/AssistantBox';
 import { TallyLogo } from '@/src/components/TallyLogo';
 
@@ -33,8 +33,15 @@ export default function HomeAlonePage() {
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [incomes, setIncomes] = useState<IncomeItem[]>([]);
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
-  const [activeTab, setActiveTab] = useState<TabId>('all');
+  const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const SPENDING_CHIPS: { id: TabId; label: string }[] = [
+    { id: 'all', label: 'All spending' },
+    { id: 'ai-tech', label: 'AI & tech' },
+    { id: 'utilities', label: 'Utilities & bills' },
+    { id: 'education', label: 'Colleges & sports' },
+  ];
 
   // Users & Auth
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -46,6 +53,7 @@ export default function HomeAlonePage() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseItem | null>(null);
   const [initialPresetId, setInitialPresetId] = useState<string | null>(null);
   const [initialCategory, setInitialCategory] = useState<string | null>(null);
@@ -452,6 +460,15 @@ export default function HomeAlonePage() {
     }
   };
 
+  // Scroll to and focus the Ask Tally input
+  const handleFocusAsk = () => {
+    const input = document.getElementById('ask-tally-input');
+    if (input) {
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      input.focus();
+    }
+  };
+
   // Reset sample data
   const handleResetData = async () => {
     if (window.confirm('Reset all expense records?')) {
@@ -485,9 +502,6 @@ export default function HomeAlonePage() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--ha-paper)' }}>
       {/* Top Sticky Navigation */}
       <Navbar
-        currentCurrency={currency}
-        onCurrencyChange={setCurrency}
-        monthlyTotal={summary.monthlyTotal}
         activeTab={activeTab}
         onTabChange={(tab) => {
           setActiveTab(tab);
@@ -502,11 +516,9 @@ export default function HomeAlonePage() {
           setInitialCategory(null);
           setIsAddModalOpen(true);
         }}
-        onOpenPresetsModal={() => setIsPresetsModalOpen(true)}
-        onOpenExportModal={() => setIsExportModalOpen(true)}
-        onOpenShareModal={() => setIsShareModalOpen(true)}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
         onOpenHelpModal={() => setIsHelpModalOpen(true)}
-        onResetData={handleResetData}
+        onFocusAsk={handleFocusAsk}
         onLogout={handleLogout}
         currentUser={currentUser}
       />
@@ -534,34 +546,51 @@ export default function HomeAlonePage() {
           <AssistantBox currency={currency} hasData={hasData} />
         </div>
 
-        {hasData && (
-          <>
-            {/* Money In / Money Out / Net Cash Flow */}
-            <CashFlowSummary
-              monthlyIncome={incomeSummary.monthlyTotal}
-              monthlyExpenses={summary.monthlyTotal}
-              currency={currency}
-              onOpenAddIncome={() => {
-                setEditingIncome(null);
-                setIsIncomeModalOpen(true);
-              }}
-            />
+        {/* Overview Dashboard */}
+        {activeTab === 'overview' && hasData && (
+          <OverviewDashboard
+            expenses={expenses}
+            summary={summary}
+            incomeSummary={incomeSummary}
+            currency={currency}
+            onEditExpense={(item) => {
+              setEditingExpense(item);
+              setInitialCategory(null);
+              setInitialPresetId(null);
+              setIsAddModalOpen(true);
+            }}
+            onFilterCategory={(cat) => {
+              if (cat === 'ai-tech') setActiveTab('ai-tech');
+              else if (cat === 'utilities') setActiveTab('utilities');
+              else if (cat === 'education') setActiveTab('education');
+              else {
+                setSelectedCategory(cat);
+                setActiveTab('all');
+              }
+            }}
+            onOpenAddIncome={() => {
+              setEditingIncome(null);
+              setIsIncomeModalOpen(true);
+            }}
+          />
+        )}
 
-            {/* Top Spend Summary Cards */}
-            <DashboardStats
-              summary={summary}
-              currency={currency}
-              onFilterCategory={(cat) => {
-                if (cat === 'ai-tech') setActiveTab('ai-tech');
-                else if (cat === 'utilities') setActiveTab('utilities');
-                else if (cat === 'education') setActiveTab('education');
-                else {
-                  setSelectedCategory(cat);
-                  setActiveTab('all');
-                }
-              }}
-            />
-          </>
+        {/* Spending Sub-Tab Chips */}
+        {SPENDING_TABS.includes(activeTab) && (
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+            {SPENDING_CHIPS.map((chip) => (
+              <button
+                key={chip.id}
+                onClick={() => {
+                  setActiveTab(chip.id);
+                  setSelectedCategory(chip.id === 'all' ? null : chip.id);
+                }}
+                className={`ha-chip${activeTab === chip.id ? ' active' : ''}`}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
         )}
 
         {/* Tab View Routing */}
@@ -807,6 +836,18 @@ export default function HomeAlonePage() {
         isOpen={isHelpModalOpen}
         onClose={() => setIsHelpModalOpen(false)}
         currentUser={currentUser}
+      />
+
+      {/* Settings & Preferences Modal */}
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        currentCurrency={currency}
+        onCurrencyChange={setCurrency}
+        onOpenPresetsModal={() => setIsPresetsModalOpen(true)}
+        onOpenExportModal={() => setIsExportModalOpen(true)}
+        onOpenShareModal={() => setIsShareModalOpen(true)}
+        onResetData={handleResetData}
       />
     </div>
   );

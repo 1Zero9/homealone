@@ -1,43 +1,49 @@
-import React from 'react';
-import type { CurrencyCode, UserProfile } from '../types/expense';
-import { CURRENCY_LIST } from '../utils/currencies';
-import { formatCurrency } from '../utils/formatters';
-import { Plus, Download, Sparkles, LogOut, UserPlus, HelpCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import type { UserProfile } from '../types/expense';
+import { Plus, Search, Settings, HelpCircle, LogOut, ShieldCheck, Menu, X, ChevronDown } from 'lucide-react';
 import { TallyLogo } from './TallyLogo';
 
-export type TabId = 'all' | 'ai-tech' | 'utilities' | 'education' | 'income' | 'calendar' | 'insights' | 'admin';
+export type TabId = 'overview' | 'all' | 'ai-tech' | 'utilities' | 'education' | 'income' | 'calendar' | 'insights' | 'admin';
+
+export const SPENDING_TABS: TabId[] = ['all', 'ai-tech', 'utilities', 'education'];
+
+const NAV_ITEMS: { id: TabId; label: string }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'all', label: 'Spending' },
+  { id: 'calendar', label: 'Bills' },
+  { id: 'income', label: 'Income' },
+  { id: 'insights', label: 'Insights' },
+];
 
 interface NavbarProps {
-  currentCurrency: CurrencyCode;
-  onCurrencyChange: (currency: CurrencyCode) => void;
-  monthlyTotal: number;
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
   onOpenAddModal: () => void;
-  onOpenPresetsModal: () => void;
-  onOpenExportModal: () => void;
-  onOpenShareModal: () => void;
+  onOpenSettings: () => void;
   onOpenHelpModal: () => void;
-  onResetData: () => void;
+  onFocusAsk: () => void;
   onLogout: () => void;
   currentUser: UserProfile | null;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  currentCurrency,
-  onCurrencyChange,
-  monthlyTotal,
   activeTab,
   onTabChange,
   onOpenAddModal,
-  onOpenPresetsModal,
-  onOpenExportModal,
-  onOpenShareModal,
+  onOpenSettings,
   onOpenHelpModal,
+  onFocusAsk,
   onLogout,
   currentUser,
 }) => {
   const isAdmin = currentUser?.role === 'ADMIN';
+  const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const handleNav = (tab: TabId) => {
+    onTabChange(tab);
+    setIsDrawerOpen(false);
+  };
 
   return (
     <div style={{ position: 'sticky', top: 0, zIndex: 50 }}>
@@ -45,253 +51,233 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div style={{
           backgroundColor: 'var(--ha-blue)',
           color: 'var(--ha-white)',
-          fontSize: '0.72rem',
+          fontSize: '0.7rem',
           fontWeight: 600,
           letterSpacing: '0.04em',
           textTransform: 'uppercase',
           textAlign: 'center',
-          padding: '0.3rem 0.5rem',
+          padding: '0.25rem 0.5rem',
         }}>
-          Admin workspace — full household access
+          Admin workspace
         </div>
       )}
       <header style={{
         backgroundColor: 'var(--ha-paper)',
-        borderBottom: isAdmin ? '2px solid var(--ha-blue)' : '1px solid var(--ha-line)',
-        padding: '0.85rem 1.5rem',
+        borderBottom: '1px solid var(--ha-line)',
+        padding: '0.75rem 1.5rem',
       }}>
-      <div style={{
-        maxWidth: '1280px',
-        margin: '0 auto',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '1rem',
-      }}>
-        {/* Brand Logo & Wordmark */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+        <div style={{
+          maxWidth: '1280px',
+          margin: '0 auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1.5rem',
+        }}>
+          {/* Brand */}
           <div
-            style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', cursor: 'pointer' }}
-            onClick={() => onTabChange('all')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', flexShrink: 0 }}
+            onClick={() => handleNav('overview')}
           >
-            <TallyLogo size={32} />
+            <TallyLogo size={28} />
             <div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                <h1 style={{
-                  fontSize: '1.65rem',
-                  fontWeight: 700,
-                  color: 'var(--ha-ink)',
-                  lineHeight: 1,
-                  fontFamily: 'var(--ha-font-display)',
-                  letterSpacing: '-0.02em',
-                  textTransform: 'none',
-                }}>
-                  Tally
-                </h1>
-                {isAdmin && (
-                  <span className="ha-badge ha-badge-blue">Admin</span>
-                )}
-              </div>
-              <p style={{
-                fontSize: '0.78rem',
-                color: 'var(--ha-muted)',
-                fontWeight: 400,
-                marginTop: '1px',
+              <h1 style={{
+                fontSize: '1.35rem',
+                fontWeight: 700,
+                color: 'var(--ha-ink)',
+                lineHeight: 1,
+                fontFamily: 'var(--ha-font-display)',
+                letterSpacing: '-0.02em',
               }}>
+                Tally
+              </h1>
+              <p className="hide-mobile" style={{ fontSize: '0.7rem', color: 'var(--ha-muted)', marginTop: '1px' }}>
                 Your household, in balance.
               </p>
             </div>
           </div>
 
-          {/* Monthly Total Indicator */}
-          <div style={{
-            display: 'none',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.35rem 0.75rem',
-            backgroundColor: 'var(--ha-white)',
-            border: '1px solid var(--ha-line)',
-            borderRadius: 'var(--ha-radius-md)',
-          }} className="desktop-burn-rate">
-            <span style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.03em' }}>
-              Monthly commitments:
-            </span>
-            <span className="tabular-nums" style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--ha-blue)' }}>
-              {formatCurrency(monthlyTotal, currentCurrency)}
-            </span>
+          {/* Primary Nav Links (desktop) */}
+          <nav className="desktop-only" style={{ alignItems: 'center', gap: '1.5rem', flex: 1, justifyContent: 'center' }}>
+            {NAV_ITEMS.map((item) => {
+              const isActive = item.id === 'all' ? SPENDING_TABS.includes(activeTab) : activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNav(item.id)}
+                  className={`ha-nav-link${isActive ? ' active' : ''}`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Right Actions (desktop) */}
+          <div className="desktop-only" style={{ alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+            <button className="ha-icon-btn" title="Ask Tally" onClick={onFocusAsk}>
+              <Search size={17} />
+            </button>
+
+            <button onClick={onOpenAddModal} className="btn btn-primary" style={{ fontSize: '0.82rem', padding: '0.5rem 0.9rem' }}>
+              <Plus size={14} />
+              <span>Add expense</span>
+            </button>
+
+            <button className="ha-icon-btn" title="Settings & preferences" onClick={onOpenSettings}>
+              <Settings size={17} />
+            </button>
+
+            {currentUser && (
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setIsAvatarMenuOpen((v) => !v)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    backgroundColor: 'transparent',
+                    border: '1px solid var(--ha-line)',
+                    borderRadius: 'var(--ha-radius-md)',
+                    padding: '0.3rem 0.5rem 0.3rem 0.3rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{
+                    width: '26px',
+                    height: '26px',
+                    borderRadius: 'var(--ha-radius-sm)',
+                    backgroundColor: currentUser.role === 'ADMIN' ? 'var(--ha-blue-light)' : currentUser.role === 'BACKUP_ADMIN' ? 'var(--ha-red-tint)' : '#e7e8ea',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: currentUser.role === 'ADMIN' ? 'var(--ha-blue)' : currentUser.role === 'BACKUP_ADMIN' ? 'var(--ha-red)' : 'var(--ha-ink)',
+                  }}>
+                    {currentUser.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="hide-mobile" style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                    {currentUser.name.split(' ')[0]}
+                  </span>
+                  <ChevronDown size={14} color="var(--ha-muted)" />
+                </button>
+
+                {isAvatarMenuOpen && (
+                  <>
+                    <div className="ha-dropdown-overlay" onClick={() => setIsAvatarMenuOpen(false)} />
+                    <div className="ha-dropdown">
+                      {isAdmin && (
+                        <button className="ha-dropdown-item" onClick={() => { handleNav('admin'); setIsAvatarMenuOpen(false); }}>
+                          <ShieldCheck size={15} />
+                          <span>Admin & users</span>
+                        </button>
+                      )}
+                      <button className="ha-dropdown-item" onClick={() => { onOpenHelpModal(); setIsAvatarMenuOpen(false); }}>
+                        <HelpCircle size={15} />
+                        <span>Help guide</span>
+                      </button>
+                      <div className="ha-dropdown-divider" />
+                      <button className="ha-dropdown-item destructive" onClick={() => { onLogout(); setIsAvatarMenuOpen(false); }}>
+                        <LogOut size={15} />
+                        <span>Log out</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Actions */}
+          <div className="mobile-menu-btn" style={{ alignItems: 'center', gap: '0.4rem' }}>
+            <button className="ha-icon-btn" title="Add expense" onClick={onOpenAddModal}>
+              <Plus size={19} />
+            </button>
+            <button className="ha-icon-btn" title="Menu" onClick={() => setIsDrawerOpen(true)}>
+              <Menu size={20} />
+            </button>
           </div>
         </div>
-
-        {/* View Switcher Tabs */}
-        <nav style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.25rem',
-          backgroundColor: 'var(--ha-white)',
-          padding: '0.25rem',
-          borderRadius: 'var(--ha-radius-md)',
-          border: '1px solid var(--ha-line)',
-          overflowX: 'auto',
-        }}>
-          {[
-            { id: 'all', label: 'All expenses' },
-            { id: 'utilities', label: 'Utilities & bills' },
-            { id: 'education', label: 'Colleges & sports' },
-            { id: 'ai-tech', label: 'AI & tech' },
-            { id: 'income', label: 'Income' },
-            { id: 'calendar', label: 'Schedule' },
-            { id: 'insights', label: 'Optimization' },
-            { id: 'admin', label: 'Admin & users' },
-          ].map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => onTabChange(tab.id as TabId)}
-                style={{
-                  padding: '0.45rem 0.85rem',
-                  borderRadius: 'var(--ha-radius-sm)',
-                  border: 'none',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.12s ease',
-                  backgroundColor: isActive ? 'var(--ha-blue)' : 'transparent',
-                  color: isActive ? 'var(--ha-white)' : 'var(--ha-muted)',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Right Actions: Currency, Catalog, Share, Export, Add Expense, User & Log Out */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-          {/* Currency Dropdown */}
-          <select
-            value={currentCurrency}
-            onChange={(e) => onCurrencyChange(e.target.value as CurrencyCode)}
-            style={{
-              backgroundColor: 'var(--ha-white)',
-              color: 'var(--ha-ink)',
-              border: '1px solid var(--ha-line)',
-              borderRadius: 'var(--ha-radius-md)',
-              padding: '0.55rem 0.75rem',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              outline: 'none',
-            }}
-            title="Display currency"
-          >
-            {CURRENCY_LIST.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.symbol} {c.code}
-              </option>
-            ))}
-          </select>
-
-          {/* Quick Presets Catalog */}
-          <button
-            onClick={onOpenPresetsModal}
-            className="btn btn-secondary"
-            style={{ fontSize: '0.85rem', padding: '0.55rem 0.85rem' }}
-            title="Browse standard subscription and utility presets"
-          >
-            <Sparkles size={15} color="var(--ha-blue)" />
-            <span>Catalog</span>
-          </button>
-
-          {/* Share Workspace Button */}
-          <button
-            onClick={onOpenShareModal}
-            className="btn btn-secondary"
-            style={{ fontSize: '0.85rem', padding: '0.55rem 0.85rem' }}
-            title="Share workspace with wife, partner or family members"
-          >
-            <UserPlus size={15} color="var(--ha-blue)" />
-            <span>Share</span>
-          </button>
-
-          {/* Export / Backup */}
-          <button
-            onClick={onOpenExportModal}
-            className="btn btn-secondary"
-            style={{ fontSize: '0.85rem', padding: '0.55rem 0.75rem' }}
-            title="Export CSV spreadsheet or JSON backup"
-          >
-            <Download size={15} />
-            <span className="hide-mobile">Export</span>
-          </button>
-
-          {/* Primary Add Expense Action */}
-          <button
-            onClick={onOpenAddModal}
-            className="btn btn-primary"
-            style={{ fontSize: '0.85rem', padding: '0.55rem 1.1rem' }}
-          >
-            <Plus size={15} />
-            <span>Add expense</span>
-          </button>
-
-          {/* User Account Chip */}
-          {currentUser && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              backgroundColor: 'var(--ha-white)',
-              border: '1px solid var(--ha-line)',
-              borderRadius: 'var(--ha-radius-md)',
-              padding: '0.25rem 0.5rem',
-              gap: '0.4rem',
-            }}>
-              <div style={{
-                width: '26px',
-                height: '26px',
-                borderRadius: 'var(--ha-radius-sm)',
-                backgroundColor: currentUser.role === 'ADMIN' ? 'var(--ha-blue-light)' : currentUser.role === 'BACKUP_ADMIN' ? 'var(--ha-red-tint)' : '#e7e8ea',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                color: currentUser.role === 'ADMIN' ? 'var(--ha-blue)' : currentUser.role === 'BACKUP_ADMIN' ? 'var(--ha-red)' : 'var(--ha-ink)',
-              }}>
-                {currentUser.name.charAt(0).toUpperCase()}
-              </div>
-
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
-                {currentUser.name}
-              </span>
-            </div>
-          )}
-
-          {/* Help Guide */}
-          <button
-            onClick={onOpenHelpModal}
-            className="btn btn-ghost"
-            style={{ fontSize: '0.82rem', padding: '0.55rem' }}
-            title="Help guide"
-          >
-            <HelpCircle size={17} />
-          </button>
-
-          {/* Prominent Log Out Button */}
-          <button
-            onClick={onLogout}
-            className="btn btn-destructive"
-            style={{ fontSize: '0.82rem', padding: '0.55rem 0.85rem' }}
-            title="Sign out of Tally"
-          >
-            <LogOut size={14} />
-            <span>Log out</span>
-          </button>
-        </div>
-      </div>
       </header>
+
+      {/* Mobile Drawer */}
+      {isDrawerOpen && (
+        <>
+          <div className="mobile-drawer-overlay" onClick={() => setIsDrawerOpen(false)} />
+          <div className="mobile-drawer">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: '1px solid var(--ha-line)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <TallyLogo size={24} />
+                <span style={{ fontWeight: 700, fontSize: '1.1rem', fontFamily: 'var(--ha-font-display)' }}>Tally</span>
+              </div>
+              <button className="ha-icon-btn" onClick={() => setIsDrawerOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            {currentUser && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '1rem 1.25rem', borderBottom: '1px solid var(--ha-line)' }}>
+                <div style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: 'var(--ha-radius-sm)',
+                  backgroundColor: 'var(--ha-blue-light)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  color: 'var(--ha-blue)',
+                }}>
+                  {currentUser.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--ha-ink)' }}>{currentUser.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--ha-muted)' }}>{currentUser.role}</div>
+                </div>
+              </div>
+            )}
+
+            <div style={{ padding: '0.75rem 0.5rem', display: 'flex', flexDirection: 'column' }}>
+              {NAV_ITEMS.map((item) => {
+                const isActive = item.id === 'all' ? SPENDING_TABS.includes(activeTab) : activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNav(item.id)}
+                    className="ha-dropdown-item"
+                    style={{ fontSize: '0.95rem', fontWeight: 600, color: isActive ? 'var(--ha-blue)' : 'var(--ha-ink)' }}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+              {isAdmin && (
+                <button onClick={() => handleNav('admin')} className="ha-dropdown-item" style={{ fontSize: '0.95rem', fontWeight: 600 }}>
+                  <ShieldCheck size={15} />
+                  <span>Admin & users</span>
+                </button>
+              )}
+
+              <div className="ha-dropdown-divider" />
+
+              <button onClick={() => { onOpenSettings(); setIsDrawerOpen(false); }} className="ha-dropdown-item">
+                <Settings size={15} />
+                <span>Settings & preferences</span>
+              </button>
+              <button onClick={() => { onOpenHelpModal(); setIsDrawerOpen(false); }} className="ha-dropdown-item">
+                <HelpCircle size={15} />
+                <span>Help guide</span>
+              </button>
+              <button onClick={() => { onLogout(); setIsDrawerOpen(false); }} className="ha-dropdown-item destructive">
+                <LogOut size={15} />
+                <span>Log out</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -45,6 +45,9 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [answer, setAnswer] = useState<AnswerContent | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
+
+  const isExpanded = isFocused || !!question || !!answer || !!errorMessage || isLoading;
 
   const fetchInsights = async (): Promise<InsightsData> => {
     const res = await fetch('/api/insights/summary');
@@ -153,10 +156,19 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
   };
 
   return (
-    <div style={{ maxWidth: '640px', margin: '0 auto', width: '100%' }}>
+    <div
+      style={{ width: '100%' }}
+      onFocus={() => setIsFocused(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          setIsFocused(false);
+        }
+      }}
+    >
       <form onSubmit={handleAsk} style={{ position: 'relative', marginBottom: '0.85rem' }}>
         <Search size={17} color="var(--ha-muted)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
         <input
+          id="ask-tally-input"
           type="text"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
@@ -174,7 +186,7 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
         )}
       </form>
 
-      <div style={{ display: hasData ? 'flex' : 'none', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginBottom: answer || errorMessage ? '1.25rem' : 0 }}>
+      <div style={{ display: hasData && isExpanded ? 'flex' : 'none', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginBottom: answer || errorMessage ? '1.25rem' : 0 }}>
         {QUICK_ACTIONS.map((action) => (
           <button
             key={action.id}
