@@ -764,8 +764,13 @@ export default function HomeAlonePage() {
           <div>
             Tally — Your household, in balance.
           </div>
-          <div>
-            Authenticated as <strong>{currentUser?.name || 'Stephen'}</strong> ({currentUser?.role || 'ADMIN'})
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <a href="/privacy" style={{ color: 'var(--ha-muted)' }}>Privacy</a>
+            <a href="/terms" style={{ color: 'var(--ha-muted)' }}>Terms</a>
+            <a href="/ai-transparency" style={{ color: 'var(--ha-muted)' }}>AI Transparency</a>
+            <span>
+              Authenticated as <strong>{currentUser?.name || 'Stephen'}</strong> ({currentUser?.role || 'ADMIN'})
+            </span>
           </div>
         </div>
       </footer>

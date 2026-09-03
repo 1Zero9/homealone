@@ -281,6 +281,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               <ArrowRight size={15} />
             </button>
 
+            <p style={{ fontSize: '0.72rem', color: 'var(--ha-muted)', textAlign: 'center', lineHeight: 1.5 }}>
+              By continuing, you agree to our{' '}
+              <a href="/terms" style={{ color: 'var(--ha-blue)' }}>Terms</a> and{' '}
+              <a href="/privacy" style={{ color: 'var(--ha-blue)' }}>Privacy Policy</a>.
+            </p>
+
             {/* Footer toggle text */}
             <div style={{ textAlign: 'center', marginTop: '0.25rem' }}>
               {mode === 'signin' ? (

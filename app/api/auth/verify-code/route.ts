@@ -3,6 +3,11 @@ import { prisma } from '@/src/lib/prisma';
 import { getErrorMessage } from '@/src/lib/errors';
 import crypto from 'crypto';
 
+// Max wrong-code guesses allowed per issued code before it's invalidated.
+// A 6-digit code has 1,000,000 combinations — without a cap, an attacker
+// could brute-force it within the 15-minute expiry window.
+const MAX_ATTEMPTS = 5;
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -31,6 +36,20 @@ export async function POST(request: Request) {
     }
 
     if (outstanding.code !== code) {
+      const attempts = outstanding.attempts + 1;
+      if (attempts >= MAX_ATTEMPTS) {
+        // Invalidate the code entirely after too many wrong guesses — the
+        // user must request a fresh one rather than keep guessing.
+        await prisma.verificationToken.delete({ where: { id: outstanding.id } });
+        return NextResponse.json(
+          { status: 'error', message: 'Too many incorrect attempts. Please request a new code.' },
+          { status: 429 }
+        );
+      }
+      await prisma.verificationToken.update({
+        where: { id: outstanding.id },
+        data: { attempts },
+      });
       return NextResponse.json(
         { status: 'error', message: 'Incorrect verification code.' },
         { status: 400 }
