@@ -73,6 +73,15 @@ export const CATEGORIES: Record<ExpenseCategory, CategoryInfo> = {
     borderColor: '#f6dfb8',
     icon: 'Landmark',
   },
+  'insurance': {
+    id: 'insurance',
+    name: 'Insurance, Motor Tax & NCT',
+    description: 'Car, life & health insurance, motor tax and NCT — vehicle and personal cover kept separate from household bills',
+    color: '#0E7490', // Teal
+    bgColor: '#e7f5f8',
+    borderColor: '#bfe3ea',
+    icon: 'ShieldCheck',
+  },
 };
 
 export const CATEGORY_LIST = Object.values(CATEGORIES);

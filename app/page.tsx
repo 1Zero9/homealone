@@ -15,6 +15,7 @@ import { AiTechSection } from '@/src/components/AiTechSection';
 import { UtilitiesSection } from '@/src/components/UtilitiesSection';
 import { EducationSection } from '@/src/components/EducationSection';
 import { BigTicketSection } from '@/src/components/BigTicketSection';
+import { InsuranceSection } from '@/src/components/InsuranceSection';
 import { PlannedExpensesSection } from '@/src/components/PlannedExpensesSection';
 import { UpcomingRenewals } from '@/src/components/UpcomingRenewals';
 import { OptimizationInsights } from '@/src/components/OptimizationInsights';
@@ -62,6 +63,7 @@ export default function TallyPage() {
     { id: 'utilities', label: 'Utilities & bills' },
     { id: 'education', label: 'Colleges & sports' },
     { id: 'big-ticket', label: 'Mortgage & loans' },
+    { id: 'insurance', label: 'Insurance & motor' },
   ];
 
   // Users & Auth
@@ -757,6 +759,7 @@ export default function TallyPage() {
           else if (tab === 'utilities') setSelectedCategory('utilities');
           else if (tab === 'education') setSelectedCategory('education');
           else if (tab === 'big-ticket') setSelectedCategory('big-ticket');
+          else if (tab === 'insurance') setSelectedCategory('insurance');
           else setSelectedCategory(null);
         }}
         onOpenAddModal={() => {
@@ -825,6 +828,7 @@ export default function TallyPage() {
               else if (cat === 'utilities') setActiveTab('utilities');
               else if (cat === 'education') setActiveTab('education');
               else if (cat === 'big-ticket') setActiveTab('big-ticket');
+              else if (cat === 'insurance') setActiveTab('insurance');
               else {
                 setSelectedCategory(cat);
                 setActiveTab('all');
@@ -955,6 +959,28 @@ export default function TallyPage() {
               setEditingExpense(null);
               setInitialPresetId(null);
               setInitialCategory('big-ticket');
+              setIsAddModalOpen(true);
+            }}
+            onOpenAddPreset={(presetId) => {
+              setEditingExpense(null);
+              setInitialPresetId(presetId);
+              setIsAddModalOpen(true);
+            }}
+          />
+        )}
+
+        {activeTab === 'insurance' && (
+          <InsuranceSection
+            expenses={liveExpenses}
+            currency={currency}
+            onEditExpense={(item) => {
+              setEditingExpense(item);
+              setIsAddModalOpen(true);
+            }}
+            onOpenAddModal={() => {
+              setEditingExpense(null);
+              setInitialPresetId(null);
+              setInitialCategory('insurance');
               setIsAddModalOpen(true);
             }}
             onOpenAddPreset={(presetId) => {

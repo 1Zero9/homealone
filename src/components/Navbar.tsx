@@ -4,9 +4,9 @@ import { Plus, Search, Settings, HelpCircle, LogOut, ShieldCheck, Menu, X, Chevr
 import { TallyLogo } from './TallyLogo';
 import { APP_VERSION, MOBILE_APP_VERSION } from '../data/changelog';
 
-export type TabId = 'overview' | 'all' | 'ai-tech' | 'utilities' | 'education' | 'big-ticket' | 'income' | 'calendar' | 'insights' | 'accounts' | 'moneymap' | 'flow' | 'goals' | 'planned' | 'admin';
+export type TabId = 'overview' | 'all' | 'ai-tech' | 'utilities' | 'education' | 'big-ticket' | 'insurance' | 'income' | 'calendar' | 'insights' | 'accounts' | 'moneymap' | 'flow' | 'goals' | 'planned' | 'admin';
 
-export const SPENDING_TABS: TabId[] = ['all', 'ai-tech', 'utilities', 'education', 'big-ticket'];
+export const SPENDING_TABS: TabId[] = ['all', 'ai-tech', 'utilities', 'education', 'big-ticket', 'insurance'];
 
 const PRIMARY_NAV_ITEMS: { id: TabId; label: string }[] = [
   { id: 'overview', label: 'Overview' },

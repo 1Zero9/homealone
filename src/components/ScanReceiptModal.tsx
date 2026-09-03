@@ -33,7 +33,7 @@ interface ConversionResult {
   convertedAmount: number;
 }
 
-const VALID_CATEGORIES: ExpenseCategory[] = ['entertainment', 'ai-tech', 'utilities', 'housing', 'education', 'lifestyle', 'shopping', 'big-ticket'];
+const VALID_CATEGORIES: ExpenseCategory[] = ['entertainment', 'ai-tech', 'utilities', 'housing', 'education', 'lifestyle', 'shopping', 'big-ticket', 'insurance'];
 const VALID_CURRENCIES: CurrencyCode[] = ['EUR', 'GBP', 'USD', 'CAD', 'AUD', 'JPY'];
 
 export const ScanReceiptModal: React.FC<ScanReceiptModalProps> = ({

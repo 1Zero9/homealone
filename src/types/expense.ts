@@ -6,7 +6,8 @@ export type ExpenseCategory =
   | 'education'      // College Tuition, School Fees, Uniforms, Books, Lunches
   | 'lifestyle'      // Sports Club, Gym, Coaching, Activities, Health
   | 'shopping'       // Groceries & general shopping — one lump total, not itemized
-  | 'big-ticket';    // Mortgage, car/personal loan repayments, holidays & other big purchases
+  | 'big-ticket'     // Mortgage, car/personal loan repayments, holidays & other big purchases
+  | 'insurance';     // Car/life/health insurance, motor tax, NCT & vehicle renewals
 
 export type IncomeCategory = 'salary' | 'freelance' | 'rental' | 'benefits' | 'other';
 

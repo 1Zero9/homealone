@@ -71,6 +71,7 @@ export function calculateSpendingSummary(
     lifestyle: 0,
     shopping: 0,
     'big-ticket': 0,
+    insurance: 0,
   };
 
   expenses.forEach((item) => {

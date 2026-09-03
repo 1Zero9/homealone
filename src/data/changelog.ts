@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.14.2';
+export const APP_VERSION = '1.15.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.15.0',
+    date: '2026-09-03',
+    changes: [
+      'Added a new "Insurance, Motor Tax & NCT" category with its own tab, so car/life/health insurance, motor tax and NCT renewals no longer have to be shoehorned into Housing or Big Purchases.',
+      'Added quick-add presets for Car Insurance, Motor Tax, NCT Test Fee, Life Insurance and Health Insurance.',
+    ],
+  },
   {
     version: '1.14.2',
     date: '2026-09-03',
