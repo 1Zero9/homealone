@@ -39,6 +39,7 @@ import { GoalModal } from '@/src/components/GoalModal';
 import { PrivacyBlurOverlay } from '@/src/components/PrivacyBlurOverlay';
 import { usePrivacyBlur } from '@/src/hooks/usePrivacyBlur';
 import { ChangelogModal } from '@/src/components/ChangelogModal';
+import { ScanReceiptModal } from '@/src/components/ScanReceiptModal';
 
 export default function TallyPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = checking
@@ -74,6 +75,9 @@ export default function TallyPage() {
   const [editingExpense, setEditingExpense] = useState<ExpenseItem | null>(null);
   const [initialPresetId, setInitialPresetId] = useState<string | null>(null);
   const [initialCategory, setInitialCategory] = useState<string | null>(null);
+  const [draftExpense, setDraftExpense] = useState<Partial<ExpenseItem> | null>(null);
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+  const [scanInitialImage, setScanInitialImage] = useState<{ dataUrl: string; base64: string; mimeType: string } | null>(null);
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<IncomeItem | null>(null);
   const [contactVendorExpense, setContactVendorExpense] = useState<ExpenseItem | null>(null);
@@ -185,6 +189,60 @@ export default function TallyPage() {
   useEffect(() => {
     saveCurrency(currency);
   }, [currency]);
+
+  // Paste (Ctrl/Cmd+V) or drag-and-drop a screenshot anywhere in the app to
+  // scan a bill — skips the manual "Scan bill" button for the common case.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const loadImageFile = (file: File) => {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        const base64 = dataUrl.split(',')[1] || '';
+        setScanInitialImage({ dataUrl, base64, mimeType: file.type });
+        setIsScanModalOpen(true);
+      };
+      reader.readAsDataURL(file);
+    };
+
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          const file = items[i].getAsFile();
+          if (file) {
+            e.preventDefault();
+            loadImageFile(file);
+          }
+          return;
+        }
+      }
+    };
+
+    const handleDragOver = (e: DragEvent) => {
+      if (e.dataTransfer?.types.includes('Files')) e.preventDefault();
+    };
+
+    const handleDrop = (e: DragEvent) => {
+      const file = e.dataTransfer?.files?.[0];
+      if (file && file.type.startsWith('image/')) {
+        e.preventDefault();
+        loadImageFile(file);
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('drop', handleDrop);
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('drop', handleDrop);
+    };
+  }, [isAuthenticated]);
 
   const handleLoginSuccess = (user: UserProfile) => {
     try {
@@ -675,6 +733,10 @@ export default function TallyPage() {
           setInitialCategory(null);
           setIsAddModalOpen(true);
         }}
+        onOpenScanModal={() => {
+          setScanInitialImage(null);
+          setIsScanModalOpen(true);
+        }}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         onOpenHelpModal={() => setIsHelpModalOpen(true)}
         onFocusAsk={handleFocusAsk}
@@ -1044,14 +1106,40 @@ export default function TallyPage() {
           setEditingExpense(null);
           setInitialPresetId(null);
           setInitialCategory(null);
+          setDraftExpense(null);
         }}
         onSave={handleSaveExpense}
         editingExpense={editingExpense}
         initialPresetId={initialPresetId}
         initialCategory={initialCategory}
+        draftExpense={draftExpense}
         users={users}
         currentUserId={currentUser?.id}
         accounts={accounts}
+      />
+
+      {/* Scan a bill screenshot */}
+      <ScanReceiptModal
+        isOpen={isScanModalOpen}
+        onClose={() => {
+          setIsScanModalOpen(false);
+          setScanInitialImage(null);
+        }}
+        initialImage={scanInitialImage}
+        onUseMatch={(mergedExpense) => {
+          setDraftExpense(null);
+          setInitialPresetId(null);
+          setInitialCategory(null);
+          setEditingExpense(mergedExpense);
+          setIsAddModalOpen(true);
+        }}
+        onUseNew={(draft) => {
+          setEditingExpense(null);
+          setInitialPresetId(null);
+          setInitialCategory(null);
+          setDraftExpense(draft);
+          setIsAddModalOpen(true);
+        }}
       />
 
       {/* Add / Edit Income Modal */}

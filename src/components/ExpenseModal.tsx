@@ -24,6 +24,7 @@ interface ExpenseModalProps {
   editingExpense?: ExpenseItem | null;
   initialPresetId?: string | null;
   initialCategory?: string | null;
+  draftExpense?: Partial<ExpenseItem> | null;
   users?: UserProfile[];
   currentUserId?: string;
   accounts?: AccountItem[];
@@ -36,11 +37,13 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   editingExpense,
   initialPresetId,
   initialCategory,
+  draftExpense,
   users = [],
   currentUserId,
   accounts = [],
 }) => {
   const [name, setName] = useState('');
+  const [vendor, setVendor] = useState('');
   const [amount, setAmount] = useState<number | string>('');
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
@@ -59,6 +62,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   useEffect(() => {
     if (editingExpense) {
       setName(editingExpense.name);
+      setVendor(editingExpense.vendor || '');
       setAmount(editingExpense.amount);
       setCurrency(editingExpense.currency || 'EUR');
       setBillingCycle(editingExpense.billingCycle);
@@ -77,6 +81,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       const preset = PRESETS.find((p) => p.id === initialPresetId);
       if (preset) {
         setName(preset.name);
+        setVendor('');
         setAmount(preset.defaultAmount);
         setCurrency('EUR');
         setBillingCycle(preset.defaultCycle);
@@ -89,8 +94,26 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         setIsVariable(preset.category === 'shopping');
         setPaymentAccountId('');
       }
+    } else if (draftExpense) {
+      setName(draftExpense.name || '');
+      setVendor(draftExpense.vendor || '');
+      setAmount(draftExpense.amount ?? '');
+      setCurrency(draftExpense.currency || 'EUR');
+      setBillingCycle(draftExpense.billingCycle || 'monthly');
+      setCategory(draftExpense.category || 'utilities');
+      setNextRenewalDate(draftExpense.nextRenewalDate || new Date().toISOString().split('T')[0]);
+      setIsPaidThisCycle(!!draftExpense.isPaidThisCycle);
+      setPaymentMethod(draftExpense.paymentMethod || 'SEPA Direct Debit');
+      setAssignedUserId(currentUserId || '');
+      setNotes(draftExpense.notes || '');
+      setContractEndDate('');
+      setVendorEmail('');
+      setUsageRating('high');
+      setIsVariable(false);
+      setPaymentAccountId('');
     } else {
       setName('');
+      setVendor('');
       setAmount('');
       setCurrency('EUR');
       setBillingCycle('monthly');
@@ -106,7 +129,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setIsVariable((initialCategory as ExpenseCategory) === 'shopping');
       setPaymentAccountId('');
     }
-  }, [editingExpense, initialPresetId, initialCategory, currentUserId, isOpen]);
+  }, [editingExpense, initialPresetId, initialCategory, draftExpense, currentUserId, isOpen]);
 
   if (!isOpen) return null;
 
@@ -123,6 +146,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     onSave(
       {
         name: name.trim(),
+        vendor: vendor.trim() || undefined,
         amount: numAmount,
         currency,
         billingCycle,
@@ -165,7 +189,9 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               {editingExpense ? 'Edit expense' : 'Add expense'}
             </h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
-              Record household bill, subscription, college, school or sports cost
+              {draftExpense && !editingExpense
+                ? 'Review the details read from your screenshot before saving'
+                : 'Record household bill, subscription, college, school or sports cost'}
             </p>
           </div>
 
@@ -396,19 +422,34 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             </div>
           )}
 
-          {/* Vendor email (for contract-review outreach) */}
-          <div>
-            <label style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', display: 'block', marginBottom: '0.35rem' }}>
-              Vendor / provider email (optional)
-            </label>
-            <input
-              type="email"
-              placeholder="e.g. support@provider.com — lets you draft a renewal/cancel email from here"
-              value={vendorEmail}
-              onChange={(e) => setVendorEmail(e.target.value)}
-              className="ha-input"
-              style={{ fontSize: '0.82rem' }}
-            />
+          {/* Vendor name & email (for contract-review outreach) */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div>
+              <label style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', display: 'block', marginBottom: '0.35rem' }}>
+                Vendor / provider name (optional)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Vodafone, Allianz — if different from the item name"
+                value={vendor}
+                onChange={(e) => setVendor(e.target.value)}
+                className="ha-input"
+                style={{ fontSize: '0.82rem' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', display: 'block', marginBottom: '0.35rem' }}>
+                Vendor / provider email (optional)
+              </label>
+              <input
+                type="email"
+                placeholder="e.g. support@provider.com"
+                value={vendorEmail}
+                onChange={(e) => setVendorEmail(e.target.value)}
+                className="ha-input"
+                style={{ fontSize: '0.82rem' }}
+              />
+            </div>
           </div>
 
           {/* Optional Notes */}

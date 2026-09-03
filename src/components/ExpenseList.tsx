@@ -354,6 +354,11 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                       <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
                         {item.name}
                       </span>
+                      {item.vendor && item.vendor !== item.name && (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--ha-muted)' }}>
+                          ({item.vendor})
+                        </span>
+                      )}
                       <span className="ha-badge ha-badge-neutral" style={{ fontSize: '0.7rem' }}>
                         {cat.name}
                       </span>

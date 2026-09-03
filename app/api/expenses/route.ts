@@ -75,6 +75,7 @@ export async function POST(request: Request) {
     const newExpense = await prisma.expense.create({
       data: {
         name: body.name,
+        vendor: body.vendor || null,
         amount: Number(body.amount),
         currency: body.currency || 'EUR',
         billingCycle: body.billingCycle || 'monthly',
@@ -146,6 +147,7 @@ export async function PUT(request: Request) {
       where: { id: body.id },
       data: {
         name: body.name,
+        vendor: body.vendor || null,
         amount: Number(body.amount),
         currency: body.currency,
         billingCycle: body.billingCycle,

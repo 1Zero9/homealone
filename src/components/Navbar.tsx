@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { UserProfile } from '../types/expense';
-import { Plus, Search, Settings, HelpCircle, LogOut, ShieldCheck, Menu, X, ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { Plus, Search, Settings, HelpCircle, LogOut, ShieldCheck, Menu, X, ChevronDown, Eye, EyeOff, ScanLine } from 'lucide-react';
 import { TallyLogo } from './TallyLogo';
 import { APP_VERSION } from '../data/changelog';
 
@@ -24,6 +24,7 @@ interface NavbarProps {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
   onOpenAddModal: () => void;
+  onOpenScanModal: () => void;
   onOpenSettings: () => void;
   onOpenHelpModal: () => void;
   onFocusAsk: () => void;
@@ -38,6 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   onTabChange,
   onOpenAddModal,
+  onOpenScanModal,
   onOpenSettings,
   onOpenHelpModal,
   onFocusAsk,
@@ -157,6 +159,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               {isPrivacyBlurred ? <EyeOff size={17} /> : <Eye size={17} />}
             </button>
 
+            <button className="ha-icon-btn" title="Scan a bill" onClick={onOpenScanModal}>
+              <ScanLine size={17} />
+            </button>
+
             <button onClick={onOpenAddModal} className="btn btn-primary" style={{ fontSize: '0.82rem', padding: '0.5rem 0.9rem' }}>
               <Plus size={14} />
               <span>Add expense</span>
@@ -235,6 +241,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={onTogglePrivacyBlur}
             >
               {isPrivacyBlurred ? <EyeOff size={19} /> : <Eye size={19} />}
+            </button>
+            <button className="ha-icon-btn" title="Scan a bill" onClick={onOpenScanModal}>
+              <ScanLine size={19} />
             </button>
             <button className="ha-icon-btn" title="Add expense" onClick={onOpenAddModal}>
               <Plus size={19} />

@@ -44,7 +44,7 @@ export interface VendorEmailDraft {
  * for showing it to a human for review/edits before it is ever sent.
  */
 export async function draftVendorEmail(
-  expense: { name: string; amount: number; currency: string; billingCycle: string; contractEndDate?: string | null },
+  expense: { name: string; vendor?: string | null; amount: number; currency: string; billingCycle: string; contractEndDate?: string | null },
   intent: VendorEmailIntent,
   senderName: string
 ): Promise<VendorEmailDraft> {
@@ -66,6 +66,7 @@ export async function draftVendorEmail(
 
 Customer name (sign the email with this): ${senderName}
 Service: ${expense.name}
+${expense.vendor && expense.vendor !== expense.name ? `Vendor/provider: ${expense.vendor}` : ''}
 Current price: ${expense.amount} ${expense.currency} (${expense.billingCycle})
 ${expense.contractEndDate ? `Contract end date: ${expense.contractEndDate}` : ''}
 
@@ -90,6 +91,92 @@ Respond with ONLY valid JSON in this exact shape, no markdown fences:
   }
 
   return { subject: String(parsed.subject), body: String(parsed.body) };
+}
+
+export interface ReceiptScanResult {
+  vendor: string;
+  amount: number | null;
+  currency: string | null;
+  date: string | null;
+  billingCycleGuess: 'monthly' | 'annual' | 'quarterly' | 'weekly' | 'termly' | 'once' | null;
+  categoryGuess: string | null;
+  isPaid: boolean;
+  matchedName: string | null;
+  notes: string | null;
+}
+
+/**
+ * Reads a screenshot/photo of a bill, receipt, or subscription confirmation
+ * and extracts structured expense data using Gemini's vision capability.
+ * If the household already has a similarly-named bill on file, the model is
+ * asked to identify it by name (exact match from the provided list) so the
+ * caller can offer to update that record instead of creating a duplicate.
+ */
+export async function analyzeReceiptImage(
+  imageBase64: string,
+  mimeType: string,
+  existingExpenseNames: string[]
+): Promise<ReceiptScanResult> {
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  if (!apiKey) {
+    throw new Error('AI assistant is not configured yet. Ask an admin to set GOOGLE_AI_API_KEY.');
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+
+  const prompt = `You are reading a screenshot or photo of a household bill, receipt, invoice, or subscription confirmation for the "Tally" household finance app.
+
+Extract the following from the image:
+- vendor: the company/service/merchant name, kept short (e.g. "Netflix", "Electric Ireland", "Vodafone")
+- amount: the total amount paid or due, as a plain number (no currency symbol, no thousands separators)
+- currency: the ISO 4217 currency code if you can tell (EUR, GBP, USD, CAD, AUD, JPY), else null
+- date: the payment/due/invoice date in YYYY-MM-DD format if visible, else null
+- billingCycleGuess: your best guess at one of "monthly", "annual", "quarterly", "weekly", "termly", "once" based on context clues, else null if unclear
+- categoryGuess: your best guess at one of "entertainment", "ai-tech", "utilities", "housing", "education", "lifestyle", "shopping" based on the vendor/content, else null
+- isPaid: true if the document shows this was already paid/charged (e.g. a receipt or "payment successful" confirmation), false if it looks like an unpaid invoice/bill still due
+
+Then compare the vendor name against this list of the household's existing bill names and, ONLY if you are confident one of them refers to the same underlying bill, return it verbatim as "matchedName". Otherwise return null for matchedName. Do not invent a name that isn't in the list.
+
+EXISTING BILL NAMES:
+${JSON.stringify(existingExpenseNames)}
+
+Respond with ONLY valid JSON in this exact shape, no markdown fences:
+{"vendor": "...", "amount": 0, "currency": "EUR", "date": "YYYY-MM-DD", "billingCycleGuess": "monthly", "categoryGuess": "utilities", "isPaid": true, "matchedName": null, "notes": "anything else useful and short, or null"}
+
+If the image doesn't look like a bill/receipt/invoice at all, still respond with the JSON shape, using your best guess and setting notes to explain what you saw instead.`;
+
+  const result = await model.generateContent([
+    { inlineData: { data: imageBase64, mimeType } },
+    prompt,
+  ]);
+  const text = result.response.text().trim();
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error('Could not read that image. Please try a clearer screenshot.');
+  }
+
+  const parsed = JSON.parse(jsonMatch[0]);
+  if (!parsed.vendor) {
+    throw new Error('Could not identify a bill in that image. Please try a clearer screenshot.');
+  }
+
+  const validCycles = ['monthly', 'annual', 'quarterly', 'weekly', 'termly', 'once'];
+
+  return {
+    vendor: String(parsed.vendor),
+    amount: typeof parsed.amount === 'number' ? parsed.amount : null,
+    currency: typeof parsed.currency === 'string' ? parsed.currency : null,
+    date: typeof parsed.date === 'string' ? parsed.date : null,
+    billingCycleGuess: validCycles.includes(parsed.billingCycleGuess) ? parsed.billingCycleGuess : null,
+    categoryGuess: typeof parsed.categoryGuess === 'string' ? parsed.categoryGuess : null,
+    isPaid: !!parsed.isPaid,
+    matchedName: typeof parsed.matchedName === 'string' && existingExpenseNames.includes(parsed.matchedName)
+      ? parsed.matchedName
+      : null,
+    notes: typeof parsed.notes === 'string' ? parsed.notes : null,
+  };
 }
 
 export type MoneyFlowInsightType = 'idle_cash' | 'timing_risk' | 'consolidation' | 'savings' | 'general';

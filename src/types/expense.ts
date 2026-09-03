@@ -49,6 +49,7 @@ export interface CurrencyConfig {
 export interface ExpenseItem {
   id: string;
   name: string;
+  vendor?: string;
   amount: number;
   currency: CurrencyCode;
   billingCycle: BillingCycle;

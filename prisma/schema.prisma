@@ -82,6 +82,7 @@ model VerificationToken {
 model Expense {
   id              String   @id @default(cuid())
   name            String
+  vendor          String?
   amount          Float
   currency        String   @default("EUR")
   billingCycle    String   @default("monthly")

@@ -39,6 +39,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const draft = await draftVendorEmail(
       {
         name: expense.name,
+        vendor: expense.vendor,
         amount: expense.amount,
         currency: expense.currency,
         billingCycle: expense.billingCycle as BillingCycle,
