@@ -8,6 +8,7 @@ import { calculateSpendingSummary, calculateIncomeSummary } from '@/src/utils/ca
 import { Navbar, SPENDING_TABS } from '@/src/components/Navbar';
 import type { TabId } from '@/src/components/Navbar';
 import { CategoryBreakdownChart } from '@/src/components/CategoryBreakdownChart';
+import { TrendChart } from '@/src/components/TrendChart';
 import { ExpenseList } from '@/src/components/ExpenseList';
 import { IncomeSection } from '@/src/components/IncomeSection';
 import { IncomeModal } from '@/src/components/IncomeModal';
@@ -573,6 +574,27 @@ export default function TallyPage() {
     }
   };
 
+  const handleToggleIncomeReceived = async (id: string) => {
+    const item = incomes.find((i) => i.id === id);
+    if (!item) return;
+
+    const updatedReceived = !item.isReceivedThisCycle;
+    setIncomes((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, isReceivedThisCycle: updatedReceived } : i))
+    );
+
+    try {
+      await fetch('/api/income', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...item, isReceivedThisCycle: updatedReceived }),
+      });
+    } catch (err) {
+      console.error('Failed to update income received status in DB:', err);
+      fetchDatabaseData();
+    }
+  };
+
   // Save new or edited income with PostgreSQL sync
   const handleSaveIncome = async (
     incomeData: Omit<IncomeItem, 'id' | 'createdAt' | 'updatedAt'>,
@@ -926,6 +948,15 @@ export default function TallyPage() {
               />
             )}
 
+            {hasData && (
+              <TrendChart
+                currency={currency}
+                metric="spending"
+                title="Spending over time"
+                subtitle="Built from bills marked paid and logged transfers — grows as you go"
+              />
+            )}
+
             {/* Complete Household Ledger */}
             <ExpenseList
               expenses={liveExpenses}
@@ -957,20 +988,31 @@ export default function TallyPage() {
         )}
 
         {activeTab === 'income' && (
-          <IncomeSection
-            incomes={incomes}
-            currency={currency}
-            onToggleActive={handleToggleIncomeActive}
-            onEditIncome={(item) => {
-              setEditingIncome(item);
-              setIsIncomeModalOpen(true);
-            }}
-            onDeleteIncome={handleDeleteIncome}
-            onOpenAddModal={() => {
-              setEditingIncome(null);
-              setIsIncomeModalOpen(true);
-            }}
-          />
+          <>
+            {incomes.length > 0 && (
+              <TrendChart
+                currency={currency}
+                metric="income"
+                title="Income over time"
+                subtitle="Built from income marked received and logged transfers — grows as you go"
+              />
+            )}
+            <IncomeSection
+              incomes={incomes}
+              currency={currency}
+              onToggleActive={handleToggleIncomeActive}
+              onToggleReceived={handleToggleIncomeReceived}
+              onEditIncome={(item) => {
+                setEditingIncome(item);
+                setIsIncomeModalOpen(true);
+              }}
+              onDeleteIncome={handleDeleteIncome}
+              onOpenAddModal={() => {
+                setEditingIncome(null);
+                setIsIncomeModalOpen(true);
+              }}
+            />
+          </>
         )}
 
         {activeTab === 'utilities' && (
@@ -1085,14 +1127,25 @@ export default function TallyPage() {
         )}
 
         {activeTab === 'calendar' && (
-          <UpcomingRenewals
-            expenses={liveExpenses}
-            currency={currency}
-            onEditExpense={(item) => {
-              setEditingExpense(item);
-              setIsAddModalOpen(true);
-            }}
-          />
+          <>
+            {liveExpenses.some((e) => e.isBill !== false) && (
+              <TrendChart
+                currency={currency}
+                metric="spending"
+                title="Bills paid over time"
+                subtitle="Only counts recurring bills & contracts marked paid — not one-off spending"
+                billsOnly
+              />
+            )}
+            <UpcomingRenewals
+              expenses={liveExpenses}
+              currency={currency}
+              onEditExpense={(item) => {
+                setEditingExpense(item);
+                setIsAddModalOpen(true);
+              }}
+            />
+          </>
         )}
 
         {activeTab === 'insights' && (

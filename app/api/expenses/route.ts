@@ -100,6 +100,7 @@ export async function POST(request: Request) {
         vendorEmail: body.vendorEmail || null,
         usageRating: body.usageRating || 'high',
         isVariable: typeof body.isVariable === 'boolean' ? body.isVariable : false,
+        isBill: typeof body.isBill === 'boolean' ? body.isBill : (body.billingCycle || 'monthly') !== 'once',
         paymentAccountId: body.paymentAccountId || null,
         linkedGoalId: body.linkedGoalId || null,
         createdById: body.createdById !== undefined ? (body.createdById || null) : auth.user.id,
@@ -117,6 +118,22 @@ export async function POST(request: Request) {
         },
       },
     });
+
+    if (newExpense.isPaidThisCycle) {
+      await prisma.transfer.create({
+        data: {
+          amount: newExpense.amount,
+          currency: newExpense.currency,
+          date: new Date().toISOString().split('T')[0],
+          externalLabel: newExpense.vendor || newExpense.name,
+          note: 'Marked paid',
+          fromAccountId: newExpense.paymentAccountId,
+          linkedExpenseId: newExpense.id,
+          createdById: auth.user.id,
+          householdId: auth.user.householdId,
+        },
+      });
+    }
 
     return NextResponse.json({
       status: 'ok',
@@ -177,6 +194,7 @@ export async function PUT(request: Request) {
         vendorEmail: body.vendorEmail || null,
         usageRating: body.usageRating || 'high',
         isVariable: typeof body.isVariable === 'boolean' ? body.isVariable : false,
+        ...(typeof body.isBill === 'boolean' ? { isBill: body.isBill } : {}),
         ...(body.paymentAccountId !== undefined ? { paymentAccountId: body.paymentAccountId || null } : {}),
         ...(body.linkedGoalId !== undefined ? { linkedGoalId: body.linkedGoalId || null } : {}),
         ...(body.createdById !== undefined ? { createdById: body.createdById || null } : {}),
@@ -196,6 +214,22 @@ export async function PUT(request: Request) {
         },
       },
     });
+
+    if (markingPaid) {
+      await prisma.transfer.create({
+        data: {
+          amount: updatedExpense.amount,
+          currency: updatedExpense.currency,
+          date: new Date().toISOString().split('T')[0],
+          externalLabel: updatedExpense.vendor || updatedExpense.name,
+          note: 'Marked paid',
+          fromAccountId: updatedExpense.paymentAccountId,
+          linkedExpenseId: updatedExpense.id,
+          createdById: auth.user.id,
+          householdId: auth.user.householdId,
+        },
+      });
+    }
 
     return NextResponse.json({
       status: 'ok',

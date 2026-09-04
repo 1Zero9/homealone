@@ -87,6 +87,7 @@ export interface ExpenseItem {
   usageRating?: 'high' | 'medium' | 'low';
   isVariable?: boolean;
   isPreset?: boolean;
+  isBill?: boolean;
   paymentAccountId?: string | null;
   paymentAccount?: AccountSummary | null;
   linkedGoalId?: string | null;
@@ -118,6 +119,8 @@ export interface IncomeItem {
   category: IncomeCategory;
   isActive: boolean;
   notes?: string;
+  isReceivedThisCycle?: boolean;
+  lastReceivedAt?: string | null;
   depositAccountId?: string | null;
   depositAccount?: AccountSummary | null;
   createdById?: string | null;
@@ -374,4 +377,19 @@ export interface SpendingSummary {
   educationMonthly: number;
   lifestyleMonthly: number;
   shoppingMonthly: number;
+}
+
+export type HistoryPeriod = '1' | '3' | '6' | '12' | 'all';
+export type ChartType = 'bar' | 'line' | 'pie';
+
+export interface MonthlyHistoryPoint {
+  month: string;
+  label: string;
+  spending: number;
+  income: number;
+}
+
+export interface HistoryResponse {
+  months: MonthlyHistoryPoint[];
+  hasAnyHistory: boolean;
 }

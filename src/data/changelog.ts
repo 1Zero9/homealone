@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.32.0';
+export const APP_VERSION = '1.33.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.33.0',
+    date: '2026-09-04',
+    changes: [
+      'Added real spending & income history: marking a bill paid or income received now logs a dated record, so trends build up over time instead of only showing a current snapshot.',
+      'Added Spending, Income and Bills trend charts with switchable Bar/Line/Pie views and a 1/3/6/12-month/All period filter.',
+      'Added a "Recurring bill / contract" toggle when logging an expense — turn it off for one-off spending like a coffee so it only counts in Spending, not Bills. Bills now only shows genuine recurring bills/contracts, with vendor, contract end date and email surfaced directly on each row.',
+      'Added a "mark received" control to Income, mirroring the existing "mark paid" control on expenses.',
+    ],
+  },
   {
     version: '1.32.0',
     date: '2026-09-04',

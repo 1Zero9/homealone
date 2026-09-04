@@ -69,6 +69,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   const [paymentAccountId, setPaymentAccountId] = useState<string>('');
   const [isPending, setIsPending] = useState(false);
   const [linkedGoalId, setLinkedGoalId] = useState<string>('');
+  const [isBill, setIsBill] = useState(true);
 
   useEffect(() => {
     if (editingExpense) {
@@ -90,6 +91,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setPaymentAccountId(editingExpense.paymentAccountId || '');
       setIsPending(!!editingExpense.isPending);
       setLinkedGoalId(editingExpense.linkedGoalId || '');
+      setIsBill(typeof editingExpense.isBill === 'boolean' ? editingExpense.isBill : editingExpense.billingCycle !== 'once');
     } else if (initialPresetId) {
       const preset = PRESETS.find((p) => p.id === initialPresetId);
       if (preset) {
@@ -108,6 +110,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         setPaymentAccountId('');
         setIsPending(false);
         setLinkedGoalId('');
+        setIsBill(preset.defaultCycle !== 'once');
       }
     } else if (draftExpense) {
       setName(draftExpense.name || '');
@@ -128,6 +131,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setPaymentAccountId('');
       setIsPending(false);
       setLinkedGoalId('');
+      setIsBill((draftExpense.billingCycle || 'monthly') !== 'once');
     } else {
       setName('');
       setVendor('');
@@ -147,6 +151,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setPaymentAccountId('');
       setIsPending(!!initialIsPending);
       setLinkedGoalId('');
+      setIsBill(true);
     }
   }, [editingExpense, initialPresetId, initialCategory, initialIsPending, draftExpense, currentUserId, isOpen]);
 
@@ -186,6 +191,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         paymentAccountId: paymentAccountId || null,
         linkedGoalId: linkedGoalId || null,
         createdById: assignedUserId || null,
+        isBill,
       },
       editingExpense?.id
     );
@@ -281,7 +287,11 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               </label>
               <select
                 value={billingCycle}
-                onChange={(e) => setBillingCycle(e.target.value as BillingCycle)}
+                onChange={(e) => {
+                  const cycle = e.target.value as BillingCycle;
+                  setBillingCycle(cycle);
+                  setIsBill(cycle !== 'once');
+                }}
                 className="ha-input"
               >
                 <option value="once">One-off (single payment)</option>
@@ -306,6 +316,33 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               onCategoryCreated={(cat) => onCategoryCreated?.(cat)}
             />
           </div>
+
+          {/* Bill/contract vs one-off spending toggle */}
+          <label style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.6rem',
+            cursor: 'pointer',
+            padding: '0.6rem 0.75rem',
+            borderRadius: 'var(--ha-radius-sm)',
+            border: '1px solid var(--ha-line)',
+            backgroundColor: isBill ? 'var(--ha-blue-light)' : '#fafaf7',
+          }}>
+            <input
+              type="checkbox"
+              checked={isBill}
+              onChange={(e) => setIsBill(e.target.checked)}
+              style={{ marginTop: '2px' }}
+            />
+            <span>
+              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block' }}>
+                Recurring bill / contract
+              </span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--ha-muted)' }}>
+                Shows up in Bills (mobile, electric, gas, subscriptions…). Turn off for incidental one-off spending like a coffee or a repair — it&apos;ll still count in Spending, just not Bills.
+              </span>
+            </span>
+          </label>
 
           {/* Pending / not-yet-required toggle */}
           <label style={{

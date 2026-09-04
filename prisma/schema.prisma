@@ -141,6 +141,11 @@ model Expense {
   vendorEmail     String?
   usageRating     String?  @default("high")
   isVariable      Boolean  @default(false)
+  // Whether this counts as a recurring bill/contract (shows in the Bills
+  // tab) vs one-off/incidental spending (e.g. a coffee) that should only
+  // show in the Spending ledger. Defaults true for backward compatibility
+  // with existing recurring records.
+  isBill          Boolean  @default(true)
 
   householdId     String?
   household       Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
@@ -176,6 +181,11 @@ model Income {
   category     String   @default("salary")
   isActive     Boolean  @default(true)
   notes        String?
+  // Mirrors Expense.isPaidThisCycle/lastPaidAt — lets a household mark
+  // "money actually landed" for this cycle, which logs a dated Transfer
+  // so real income history accumulates over time.
+  isReceivedThisCycle Boolean   @default(false)
+  lastReceivedAt      DateTime?
 
   householdId  String?
   household    Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)

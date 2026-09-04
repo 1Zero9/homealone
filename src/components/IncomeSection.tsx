@@ -16,6 +16,7 @@ interface IncomeSectionProps {
   incomes: IncomeItem[];
   currency: CurrencyCode;
   onToggleActive: (id: string) => void;
+  onToggleReceived: (id: string) => void;
   onEditIncome: (income: IncomeItem) => void;
   onDeleteIncome: (id: string) => void;
   onOpenAddModal: () => void;
@@ -25,6 +26,7 @@ export const IncomeSection: React.FC<IncomeSectionProps> = ({
   incomes,
   currency,
   onToggleActive,
+  onToggleReceived,
   onEditIncome,
   onDeleteIncome,
   onOpenAddModal,
@@ -158,6 +160,14 @@ export const IncomeSection: React.FC<IncomeSectionProps> = ({
                   </div>
 
                   <div className="ha-ledger-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '1rem' }}>
+                    <button
+                      className={`ha-payment-status${item.isReceivedThisCycle ? ' is-paid' : ' is-unpaid'}`}
+                      onClick={() => onToggleReceived(item.id)}
+                      title={item.isReceivedThisCycle ? 'Received — click to mark not received' : 'Not received yet — click to mark received'}
+                    >
+                      {item.isReceivedThisCycle ? 'Received' : 'Not yet'}
+                    </button>
+
                     <label className="toggle-switch" title={item.isActive ? 'Active — click to pause' : 'Paused — click to activate'}>
                       <input
                         type="checkbox"

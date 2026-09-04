@@ -50,7 +50,7 @@ export async function GET() {
 
         return prisma.income.update({
           where: { id: income.id },
-          data: { nextPayDate },
+          data: { nextPayDate, isReceivedThisCycle: false },
           include: {
             createdBy: { select: { id: true, name: true, role: true } },
             depositAccount: { select: { id: true, name: true, type: true, institution: true } },
@@ -89,6 +89,8 @@ export async function POST(request: Request) {
         category: body.category || 'salary',
         isActive: typeof body.isActive === 'boolean' ? body.isActive : true,
         notes: body.notes || null,
+        isReceivedThisCycle: typeof body.isReceivedThisCycle === 'boolean' ? body.isReceivedThisCycle : false,
+        ...(body.isReceivedThisCycle === true ? { lastReceivedAt: new Date() } : {}),
         depositAccountId: body.depositAccountId || null,
         createdById: body.createdById !== undefined ? (body.createdById || null) : auth.user.id,
         householdId: auth.user.householdId,
@@ -102,6 +104,22 @@ export async function POST(request: Request) {
         },
       },
     });
+
+    if (newIncome.isReceivedThisCycle) {
+      await prisma.transfer.create({
+        data: {
+          amount: newIncome.amount,
+          currency: newIncome.currency,
+          date: new Date().toISOString().split('T')[0],
+          externalLabel: newIncome.name,
+          note: 'Marked received',
+          toAccountId: newIncome.depositAccountId,
+          linkedIncomeId: newIncome.id,
+          createdById: auth.user.id,
+          householdId: auth.user.householdId,
+        },
+      });
+    }
 
     return NextResponse.json({
       status: 'ok',
@@ -137,6 +155,10 @@ export async function PUT(request: Request) {
       );
     }
 
+    // Toggling "received this cycle" is handled explicitly so we can stamp lastReceivedAt.
+    const markingReceived = body.isReceivedThisCycle === true && !existing.isReceivedThisCycle;
+    const markingUnreceived = body.isReceivedThisCycle === false && existing.isReceivedThisCycle;
+
     const updatedIncome = await prisma.income.update({
       where: { id: body.id },
       data: {
@@ -150,6 +172,9 @@ export async function PUT(request: Request) {
         notes: body.notes || null,
         ...(body.depositAccountId !== undefined ? { depositAccountId: body.depositAccountId || null } : {}),
         ...(body.createdById !== undefined ? { createdById: body.createdById || null } : {}),
+        ...(typeof body.isReceivedThisCycle === 'boolean' ? { isReceivedThisCycle: body.isReceivedThisCycle } : {}),
+        ...(markingReceived ? { lastReceivedAt: new Date() } : {}),
+        ...(markingUnreceived ? { lastReceivedAt: null } : {}),
       },
       include: {
         createdBy: {
@@ -160,6 +185,22 @@ export async function PUT(request: Request) {
         },
       },
     });
+
+    if (markingReceived) {
+      await prisma.transfer.create({
+        data: {
+          amount: updatedIncome.amount,
+          currency: updatedIncome.currency,
+          date: new Date().toISOString().split('T')[0],
+          externalLabel: updatedIncome.name,
+          note: 'Marked received',
+          toAccountId: updatedIncome.depositAccountId,
+          linkedIncomeId: updatedIncome.id,
+          createdById: auth.user.id,
+          householdId: auth.user.householdId,
+        },
+      });
+    }
 
     return NextResponse.json({
       status: 'ok',

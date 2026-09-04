@@ -15,7 +15,7 @@ export const UpcomingRenewals: React.FC<UpcomingRenewalsProps> = ({
   currency,
   onEditExpense,
 }) => {
-  const activeItems = expenses.filter((e) => e.isActive);
+  const activeItems = expenses.filter((e) => e.isActive && e.isBill !== false);
 
   const sortedRenewals = activeItems.map((item) => {
     const daysLeft = getDaysUntilRenewal(item.nextRenewalDate || `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${item.renewalDay}`, item.billingCycle);
@@ -54,7 +54,7 @@ export const UpcomingRenewals: React.FC<UpcomingRenewalsProps> = ({
               Upcoming renewals & debits
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--ha-muted)', maxWidth: '600px', marginTop: '0.25rem' }}>
-              Chronological schedule of upcoming payments due in the current billing cycle.
+              Chronological schedule of your recurring bills & contracts (mobile, electric, gas, subscriptions…). One-off spending doesn&apos;t show here — it&apos;s in Spending only.
             </p>
           </div>
 
@@ -167,11 +167,24 @@ export const UpcomingRenewals: React.FC<UpcomingRenewalsProps> = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <span className="ha-color-marker" style={{ backgroundColor: item.color || '#3155D9' }} />
                   <div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
-                      {item.name}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                        {item.name}
+                      </span>
+                      {item.vendor && item.vendor !== item.name && (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--ha-muted)' }}>
+                          ({item.vendor})
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--ha-muted)' }}>
                       {item.paymentMethod || 'Direct Debit'} • {item.billingCycle}
+                      {item.contractEndDate && (
+                        <> • Contract ends {item.contractEndDate}</>
+                      )}
+                      {item.vendorEmail && (
+                        <> • {item.vendorEmail}</>
+                      )}
                     </div>
                   </div>
                 </div>
