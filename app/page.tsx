@@ -793,7 +793,7 @@ export default function TallyPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--ha-paper)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Top Sticky Navigation */}
       <Navbar
         activeTab={activeTab}
@@ -840,8 +840,8 @@ export default function TallyPage() {
         flex: 1,
       }}>
         {/* Ask Bar — the "Google box" for this household's spending */}
-        <div className="ha-ask-wrap" style={{ padding: hasData ? '0.5rem 0 2rem' : '3rem 0 2.5rem' }}>
-          <h2 style={{
+        <div className={`ha-ask-wrap${hasData ? '' : ' is-empty'}`} style={{ padding: hasData ? '0.5rem 0 2rem' : '3rem 0 2.5rem' }}>
+          <h2 className="ha-greeting" style={{
             textAlign: 'center',
             fontFamily: 'var(--ha-font-display)',
             fontSize: '1.5rem',
@@ -895,7 +895,7 @@ export default function TallyPage() {
 
         {/* Spending Sub-Tab Chips */}
         {SPENDING_TABS.includes(activeTab) && (
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+          <div className="ha-page-tabs" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
             {SPENDING_CHIPS.map((chip) => (
               <button
                 key={chip.id}

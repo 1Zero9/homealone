@@ -151,7 +151,7 @@ export const AccountsSection: React.FC<AccountsSectionProps> = ({
             </p>
             <button onClick={onOpenAddModal} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>
               <Plus size={15} />
-              <span>+ Add first account</span>
+              <span>Add first account</span>
             </button>
           </div>
         ) : (

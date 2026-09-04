@@ -173,6 +173,7 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
 
   return (
     <div
+      className="ha-assistant"
       style={{ width: '100%' }}
       onFocus={() => setIsFocused(true)}
       onBlur={(e) => {
@@ -181,7 +182,7 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
         }
       }}
     >
-      <form onSubmit={handleAsk} style={{ position: 'relative', marginBottom: '0.85rem' }}>
+      <form className="ha-assistant-form" onSubmit={handleAsk} style={{ position: 'relative', marginBottom: '0.85rem' }}>
         <Search size={17} color="var(--ha-muted)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
         <input
           id="ask-tally-input"
@@ -189,7 +190,7 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder={hasData ? 'Ask about your spending, or how to use Tally...' : 'Ask how to use Tally...'}
-          className="ha-input"
+          className="ha-input ha-assistant-input"
           style={{
             width: '100%',
             padding: '0.9rem 1rem 0.9rem 2.6rem',

@@ -17,10 +17,8 @@ const PRIMARY_NAV_ITEMS: { id: TabId; label: string }[] = [
   { id: 'insights', label: 'Insights' },
 ];
 
-// Previously tucked inside a "Money Journey" dropdown — promoted to the
-// primary bar (it wraps onto a second row on narrower desktop widths, see
-// the `flexWrap` on the nav below) since these were reported as important
-// options hidden in a menu.
+// Journey destinations remain directly visible in the dedicated navigation
+// rail so nobody needs to learn a hidden grouping or dropdown.
 const JOURNEY_NAV_ITEMS: { id: TabId; label: string }[] = [
   { id: 'flow', label: 'Flow' },
   { id: 'goals', label: 'Goals' },
@@ -67,108 +65,53 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <div style={{ position: 'sticky', top: 0, zIndex: 50 }}>
-      <header style={{
-        backgroundColor: 'var(--ha-paper)',
-        borderBottom: '1px solid var(--ha-line)',
-        padding: '0.75rem 1.5rem',
-      }}>
-        <div style={{
-          maxWidth: '1280px',
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '1.5rem',
-        }}>
+    <div className="ha-navbar">
+      <header className="ha-navbar-shell">
+        <div className="ha-navbar-top">
           {/* Brand */}
           <div
-            style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', flexShrink: 0 }}
+            className="ha-brand"
             onClick={() => handleNav('overview')}
           >
-            <TallyLogo size={28} />
-            <div>
-              <h1 style={{
-                fontSize: '1.35rem',
-                fontWeight: 700,
-                color: 'var(--ha-ink)',
-                lineHeight: 1,
-                fontFamily: 'var(--ha-font-display)',
-                letterSpacing: '-0.02em',
-              }}>
+            <TallyLogo size={34} />
+            <div className="ha-brand-copy">
+              <h1>
                 Tally
               </h1>
-              <p className="hide-mobile" style={{ fontSize: '0.7rem', color: 'var(--ha-muted)', marginTop: '1px' }}>
+              <p className="hide-mobile">
                 Your household, in balance.
               </p>
             </div>
             <button
-              className="hide-mobile"
+              className="hide-mobile ha-version-badge"
               onClick={(e) => { e.stopPropagation(); onOpenChangelog('desktop'); }}
               title="View changelog"
-              style={{
-                background: 'none',
-                border: '1px solid var(--ha-line)',
-                borderRadius: 'var(--ha-radius-sm)',
-                padding: '0.1rem 0.4rem',
-                color: 'var(--ha-muted)',
-                fontSize: '0.68rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                alignSelf: 'flex-start',
-                marginTop: '2px',
-              }}
             >
               v{APP_VERSION}
             </button>
           </div>
 
-          {/* Primary Nav Links (desktop) — wraps onto a second row rather than hiding items in a menu */}
-          <nav className="desktop-only" style={{ alignItems: 'center', flexWrap: 'wrap', rowGap: '0.4rem', columnGap: '1.25rem', flex: 1, justifyContent: 'center' }}>
-            {[...PRIMARY_NAV_ITEMS, ...JOURNEY_NAV_ITEMS].map((item) => {
-              const isActive = item.id === 'all' ? SPENDING_TABS.includes(activeTab) : activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNav(item.id)}
-                  className={`ha-nav-link${isActive ? ' active' : ''}`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Right Actions (desktop) — icon+label buttons so key actions (especially the
-              privacy blur toggle) aren't hidden behind a bare icon + tooltip. */}
-          <div className="desktop-only" style={{ alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
-            <button className="btn btn-secondary" title="Ask Tally" onClick={onFocusAsk} style={{ fontSize: '0.78rem', padding: '0.45rem 0.65rem' }}>
+          <div className="desktop-only ha-navbar-actions">
+            <button className="btn btn-ghost ha-nav-action" title="Ask Tally" onClick={onFocusAsk}>
               <Search size={15} />
               <span>Ask Tally</span>
             </button>
 
             <button
-              className="btn"
+              className={`btn btn-ghost ha-nav-action${isPrivacyBlurred ? ' is-active' : ''}`}
               title={isPrivacyBlurred ? 'Reveal screen' : 'Blur screen for privacy'}
               onClick={onTogglePrivacyBlur}
-              style={{
-                fontSize: '0.78rem',
-                padding: '0.45rem 0.65rem',
-                backgroundColor: isPrivacyBlurred ? 'var(--ha-blue-light)' : 'var(--ha-white)',
-                color: isPrivacyBlurred ? 'var(--ha-blue)' : 'var(--ha-ink)',
-                borderColor: isPrivacyBlurred ? 'var(--ha-blue)' : 'var(--ha-line)',
-              }}
             >
               {isPrivacyBlurred ? <EyeOff size={15} /> : <Eye size={15} />}
               <span>{isPrivacyBlurred ? 'Blurred' : 'Privacy'}</span>
             </button>
 
-            <button className="btn btn-secondary" title="Scan a bill" onClick={onOpenScanModal} style={{ fontSize: '0.78rem', padding: '0.45rem 0.65rem' }}>
+            <button className="btn btn-ghost ha-nav-action" title="Scan a bill" onClick={onOpenScanModal}>
               <ScanLine size={15} />
               <span>Scan</span>
             </button>
 
-            <button onClick={onOpenAddModal} className="btn btn-primary" style={{ fontSize: '0.82rem', padding: '0.5rem 0.9rem' }}>
+            <button onClick={onOpenAddModal} className="btn btn-primary ha-navbar-primary">
               <Plus size={14} />
               <span>Add expense</span>
             </button>
@@ -178,24 +121,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             {currentUser && (
-              <div style={{ position: 'relative' }}>
+              <div className="ha-profile-wrap">
                 <button
                   onClick={() => setIsAvatarMenuOpen((v) => !v)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    backgroundColor: 'transparent',
-                    border: '1px solid var(--ha-line)',
-                    borderRadius: 'var(--ha-radius-md)',
-                    padding: '0.3rem 0.5rem 0.3rem 0.3rem',
-                    cursor: 'pointer',
-                  }}
+                  className="ha-profile-button"
                 >
                   <div style={{
-                    width: '26px',
-                    height: '26px',
-                    borderRadius: 'var(--ha-radius-sm)',
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
                     backgroundColor: currentUser.role === 'ADMIN' ? 'var(--ha-blue-light)' : currentUser.role === 'BACKUP_ADMIN' ? 'var(--ha-red-tint)' : '#e7e8ea',
                     display: 'flex',
                     alignItems: 'center',
@@ -239,7 +173,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Mobile Actions */}
-          <div className="mobile-menu-btn" style={{ alignItems: 'center', gap: '0.4rem' }}>
+          <div className="mobile-menu-btn">
             <button
               className="ha-icon-btn"
               title={isPrivacyBlurred ? 'Reveal screen' : 'Blur screen for privacy'}
@@ -259,6 +193,23 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
         </div>
+
+        {/* A dedicated navigation rail keeps destinations predictable and prevents
+            the accidental two-row wrapping visible in the previous header. */}
+        <nav className="desktop-only ha-navbar-nav" aria-label="Main navigation">
+          {[...PRIMARY_NAV_ITEMS, ...JOURNEY_NAV_ITEMS].map((item) => {
+            const isActive = item.id === 'all' ? SPENDING_TABS.includes(activeTab) : activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleNav(item.id)}
+                className={`ha-nav-link${isActive ? ' active' : ''}`}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
       </header>
 
       {/* Mobile Drawer */}

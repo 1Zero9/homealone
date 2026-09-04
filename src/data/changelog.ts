@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.29.0';
+export const APP_VERSION = '1.30.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.30.0',
+    date: '2026-09-04',
+    changes: [
+      'Refreshed Tally’s full visual system with a warmer household-friendly palette, stronger type hierarchy, softer cards, clearer buttons and inputs, calmer filters, improved focus states, and more comfortable spacing throughout.',
+      'Rebuilt the desktop header into two deliberate levels so household actions and page navigation no longer compete or wrap unpredictably, while keeping every existing destination directly accessible.',
+      'Polished the responsive experience with larger touch targets, a cleaner mobile drawer, compact small-screen actions, and more consistent card and modal sizing.',
+    ],
+  },
   {
     version: '1.29.0',
     date: '2026-09-04',
@@ -325,9 +334,16 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
 ];
 
-export const MOBILE_APP_VERSION = '1.0.0';
+export const MOBILE_APP_VERSION = '1.1.0';
 
 export const MOBILE_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.1.0',
+    date: '2026-09-04',
+    changes: [
+      'Refreshed the mobile look and feel with warmer colours, clearer type, larger touch targets, softer cards, a cleaner drawer, and a more focused small-screen action bar.',
+    ],
+  },
   {
     version: '1.0.0',
     date: '2026-09-03',
