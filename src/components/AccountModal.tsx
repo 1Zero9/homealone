@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import type { AccountItem, AccountType, CurrencyCode } from '../types/expense';
 import { CURRENCIES } from '../utils/currencies';
 import { X, Lock, ShieldAlert } from 'lucide-react';
-import { useOverlayClose } from '../hooks/useOverlayClose';
 
 const ACCOUNT_TYPES: { id: AccountType; label: string }[] = [
   { id: 'CHECKING', label: 'Current' },
@@ -41,7 +40,6 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   editingAccount,
   encryptionConfigured,
 }) => {
-  const overlayHandlers = useOverlayClose(onClose);
   const [name, setName] = useState('');
   const [institution, setInstitution] = useState('');
   const [type, setType] = useState<AccountType>('CHECKING');
@@ -154,7 +152,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   );
 
   return (
-    <div className="modal-overlay" {...overlayHandlers}>
+    <div className="modal-overlay">
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '620px' }}>
         <div style={{
           display: 'flex',

@@ -3,7 +3,6 @@ import type { GoalItem, AccountItem, CurrencyCode } from '../types/expense';
 import { CURRENCIES } from '../utils/currencies';
 import { formatCurrency } from '../utils/formatters';
 import { X, Divide } from 'lucide-react';
-import { useOverlayClose } from '../hooks/useOverlayClose';
 
 const SPLIT_PRESETS = [2, 4, 12, 20];
 
@@ -22,7 +21,6 @@ export const GoalModal: React.FC<GoalModalProps> = ({
   editingGoal,
   accounts,
 }) => {
-  const overlayHandlers = useOverlayClose(onClose);
   const [name, setName] = useState('');
   const [targetAmount, setTargetAmount] = useState<number | string>('');
   const [currentAmount, setCurrentAmount] = useState<number | string>('');
@@ -83,7 +81,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({
   const perChunk = splitCount && Number(splitCount) > 0 ? remainingToSave / Number(splitCount) : null;
 
   return (
-    <div className="modal-overlay" {...overlayHandlers}>
+    <div className="modal-overlay">
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div style={{
           display: 'flex',

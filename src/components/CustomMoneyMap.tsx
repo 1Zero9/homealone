@@ -3,7 +3,6 @@ import type { AccountItem, CurrencyCode, MapEdgeItem, MapNodeItem } from '../typ
 import { CURRENCY_LIST } from '../utils/currencies';
 import { formatCurrency } from '../utils/formatters';
 import { getErrorMessage } from '../lib/errors';
-import { useOverlayClose } from '../hooks/useOverlayClose';
 import { Plus, Link2, X, Trash2, MousePointer2 } from 'lucide-react';
 
 interface CustomMoneyMapProps {
@@ -60,7 +59,6 @@ interface NodeFormModalProps {
 }
 
 const NodeFormModal: React.FC<NodeFormModalProps> = ({ mode, accounts, initial, onClose, onSubmit, onDelete }) => {
-  const overlayHandlers = useOverlayClose(onClose);
   const [label, setLabel] = useState(initial?.label || '');
   const [accountId, setAccountId] = useState(initial?.accountId || '');
   const [color, setColor] = useState(initial?.color || DEFAULT_NODE_COLOR);
@@ -89,7 +87,7 @@ const NodeFormModal: React.FC<NodeFormModalProps> = ({ mode, accounts, initial, 
   };
 
   return (
-    <div className="modal-overlay" {...overlayHandlers}>
+    <div className="modal-overlay">
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -192,7 +190,6 @@ interface EdgeFormModalProps {
 }
 
 const EdgeFormModal: React.FC<EdgeFormModalProps> = ({ edge, fromLabel, toLabel, defaultCurrency, onClose, onSubmit, onDelete }) => {
-  const overlayHandlers = useOverlayClose(onClose);
   const [label, setLabel] = useState(edge.label || '');
   const [amount, setAmount] = useState<number | string>(edge.amount ?? '');
   const [edgeCurrency, setEdgeCurrency] = useState<CurrencyCode>(edge.currency || defaultCurrency);
@@ -213,7 +210,7 @@ const EdgeFormModal: React.FC<EdgeFormModalProps> = ({ edge, fromLabel, toLabel,
   };
 
   return (
-    <div className="modal-overlay" {...overlayHandlers}>
+    <div className="modal-overlay">
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import type { TransferItem, AccountItem, ExpenseItem, IncomeItem, CurrencyCode } from '../types/expense';
 import { CURRENCIES } from '../utils/currencies';
 import { X, ArrowRight } from 'lucide-react';
-import { useOverlayClose } from '../hooks/useOverlayClose';
 
 const EXTERNAL_VALUE = '__external__';
 
@@ -25,7 +24,6 @@ export const TransferModal: React.FC<TransferModalProps> = ({
   expenses = [],
   incomes = [],
 }) => {
-  const overlayHandlers = useOverlayClose(onClose);
   const [amount, setAmount] = useState<number | string>('');
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [date, setDate] = useState('');
@@ -91,7 +89,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
   const currencySymbol = CURRENCIES[currency]?.symbol || '€';
 
   return (
-    <div className="modal-overlay" {...overlayHandlers}>
+    <div className="modal-overlay">
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div style={{
           display: 'flex',

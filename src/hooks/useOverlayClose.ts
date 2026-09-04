@@ -14,6 +14,22 @@ import { useRef, useCallback } from 'react';
  *
  * Usage: spread the returned handlers onto the overlay div —
  *   <div className="modal-overlay" {...useOverlayClose(onClose)}>
+ *
+ * IMPORTANT — do NOT use this for modals that contain a data-entry form
+ * (anything with typed/selected values that only get saved on an explicit
+ * Save/Add button, e.g. AccountModal, ExpenseModal, TransferModal,
+ * GoalModal, IncomeModal, ShareWorkspaceModal, ContactVendorModal,
+ * ScanReceiptModal, the Money Map node/edge forms). Even with the fix
+ * above, click-outside-to-close on those modals silently discards
+ * whatever the user just typed, which is worse than the text-selection
+ * bug this hook was originally written to solve. For those, leave the
+ * overlay as a plain `<div className="modal-overlay">` (no handlers) and
+ * only close via the explicit X / Cancel button.
+ *
+ * Only use this hook for modals with no unsaved-state risk: read-only
+ * viewers (HelpGuideModal, ChangelogModal), or browse/search/action
+ * modals whose actions apply immediately rather than staging a draft
+ * (PresetsModal, SettingsModal, AdminBackupModal, ExportImportModal).
  */
 export function useOverlayClose(onClose: () => void) {
   const mouseDownOnOverlay = useRef(false);

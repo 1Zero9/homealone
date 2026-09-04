@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.28.0';
+export const APP_VERSION = '1.29.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.29.0',
+    date: '2026-09-04',
+    changes: [
+      'Fixed accounts, transfers, goals, income, invites, contact-vendor and scan-receipt forms (and Money Map object/connection forms) closing and discarding whatever you had typed if you clicked the blurred background behind the popup — those now only close via the X or Cancel button, matching how the expense form already worked.',
+    ],
+  },
   {
     version: '1.28.0',
     date: '2026-09-04',
