@@ -2,7 +2,18 @@
 
 *Simple records. Clearer days.*
 
-Tally is a shared household ledger for expenses, income, accounts, and the real journey your money takes — plus AI-assisted insights to help you save. This guide walks through every part of the app.
+Tally is a shared household ledger for expenses, income, accounts, and the real journey your money takes — plus AI-assisted insights to help you save. This guide walks through every part of the app, section by section, so you can jump straight to what you need.
+
+---
+
+## Why Tally?
+
+Most budgeting apps show you category totals and ask you to trust them. Tally is built around a different idea: the household's shared, checkable source of truth for where money actually comes from, where it actually goes, and what's coming up next.
+
+- **One shared ledger, not five spreadsheets.** Everyone in the household sees the same accounts, bills, income, and goals — no copy-pasting numbers between people.
+- **Real money movements, not guesses.** Log actual transfers and reconcile them against real bank statements (CSV, PDF, or just a photo) so your numbers match what actually happened.
+- **AI that works for you, on demand.** Ask a plain-English question, scan a receipt, or run a money-flow analysis whenever you want — always using only your own household's data, and only when you ask for it.
+- **Every number is traceable.** Nothing is a black-box estimate — every figure ties back to a real bill, transfer, or statement row you can click into and check.
 
 ---
 
@@ -85,18 +96,24 @@ You can optionally link a transfer to an existing recurring Expense or Income re
 
 ### Statement imports
 
-Under Flow, **Statement imports** lets you cross-check a real bank or credit-card statement against what you've logged:
+Under Flow, **Statement imports** lets you cross-check a real bank or credit-card statement against what you've already logged.
 
-- **Upload a CSV, PDF, or photo/screenshot** — CSV works best, but Tally reads PDFs and photos with AI, so there's no need to convert a bank PDF to CSV first.
-- For CSV, tell Tally which column is the date, description and amount. Either way, pick which **Account** the statement is from — this keeps matching accurate once you have more than one account.
-- From a PDF or photo, Tally also extracts whatever account-level details are printed — bank name, account holder, account number, sort code/IBAN, statement period, opening/closing balance — and, once you pick the account, checks the account number and sort code against what's saved for it. A mismatch is flagged; if the account has nothing saved yet, you can save the extracted value in one click.
-- **No account for this statement yet?** Click **Add a new account** (or **Add your first account** if you have none) right on the import screen — no need to leave and set one up separately. Give it a name, type, and institution, and any account number/sort code Tally found on the statement is carried straight over and encrypted automatically. This works for CSV statements too, even without extracted details.
-- Tally suggests matches against your existing bills and transfers and flags recurring-but-untracked charges worth checking — but only ever auto-confirms a merchant you've personally confirmed before; everything else waits in **Needs review** for an explicit "Confirm match". A suggested match is only ever a guess: the confirm and correct buttons are equally weighted, and a low-confidence guess shows a reassurance note — correcting a match also improves future suggestions for that merchant.
-- For anything that isn't a bill you've tracked, **Add as expense** logs it with a proper spending category (remembered per merchant for next time) instead of an anonymous transfer — or use **Log as transfer** for a quick, uncategorized entry.
-- **Rename a merchant**: click the pencil next to any row's description to give a cryptic bank description a friendly nickname (e.g. "IEPROS" → "Smyths Toy Shop"). It updates that row plus every past and future row for the same merchant, and groups rows under the nickname too.
-- **Add all as expense**: for a merchant with several rows in the same statement (e.g. five Starbucks visits), pick a category once on that group and log all of them as expenses in one go, instead of one row at a time.
-- **Rename an import**: click the pencil next to a statement's name in the Statement imports list, or from inside the review screen, to give it a friendlier label than the uploaded filename.
-- Clicking outside the import dialog never discards anything — only the visible buttons (Back, Import, Done, the X) can close or navigate it.
+**Uploading**
+- Upload a CSV, PDF, or photo/screenshot — CSV works best, but Tally reads PDFs and photos with AI, so there's no need to convert a bank PDF to CSV first.
+- For CSV, tell Tally which column is the date, description, and amount. Either way, pick which **Account** the statement is from — this keeps matching accurate once you have more than one account.
+- From a PDF or photo, Tally also extracts account details printed on it — bank name, account holder, account number, sort code/IBAN, statement period, opening/closing balance — and checks them against what's saved for the account you picked. A mismatch is flagged; if nothing's saved yet, save the extracted value in one click.
+- **No account for this statement yet?** Click **Add a new account** (or **Add your first account**) right on the import screen. Any account number/sort code Tally found is carried over and encrypted automatically — this works for CSV too, even without extracted details.
+
+**Reviewing matches**
+- Tally suggests matches against your existing bills and transfers, and flags recurring-but-untracked charges worth checking — but only auto-confirms a merchant you've personally confirmed before. Everything else waits in **Needs review**.
+- A suggested match is only ever a guess: the confirm and correct buttons are equally weighted, and a low-confidence guess shows a reassurance note. Correcting a match also improves future suggestions for that merchant.
+- Not a bill you've tracked? **Add as expense** logs it with a proper spending category (remembered per merchant next time) — or use **Log as transfer** for a quick, uncategorized entry.
+
+**Tidying up**
+- **Rename a merchant**: click the pencil next to any row's description to turn a cryptic bank description (e.g. "IEPROS") into a friendly nickname (e.g. "Smyths Toy Shop"). It updates every past and future row from that merchant, and groups rows under the nickname.
+- **Add all as expense**: for a merchant with several rows in the same statement, pick a category once on that group and log them all in one go.
+- **Rename an import**: click the pencil next to a statement's name in the list, or inside the review screen, to give it a friendlier label than the uploaded filename.
+- Clicking outside the dialog never discards anything — only the visible buttons (Back, Import, Done, the X) close or navigate it.
 
 ## 8. Goals
 

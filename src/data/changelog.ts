@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.22.0';
+export const APP_VERSION = '1.22.1';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.22.1',
+    date: '2026-09-04',
+    changes: [
+      'Rewrote the User Guide intro with a "Why Tally?" section spelling out what makes it different, and broke the dense Statement imports walkthrough into shorter, grouped steps (Uploading, Reviewing matches, Tidying up) for easier reading.',
+    ],
+  },
   {
     version: '1.22.0',
     date: '2026-09-04',
