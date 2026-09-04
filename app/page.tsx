@@ -42,11 +42,13 @@ import { GoalsSection } from '@/src/components/GoalsSection';
 import { GoalModal } from '@/src/components/GoalModal';
 import { PrivacyBlurOverlay } from '@/src/components/PrivacyBlurOverlay';
 import { usePrivacyBlur } from '@/src/hooks/usePrivacyBlur';
+import { useIdleLogout } from '@/src/hooks/useIdleLogout';
 import { ChangelogModal } from '@/src/components/ChangelogModal';
 import { ScanReceiptModal } from '@/src/components/ScanReceiptModal';
 
 export default function TallyPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = checking
+  const [idleLogoutNotice, setIdleLogoutNotice] = useState<string | null>(null);
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [incomes, setIncomes] = useState<IncomeItem[]>([]);
   const [accounts, setAccounts] = useState<AccountItem[]>([]);
@@ -256,6 +258,7 @@ export default function TallyPage() {
     try {
       localStorage.setItem('tally_user', JSON.stringify(user));
     } catch {}
+    setIdleLogoutNotice(null);
     setIsAuthenticated(true);
     setCurrentUser(user);
     fetchDatabaseData();
@@ -272,6 +275,21 @@ export default function TallyPage() {
     setIsAuthenticated(false);
     setCurrentUser(null);
   };
+
+  // Signs out automatically after a long stretch of genuine inactivity
+  // (no mouse/keyboard/touch/scroll input) — separate from the much shorter
+  // privacy blur, and from the 30-day "remember me" session cookie.
+  const handleIdleLogout = useCallback(() => {
+    try {
+      localStorage.removeItem('tally_user');
+    } catch {}
+    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    setIdleLogoutNotice("You were signed out after a while of inactivity. Sign in again to continue.");
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+  }, []);
+
+  useIdleLogout(isAuthenticated === true, handleIdleLogout);
 
   // Planned/pending expenses stand alone and must not affect any totals, bills or insights.
   const liveExpenses = expenses.filter((e) => !e.isPending);
@@ -745,7 +763,7 @@ export default function TallyPage() {
 
   // If unauthenticated, show Logon Screen
   if (!isAuthenticated) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} notice={idleLogoutNotice} />;
   }
 
   return (

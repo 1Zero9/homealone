@@ -6,9 +6,10 @@ import { TallyLogo } from './TallyLogo';
 
 interface LoginScreenProps {
   onLoginSuccess: (user: UserProfile) => void;
+  notice?: string | null;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, notice }) => {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'form' | 'code'>('form');
@@ -119,6 +120,23 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             Your household, in balance.
           </p>
         </div>
+
+        {notice && !errorMessage && (
+          <div style={{
+            backgroundColor: 'var(--ha-blue-light)',
+            border: '1px solid var(--ha-blue)',
+            borderRadius: 'var(--ha-radius-sm)',
+            padding: '0.65rem 0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            color: 'var(--ha-blue)',
+            fontSize: '0.82rem',
+          }}>
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <span>{notice}</span>
+          </div>
+        )}
 
         {/* Error notification */}
         {errorMessage && (

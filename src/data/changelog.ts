@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.20.1';
+export const APP_VERSION = '1.21.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.21.0',
+    date: '2026-09-04',
+    changes: [
+      'Added genuine auto sign-out after 30 minutes of inactivity — separate from the existing 30-day "stay signed in" session, which is unaffected. You\'ll see a note explaining why on your next sign-in.',
+      'The privacy screen-blur was triggering after just 20 seconds idle — pushed out to 90 seconds so it no longer interrupts normal use.',
+      'Flow, Goals, Planned and Money Map were previously tucked inside a "Money Journey" dropdown — they\'re now directly in the main nav bar alongside everything else.',
+      'Added a full in-app User Guide page, linked from both the Help guide and the "Ask Tally" box — it\'s built from the same content that powers Ask Tally\'s how-to answers, so it\'s always in sync.',
+      'Statement import now lets you add a brand new account right from the import screen — for CSV, PDF or photo statements, even if you have no accounts saved yet. When Tally reads an account number/sort code off a PDF or photo, it\'s carried straight over to the new account, encrypted.',
+    ],
+  },
   {
     version: '1.20.1',
     date: '2026-09-04',

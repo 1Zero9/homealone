@@ -15,8 +15,9 @@ import {
   ChevronDown,
   ChevronRight,
   Edit2,
+  Landmark,
 } from 'lucide-react';
-import type { ExpenseItem, StatementTransactionItem, CurrencyCode, AccountItem, ExpenseCategory } from '../types/expense';
+import type { ExpenseItem, StatementTransactionItem, CurrencyCode, AccountItem, AccountType, ExpenseCategory } from '../types/expense';
 import { formatCurrency } from '../utils/formatters';
 import { parseCsv, guessColumns, parseAmount, parseDateFlexible, type ColumnGuess } from '../lib/statementMatching';
 import type { StatementAccountInfo } from '../lib/ai';
@@ -56,6 +57,18 @@ const FILTERS: { id: ReviewFilter; label: string }[] = [
   { id: 'matched', label: 'Matched' },
   { id: 'ignored', label: 'Ignored' },
   { id: 'all', label: 'All' },
+];
+
+const ACCOUNT_TYPES: { id: AccountType; label: string }[] = [
+  { id: 'CHECKING', label: 'Current' },
+  { id: 'SAVINGS', label: 'Savings' },
+  { id: 'CREDIT_UNION', label: 'Credit union' },
+  { id: 'CREDIT_CARD', label: 'Credit card' },
+  { id: 'DEBIT_CARD', label: 'Debit card' },
+  { id: 'PAYPAL', label: 'PayPal' },
+  { id: 'LOAN', label: 'Loan' },
+  { id: 'INVESTMENT', label: 'Investment' },
+  { id: 'OTHER', label: 'Other' },
 ];
 
 export const StatementImportModal: React.FC<StatementImportModalProps> = ({
@@ -107,6 +120,13 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const [accountMatch, setAccountMatch] = useState<{ accountNumber: FieldMatch; routingNumber: FieldMatch } | null>(null);
   const [savingField, setSavingField] = useState<'accountNumber' | 'routingNumber' | null>(null);
   const [savedFields, setSavedFields] = useState<{ accountNumber?: boolean; routingNumber?: boolean }>({});
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [newAccountName, setNewAccountName] = useState('');
+  const [newAccountInstitution, setNewAccountInstitution] = useState('');
+  const [newAccountType, setNewAccountType] = useState<AccountType>('CHECKING');
+  const [isSavingNewAccount, setIsSavingNewAccount] = useState(false);
+  const [newAccountError, setNewAccountError] = useState('');
+  const [pendingNewAccount, setPendingNewAccount] = useState<{ id: string; name: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadedInitialRef = useRef(false);
 
@@ -149,6 +169,13 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     setAccountMatch(null);
     setSavingField(null);
     setSavedFields({});
+    setIsCreatingAccount(false);
+    setNewAccountName('');
+    setNewAccountInstitution('');
+    setNewAccountType('CHECKING');
+    setIsSavingNewAccount(false);
+    setNewAccountError('');
+    setPendingNewAccount(null);
     loadedInitialRef.current = false;
   }, []);
 
@@ -356,6 +383,62 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
       }
     } finally {
       setSavingField(null);
+    }
+  };
+
+  useEffect(() => {
+    if (pendingNewAccount && accounts.some((a) => a.id === pendingNewAccount.id)) {
+      setPendingNewAccount(null);
+    }
+  }, [accounts, pendingNewAccount]);
+
+  const openCreateAccount = () => {
+    setNewAccountName(accountInfo?.bankName || '');
+    setNewAccountInstitution(accountInfo?.bankName || '');
+    setNewAccountType('CHECKING');
+    setNewAccountError('');
+    setIsCreatingAccount(true);
+  };
+
+  const handleCreateAccount = async () => {
+    if (!newAccountName.trim()) {
+      setNewAccountError('Give the account a name first.');
+      return;
+    }
+    setIsSavingNewAccount(true);
+    setNewAccountError('');
+    try {
+      const res = await fetch('/api/accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newAccountName.trim(),
+          institution: newAccountInstitution.trim(),
+          type: newAccountType,
+          currency: householdCurrency,
+          isActive: true,
+          ...(accountInfo?.accountNumber ? { accountNumber: accountInfo.accountNumber } : {}),
+          ...(accountInfo?.sortCode ? { routingNumber: accountInfo.sortCode } : {}),
+        }),
+      });
+      const data = await res.json();
+      if (data.status !== 'ok') {
+        setNewAccountError(data.message || 'Failed to create that account.');
+        return;
+      }
+      setPendingNewAccount({ id: data.account.id, name: data.account.name });
+      setAccountId(data.account.id);
+      setIsCreatingAccount(false);
+      setSavedFields((prev) => ({
+        ...prev,
+        ...(accountInfo?.accountNumber ? { accountNumber: true } : {}),
+        ...(accountInfo?.sortCode ? { routingNumber: true } : {}),
+      }));
+      onExpensesChanged?.();
+    } catch {
+      setNewAccountError('Failed to create that account. Please try again.');
+    } finally {
+      setIsSavingNewAccount(false);
     }
   };
 
@@ -579,7 +662,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
 
           {step === 'map' && (
             <>
-              <div style={{ display: 'grid', gridTemplateColumns: accounts.length > 0 ? '1.4fr 1fr' : '1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.3rem' }}>
                     Label for this import
@@ -587,23 +670,123 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                   <input className="ha-input" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. AIB Credit Card — September" />
                 </div>
 
-                {accounts.length > 0 && (
-                  <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.3rem' }}>
-                      Which account is this?
-                    </label>
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.3rem' }}>
+                    Which account is this?
+                  </label>
+                  {(accounts.length > 0 || pendingNewAccount) ? (
                     <select className="ha-input" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
                       <option value="">Not sure / mixed</option>
                       {accounts.map((a) => (
                         <option key={a.id} value={a.id}>{a.name}{a.institution ? ` — ${a.institution}` : ''}</option>
                       ))}
+                      {pendingNewAccount && !accounts.some((a) => a.id === pendingNewAccount.id) && (
+                        <option key={pendingNewAccount.id} value={pendingNewAccount.id}>{pendingNewAccount.name}</option>
+                      )}
                     </select>
-                    <p style={{ fontSize: '0.72rem', color: 'var(--ha-muted)', marginTop: '0.3rem' }}>
-                      Helps matching stay accurate when you have more than one account.
+                  ) : (
+                    <p style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', margin: '0.4rem 0' }}>
+                      No accounts saved yet.
                     </p>
-                  </div>
-                )}
+                  )}
+                  {!isCreatingAccount && (
+                    <button
+                      type="button"
+                      onClick={openCreateAccount}
+                      className="btn btn-ghost"
+                      style={{ fontSize: '0.72rem', padding: '0.25rem 0', marginTop: '0.3rem' }}
+                    >
+                      <Landmark size={12} /> {accounts.length > 0 ? 'Add a new account' : 'Add your first account'}
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {isCreatingAccount && (
+                <div style={{
+                  border: '1px solid var(--ha-line)',
+                  borderRadius: 'var(--ha-radius-md)',
+                  padding: '0.85rem 1rem',
+                  backgroundColor: '#fafaf7',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.65rem',
+                }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                    New account
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '0.75rem' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                        Account name
+                      </label>
+                      <input
+                        className="ha-input"
+                        style={{ fontSize: '0.85rem' }}
+                        value={newAccountName}
+                        onChange={(e) => setNewAccountName(e.target.value)}
+                        placeholder="e.g. Main Current Account"
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                        Type
+                      </label>
+                      <select
+                        className="ha-input"
+                        style={{ fontSize: '0.85rem' }}
+                        value={newAccountType}
+                        onChange={(e) => setNewAccountType(e.target.value as AccountType)}
+                      >
+                        {ACCOUNT_TYPES.map((t) => (
+                          <option key={t.id} value={t.id}>{t.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                      Institution
+                    </label>
+                    <input
+                      className="ha-input"
+                      style={{ fontSize: '0.85rem' }}
+                      value={newAccountInstitution}
+                      onChange={(e) => setNewAccountInstitution(e.target.value)}
+                      placeholder="e.g. AIB, Revolut, PayPal"
+                    />
+                  </div>
+                  {(accountInfo?.accountNumber || accountInfo?.sortCode) && (
+                    <p style={{ fontSize: '0.72rem', color: 'var(--ha-muted)', margin: 0 }}>
+                      The account {accountInfo.accountNumber && accountInfo.sortCode ? 'number and sort code' : accountInfo.accountNumber ? 'number' : 'sort code'} found on this statement will be saved to the new account, encrypted.
+                    </p>
+                  )}
+                  {newAccountError && (
+                    <div style={{ fontSize: '0.78rem', color: 'var(--ha-red)' }}>{newAccountError}</div>
+                  )}
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={handleCreateAccount}
+                      disabled={isSavingNewAccount}
+                      className="btn btn-primary"
+                      style={{ fontSize: '0.78rem', padding: '0.4rem 0.7rem' }}
+                    >
+                      {isSavingNewAccount ? <Loader2 size={13} className="spin" /> : <Landmark size={13} />}
+                      {isSavingNewAccount ? 'Creating…' : 'Create account'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setIsCreatingAccount(false); setNewAccountError(''); }}
+                      className="btn btn-ghost"
+                      style={{ fontSize: '0.78rem', padding: '0.4rem 0.6rem' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {accountInfo && (accountInfo.bankName || accountInfo.accountHolderName || accountInfo.accountNumber || accountInfo.sortCode || accountInfo.iban || accountInfo.statementPeriod || accountInfo.openingBalance != null || accountInfo.closingBalance != null) && (
                 <div style={{

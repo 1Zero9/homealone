@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // How long the screen can sit idle before sensitive data is auto-blurred.
-const IDLE_TIMEOUT_MS = 20_000;
+const IDLE_TIMEOUT_MS = 90_000;
 
 const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel'] as const;
 

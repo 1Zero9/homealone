@@ -1,6 +1,7 @@
 import React from 'react';
+import Link from 'next/link';
 import type { UserProfile } from '../types/expense';
-import { X, Sparkles, Plus, UserPlus, Download, Bell, Mail, ShieldCheck, Landmark, ArrowLeftRight, Target, Activity, CalendarClock, UserCog, FileSpreadsheet, ScanLine } from 'lucide-react';
+import { X, Sparkles, Plus, UserPlus, Download, Bell, Mail, ShieldCheck, Landmark, ArrowLeftRight, Target, Activity, CalendarClock, UserCog, FileSpreadsheet, ScanLine, BookOpen } from 'lucide-react';
 import { HELP_GUIDE_SECTIONS } from '../data/helpGuide';
 
 interface HelpGuideModalProps {
@@ -89,11 +90,31 @@ export const HelpGuideModal: React.FC<HelpGuideModalProps> = ({ isOpen, onClose,
         <div style={{
           padding: '1rem 1.5rem',
           borderTop: '1px solid var(--ha-line)',
-          fontSize: '0.78rem',
-          color: 'var(--ha-muted)',
-          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '0.5rem',
         }}>
-          Still stuck? Reach out to whoever set up your household workspace.
+          <Link
+            href="/guide"
+            target="_blank"
+            onClick={onClose}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              color: 'var(--ha-blue)',
+              textDecoration: 'none',
+            }}
+          >
+            <BookOpen size={14} />
+            <span>Read the full user guide</span>
+          </Link>
+          <p style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', textAlign: 'center', margin: 0 }}>
+            Still stuck? Reach out to whoever set up your household workspace.
+          </p>
         </div>
       </div>
     </div>

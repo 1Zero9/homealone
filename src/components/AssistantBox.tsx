@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import Link from 'next/link';
 import type { CurrencyCode } from '../types/expense';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { getErrorMessage } from '../lib/errors';
-import { Sparkles, Search, Loader2, HelpCircle } from 'lucide-react';
+import { Sparkles, Search, Loader2, HelpCircle, BookOpen } from 'lucide-react';
 
 interface InsightsData {
   monthlyTotal: number;
@@ -217,7 +218,7 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
         ))}
       </div>
 
-      <div style={{ display: isExpanded ? 'flex' : 'none', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginTop: hasData ? '0.5rem' : 0, marginBottom: answer || errorMessage ? '1.25rem' : 0 }}>
+      <div style={{ display: isExpanded ? 'flex' : 'none', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginTop: hasData ? '0.5rem' : 0, marginBottom: answer || errorMessage ? '0.75rem' : 0 }}>
         {HELP_QUICK_ACTIONS.map((action) => (
           <button
             key={action.id}
@@ -232,6 +233,19 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
           </button>
         ))}
       </div>
+
+      {isExpanded && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: answer || errorMessage ? '1.25rem' : 0 }}>
+          <Link
+            href="/guide"
+            target="_blank"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.76rem', fontWeight: 600, color: 'var(--ha-blue)', textDecoration: 'none' }}
+          >
+            <BookOpen size={12} />
+            <span>Read the full user guide</span>
+          </Link>
+        </div>
+      )}
 
       {errorMessage && (
         <div className="ha-card" style={{
