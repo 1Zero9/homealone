@@ -673,6 +673,118 @@ input:checked + .slider:before {
   font-size: 1rem !important;
 }
 
+.ha-assistant-input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(23, 107, 82, 0.13);
+}
+
+.ha-assistant-menu {
+  display: grid;
+  gap: 1rem;
+  margin-top: -0.15rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(255, 254, 250, 0.72);
+  border: 1px solid var(--ha-line);
+  border-radius: 17px;
+  box-shadow: 0 10px 26px rgba(31, 49, 40, 0.045);
+  animation: assistantReveal 0.18s ease-out;
+}
+
+@keyframes assistantReveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ha-assistant-group {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  align-items: start;
+  gap: 0.75rem;
+}
+
+.ha-assistant-group + .ha-assistant-group {
+  padding-top: 1rem;
+  border-top: 1px solid var(--ha-line);
+}
+
+.ha-assistant-group-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 40px;
+  color: var(--ha-blue);
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+}
+
+.ha-assistant-shortcuts {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ha-assistant-shortcuts-insights {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ha-assistant-shortcuts-help {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ha-assistant-shortcut {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0.55rem 0.75rem;
+  background: #f7f8f4;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  color: var(--ha-ink);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.25;
+  text-align: left;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.ha-assistant-shortcut::before {
+  content: '→';
+  margin-right: 0.5rem;
+  color: var(--ha-blue);
+  font-size: 0.9rem;
+}
+
+.ha-assistant-shortcut:hover {
+  background: var(--ha-blue-light);
+  border-color: #cfe1d7;
+  color: var(--ha-blue-hover);
+  transform: translateY(-1px);
+}
+
+.ha-assistant-shortcut:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+.ha-assistant-guide-link {
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  gap: 0.4rem;
+  color: var(--ha-blue);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ha-assistant-guide-link:hover {
+  color: var(--ha-blue-hover);
+  text-decoration: underline;
+}
+
 .ha-page-tabs {
   scrollbar-width: none;
 }
@@ -870,6 +982,24 @@ input:checked + .slider:before {
     font-size: 0.94rem !important;
   }
 
+  .ha-assistant-menu {
+    padding: 0.85rem;
+  }
+
+  .ha-assistant-group {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+  }
+
+  .ha-assistant-group-label {
+    min-height: 28px;
+  }
+
+  .ha-assistant-shortcuts-insights,
+  .ha-assistant-shortcuts-help {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .ha-card,
   .ha-card-interactive {
     border-radius: 16px;
@@ -893,6 +1023,15 @@ input:checked + .slider:before {
   .modal-content {
     border-radius: 18px;
     max-height: calc(100vh - 1rem);
+  }
+
+  .ha-assistant-shortcuts-insights,
+  .ha-assistant-shortcuts-help {
+    grid-template-columns: 1fr;
+  }
+
+  .ha-assistant-guide-link {
+    justify-self: start;
   }
 }
 

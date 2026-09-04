@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.30.0';
+export const APP_VERSION = '1.30.1';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.30.1',
+    date: '2026-09-04',
+    changes: [
+      'Redesigned the expanded Ask Tally shortcuts as one structured panel, separating household insights from help topics and replacing the loose rows of equal-weight buttons with calmer, easier-to-scan actions.',
+      'Simplified the search field’s focus treatment and refined the assistant shortcuts for tablet and phone layouts.',
+    ],
+  },
   {
     version: '1.30.0',
     date: '2026-09-04',
@@ -334,9 +342,16 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
 ];
 
-export const MOBILE_APP_VERSION = '1.1.0';
+export const MOBILE_APP_VERSION = '1.1.1';
 
 export const MOBILE_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.1.1',
+    date: '2026-09-04',
+    changes: [
+      'Made the expanded Ask Tally shortcuts easier to scan on small screens with clear insight/help groups and a responsive one- or two-column layout.',
+    ],
+  },
   {
     version: '1.1.0',
     date: '2026-09-04',

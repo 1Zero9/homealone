@@ -203,47 +203,53 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
         )}
       </form>
 
-      <div style={{ display: hasData && isExpanded ? 'flex' : 'none', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
-        {QUICK_ACTIONS.map((action) => (
-          <button
-            key={action.id}
-            type="button"
-            onClick={() => runQuickAction(action.id)}
-            disabled={isLoading}
-            className="btn btn-secondary"
-            style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}
-          >
-            <Sparkles size={13} color="var(--ha-blue)" />
-            <span>{action.label}</span>
-          </button>
-        ))}
-      </div>
-
-      <div style={{ display: isExpanded ? 'flex' : 'none', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginTop: hasData ? '0.5rem' : 0, marginBottom: answer || errorMessage ? '0.75rem' : 0 }}>
-        {HELP_QUICK_ACTIONS.map((action) => (
-          <button
-            key={action.id}
-            type="button"
-            onClick={() => runHelpAction(action.question)}
-            disabled={isLoading}
-            className="btn btn-secondary"
-            style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}
-          >
-            <HelpCircle size={13} color="var(--ha-muted)" />
-            <span>{action.label}</span>
-          </button>
-        ))}
-      </div>
-
       {isExpanded && (
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: answer || errorMessage ? '1.25rem' : 0 }}>
-          <Link
-            href="/guide"
-            target="_blank"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.76rem', fontWeight: 600, color: 'var(--ha-blue)', textDecoration: 'none' }}
-          >
-            <BookOpen size={12} />
-            <span>Read the full user guide</span>
+        <div className="ha-assistant-menu">
+          {hasData && (
+            <section className="ha-assistant-group" aria-labelledby="assistant-insights-label">
+              <div id="assistant-insights-label" className="ha-assistant-group-label">
+                <Sparkles size={14} />
+                <span>Explore your household</span>
+              </div>
+              <div className="ha-assistant-shortcuts ha-assistant-shortcuts-insights">
+                {QUICK_ACTIONS.map((action) => (
+                  <button
+                    key={action.id}
+                    type="button"
+                    onClick={() => runQuickAction(action.id)}
+                    disabled={isLoading}
+                    className="ha-assistant-shortcut"
+                  >
+                    <span>{action.label}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="ha-assistant-group" aria-labelledby="assistant-help-label">
+            <div id="assistant-help-label" className="ha-assistant-group-label">
+              <HelpCircle size={14} />
+              <span>Help with Tally</span>
+            </div>
+            <div className="ha-assistant-shortcuts ha-assistant-shortcuts-help">
+              {HELP_QUICK_ACTIONS.map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  onClick={() => runHelpAction(action.question)}
+                  disabled={isLoading}
+                  className="ha-assistant-shortcut"
+                >
+                  <span>{action.label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <Link href="/guide" target="_blank" className="ha-assistant-guide-link">
+            <BookOpen size={14} />
+            <span>Open the complete user guide</span>
           </Link>
         </div>
       )}
