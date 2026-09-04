@@ -3,6 +3,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // How long the screen can sit idle before sensitive data is auto-blurred.
 const IDLE_TIMEOUT_MS = 90_000;
 
+// Grace period before a window-blur event actually triggers the privacy
+// screen. `window`'s blur event fires very eagerly — e.g. opening devtools,
+// clicking a native <select>/date-picker, an autofill/password-manager
+// popup, or just clicking the browser's address bar all momentarily blur
+// the window even though the user never left the tab. Without a grace
+// period the screen would flash-blur on virtually every interaction. If
+// focus returns within this window, the pending blur is cancelled.
+const WINDOW_BLUR_GRACE_MS = 600;
+
 const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel'] as const;
 
 /**
@@ -48,10 +57,25 @@ export function usePrivacyBlur() {
     const handleVisibilityChange = () => {
       if (document.hidden) setIsBlurred(true);
     };
-    const handleWindowBlur = () => setIsBlurred(true);
+
+    let blurTimeout: ReturnType<typeof setTimeout> | null = null;
+    const clearPendingBlur = () => {
+      if (blurTimeout) {
+        clearTimeout(blurTimeout);
+        blurTimeout = null;
+      }
+    };
+    const handleWindowBlur = () => {
+      clearPendingBlur();
+      blurTimeout = setTimeout(() => setIsBlurred(true), WINDOW_BLUR_GRACE_MS);
+    };
+    const handleWindowFocus = () => {
+      clearPendingBlur();
+    };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', handleWindowFocus);
 
     const interval = setInterval(() => {
       setIsBlurred((prev) => {
@@ -64,6 +88,8 @@ export function usePrivacyBlur() {
       ACTIVITY_EVENTS.forEach((evt) => window.removeEventListener(evt, markActivity));
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('focus', handleWindowFocus);
+      clearPendingBlur();
       clearInterval(interval);
     };
   }, []);

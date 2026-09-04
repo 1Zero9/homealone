@@ -185,7 +185,7 @@ Click **Export** at any time to download your records as a CSV spreadsheet or a 
 
 - Passwordless sign-in via one-time 6-digit codes — no passwords stored anywhere.
 - Session tokens live in a secure, httpOnly cookie, valid up to 30 days — but an idle tab automatically signs out after 30 minutes of no activity, independent of that 30-day window.
-- The screen blurs automatically for privacy after 90 seconds of inactivity (or when the tab loses focus) — click to reveal again. Toggle it manually anytime with the eye icon in the top bar.
+- The screen blurs automatically for privacy after 90 seconds of inactivity (or when the tab loses focus) — select **Reveal Tally** to return. Toggle it manually anytime with the eye icon in the top bar.
 - Sensitive account fields (account numbers, online banking logins, security notes) are encrypted at rest and only decrypted on an explicit "reveal" action — or, for statement imports, an on-the-fly admin-only comparison that returns a match/mismatch signal but never the decrypted value itself.
 - AI features (the Ask box and Money flow analysis) only ever send your own household's data, and only when you actively trigger them — nothing runs automatically in the background.
 - Full details: see the in-app **Privacy** page (footer link) and the **AI transparency** page.

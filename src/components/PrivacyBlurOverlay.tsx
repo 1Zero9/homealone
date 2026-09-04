@@ -1,5 +1,6 @@
 import React from 'react';
 import { EyeOff } from 'lucide-react';
+import { TallyLogo } from './TallyLogo';
 
 interface PrivacyBlurOverlayProps {
   isBlurred: boolean;
@@ -29,41 +30,21 @@ export const PrivacyBlurOverlay: React.FC<PrivacyBlurOverlayProps> = ({
       </div>
 
       {isBlurred && (
-        <div
-          onClick={onReveal}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') onReveal();
-          }}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            backgroundColor: 'rgba(244, 246, 242, 0.4)',
-            zIndex: 60,
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--ha-white)',
-              border: '1px solid var(--ha-line)',
-              borderRadius: 'var(--ha-radius-lg)',
-              boxShadow: 'var(--ha-shadow-elevated)',
-              padding: '1.5rem 2rem',
-              textAlign: 'center',
-            }}
-          >
-            <EyeOff size={26} color="var(--ha-muted)" style={{ marginBottom: '0.5rem' }} />
-            <div style={{ fontWeight: 700, color: 'var(--ha-ink)', fontSize: '0.95rem' }}>
+        <div className="ha-privacy-overlay">
+          <div className="ha-privacy-card" role="dialog" aria-modal="true" aria-labelledby="privacy-screen-title">
+            <div className="ha-privacy-brand" aria-hidden="true">
+              <TallyLogo size={30} />
+            </div>
+            <div className="ha-privacy-icon" aria-hidden="true">
+              <EyeOff size={24} />
+            </div>
+            <div id="privacy-screen-title" className="ha-privacy-title">
               Screen hidden for privacy
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginTop: '0.25rem' }}>
-              Click to reveal
-            </div>
+            <p className="ha-privacy-copy">Your household figures are safely obscured.</p>
+            <button type="button" className="btn btn-primary ha-privacy-reveal" onClick={onReveal} autoFocus>
+              Reveal Tally
+            </button>
           </div>
         </div>
       )}
