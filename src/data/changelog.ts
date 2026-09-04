@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.27.0';
+export const APP_VERSION = '1.28.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.28.0',
+    date: '2026-09-04',
+    changes: [
+      'Added encrypted IBAN and BIC/SWIFT fields to accounts, alongside account number and routing/sort code.',
+      'Fixed account and expense rows collapsing unexpectedly when finishing a text-selection drag (e.g. selecting an account number to copy) inside an expanded row.',
+    ],
+  },
   {
     version: '1.27.0',
     date: '2026-09-04',

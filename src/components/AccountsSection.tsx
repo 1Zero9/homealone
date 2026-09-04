@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { AccountItem } from '../types/expense';
 import { Edit2, Trash2, Plus, Landmark, Eye, EyeOff, Copy, Check, ShieldAlert, Link as LinkIcon } from 'lucide-react';
+import { hasTextSelection } from '../utils/dom';
 
 const TYPE_LABELS: Record<string, string> = {
   CHECKING: 'Current',
@@ -17,6 +18,8 @@ const TYPE_LABELS: Record<string, string> = {
 const SENSITIVE_FIELDS: { key: string; hasKey: keyof AccountItem; label: string }[] = [
   { key: 'accountNumber', hasKey: 'hasAccountNumber', label: 'Account number' },
   { key: 'routingNumber', hasKey: 'hasRoutingNumber', label: 'Routing / sort code' },
+  { key: 'iban', hasKey: 'hasIban', label: 'IBAN' },
+  { key: 'bic', hasKey: 'hasBic', label: 'BIC / SWIFT' },
   { key: 'loginUsername', hasKey: 'hasLoginUsername', label: 'Login username' },
   { key: 'loginPassword', hasKey: 'hasLoginPassword', label: 'Login password' },
   { key: 'loginUrl', hasKey: 'hasLoginUrl', label: 'Login URL' },
@@ -157,7 +160,14 @@ export const AccountsSection: React.FC<AccountsSectionProps> = ({
               const isExpanded = expandedId === item.id;
               return (
                 <div key={item.id} style={{ borderBottom: '1px solid var(--ha-line)' }}>
-                  <div className="ha-ledger-row" style={{ opacity: item.isActive ? 1 : 0.55, cursor: 'pointer' }} onClick={() => setExpandedId(isExpanded ? null : item.id)}>
+                  <div
+                    className="ha-ledger-row"
+                    style={{ opacity: item.isActive ? 1 : 0.55, cursor: 'pointer' }}
+                    onClick={() => {
+                      if (hasTextSelection()) return;
+                      setExpandedId(isExpanded ? null : item.id);
+                    }}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: '1 1 280px' }}>
                       <span className="ha-color-marker" style={{ backgroundColor: item.type === 'LOAN' ? 'var(--ha-red)' : 'var(--ha-blue)' }} />
                       <div>

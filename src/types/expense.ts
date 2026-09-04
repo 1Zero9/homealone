@@ -148,6 +148,8 @@ export interface AccountItem {
 
   hasAccountNumber: boolean;
   hasRoutingNumber: boolean;
+  hasIban: boolean;
+  hasBic: boolean;
   hasLoginUsername: boolean;
   hasLoginPassword: boolean;
   hasLoginUrl: boolean;

@@ -7,6 +7,8 @@ import { encryptOptional, isEncryptionConfigured } from '@/src/lib/crypto';
 const SENSITIVE_FIELDS = [
   'accountNumber',
   'routingNumber',
+  'iban',
+  'bic',
   'loginUsername',
   'loginPassword',
   'loginUrl',
@@ -19,10 +21,12 @@ const SENSITIVE_FIELDS = [
  * (handy for telling accounts apart without a reveal call).
  */
 function toPublicAccount(account: Record<string, unknown>) {
-  const { accountNumberEnc, routingNumberEnc, loginUsernameEnc, loginPasswordEnc, loginUrlEnc, securityNotesEnc, ...rest } =
+  const { accountNumberEnc, routingNumberEnc, ibanEnc, bicEnc, loginUsernameEnc, loginPasswordEnc, loginUrlEnc, securityNotesEnc, ...rest } =
     account as {
       accountNumberEnc: string | null;
       routingNumberEnc: string | null;
+      ibanEnc: string | null;
+      bicEnc: string | null;
       loginUsernameEnc: string | null;
       loginPasswordEnc: string | null;
       loginUrlEnc: string | null;
@@ -34,6 +38,8 @@ function toPublicAccount(account: Record<string, unknown>) {
     ...rest,
     hasAccountNumber: !!accountNumberEnc,
     hasRoutingNumber: !!routingNumberEnc,
+    hasIban: !!ibanEnc,
+    hasBic: !!bicEnc,
     hasLoginUsername: !!loginUsernameEnc,
     hasLoginPassword: !!loginPasswordEnc,
     hasLoginUrl: !!loginUrlEnc,
@@ -103,6 +109,8 @@ export async function POST(request: Request) {
 
         accountNumberEnc: encryptOptional(body.accountNumber),
         routingNumberEnc: encryptOptional(body.routingNumber),
+        ibanEnc: encryptOptional(body.iban),
+        bicEnc: encryptOptional(body.bic),
         loginUsernameEnc: encryptOptional(body.loginUsername),
         loginPasswordEnc: encryptOptional(body.loginPassword),
         loginUrlEnc: encryptOptional(body.loginUrl),
@@ -164,6 +172,8 @@ export async function PUT(request: Request) {
     const fieldToColumn: Record<(typeof SENSITIVE_FIELDS)[number], string> = {
       accountNumber: 'accountNumberEnc',
       routingNumber: 'routingNumberEnc',
+      iban: 'ibanEnc',
+      bic: 'bicEnc',
       loginUsername: 'loginUsernameEnc',
       loginPassword: 'loginPasswordEnc',
       loginUrl: 'loginUrlEnc',

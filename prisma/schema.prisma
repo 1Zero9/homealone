@@ -196,6 +196,8 @@ model Account {
   // null when not set. Never selected in list/summary API responses.
   accountNumberEnc String?
   routingNumberEnc String?
+  ibanEnc          String?
+  bicEnc           String?
   loginUsernameEnc String?
   loginPasswordEnc String?
   loginUrlEnc      String?

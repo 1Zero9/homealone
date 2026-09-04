@@ -7,6 +7,8 @@ import { decryptOptional } from '@/src/lib/crypto';
 const FIELD_TO_COLUMN: Record<string, string> = {
   accountNumber: 'accountNumberEnc',
   routingNumber: 'routingNumberEnc',
+  iban: 'ibanEnc',
+  bic: 'bicEnc',
   loginUsername: 'loginUsernameEnc',
   loginPassword: 'loginPasswordEnc',
   loginUrl: 'loginUrlEnc',

@@ -3,6 +3,7 @@ import type { ExpenseItem, CurrencyCode, CustomCategoryItem } from '../types/exp
 import { CATEGORY_LIST, getCategoryMeta } from '../data/categories';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle } from '../utils/formatters';
+import { hasTextSelection } from '../utils/dom';
 import { Search, ArrowUpDown, Edit2, Trash2, Copy, User, Plus, Sparkles, RefreshCw, Mail, ChevronDown } from 'lucide-react';
 
 function isOverdue(dateStr: string): boolean {
@@ -381,7 +382,10 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                   cursor: 'pointer',
                   borderBottom: 'none',
                 }}
-                onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                onClick={() => {
+                  if (hasTextSelection()) return;
+                  setExpandedId(isExpanded ? null : item.id);
+                }}
               >
                 {/* 1. Category Square Color Marker & Name */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: '1 1 280px' }}>

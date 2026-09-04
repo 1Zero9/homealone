@@ -51,6 +51,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 
   const [accountNumber, setAccountNumber] = useState<SensitiveFieldState>(emptyField());
   const [routingNumber, setRoutingNumber] = useState<SensitiveFieldState>(emptyField());
+  const [iban, setIban] = useState<SensitiveFieldState>(emptyField());
+  const [bic, setBic] = useState<SensitiveFieldState>(emptyField());
   const [loginUsername, setLoginUsername] = useState<SensitiveFieldState>(emptyField());
   const [loginPassword, setLoginPassword] = useState<SensitiveFieldState>(emptyField());
   const [loginUrl, setLoginUrl] = useState<SensitiveFieldState>(emptyField());
@@ -87,6 +89,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     }
     setAccountNumber(emptyField());
     setRoutingNumber(emptyField());
+    setIban(emptyField());
+    setBic(emptyField());
     setLoginUsername(emptyField());
     setLoginPassword(emptyField());
     setLoginUrl(emptyField());
@@ -114,6 +118,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 
     if (accountNumber.touched) data.accountNumber = accountNumber.value;
     if (routingNumber.touched) data.routingNumber = routingNumber.value;
+    if (iban.touched) data.iban = iban.value;
+    if (bic.touched) data.bic = bic.value;
     if (loginUsername.touched) data.loginUsername = loginUsername.value;
     if (loginPassword.touched) data.loginPassword = loginPassword.value;
     if (loginUrl.touched) data.loginUrl = loginUrl.value;
@@ -315,6 +321,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               {sensitiveField('Account number', accountNumber, setAccountNumber, !!editingAccount?.hasAccountNumber)}
               {sensitiveField('Routing / sort code', routingNumber, setRoutingNumber, !!editingAccount?.hasRoutingNumber)}
+              {sensitiveField('IBAN', iban, setIban, !!editingAccount?.hasIban)}
+              {sensitiveField('BIC / SWIFT', bic, setBic, !!editingAccount?.hasBic)}
               {sensitiveField('Login username / email', loginUsername, setLoginUsername, !!editingAccount?.hasLoginUsername)}
               {sensitiveField('Login password', loginPassword, setLoginPassword, !!editingAccount?.hasLoginPassword, 'password')}
               {sensitiveField('Login URL', loginUrl, setLoginUrl, !!editingAccount?.hasLoginUrl)}
