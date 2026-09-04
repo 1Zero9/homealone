@@ -1,0 +1,278 @@
+import { LegalPageLayout } from '@/src/components/LegalPageLayout';
+import { APP_VERSION } from '@/src/data/changelog';
+
+export const metadata = {
+  title: 'Technical Overview — Tally',
+};
+
+export default function TechnicalOverviewPage() {
+  return (
+    <LegalPageLayout title="Technical overview" lastUpdated={`v${APP_VERSION}`}>
+      <p>
+        A complete technical reference for the Tally codebase: architecture, data model, API
+        surface, security model, and the full feature set. For the end-user walkthrough, see the{' '}
+        <a href="/guide">User Guide</a>.
+      </p>
+
+      <h2>1. Architecture</h2>
+      <p>
+        Tally is a server-rendered, full-stack <strong>Next.js App Router</strong> application —
+        there is no separate backend service. All business logic lives in Next.js Route Handlers
+        under <code>app/api/</code>, called from client components via <code>fetch</code>.
+      </p>
+      <table>
+        <thead>
+          <tr><th>Layer</th><th>Technology</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Framework</td><td>Next.js 15 (App Router), React 19, TypeScript</td></tr>
+          <tr><td>Database</td><td>PostgreSQL</td></tr>
+          <tr><td>ORM</td><td>Prisma (<code>@prisma/client</code>)</td></tr>
+          <tr><td>Auth</td><td>Passwordless 6-digit OTP, first-party session cookies (no third-party auth provider)</td></tr>
+          <tr><td>AI</td><td>Google Gemini (<code>@google/generative-ai</code>, model <code>gemini-flash-latest</code>) — text and vision</td></tr>
+          <tr><td>Email</td><td>Resend</td></tr>
+          <tr><td>Styling</td><td>Hand-rolled CSS design tokens (<code>--ha-*</code>), no CSS framework</td></tr>
+          <tr><td>Icons</td><td>Lucide React</td></tr>
+          <tr><td>Deployment target</td><td>Vercel, Netlify, or a Node.js/Docker host</td></tr>
+        </tbody>
+      </table>
+      <p>
+        Requests flow: <strong>Client component</strong> → <code>fetch(&apos;/api/...&apos;)</code> →{' '}
+        <strong>Route Handler</strong> (<code>app/api/**/route.ts</code>) →{' '}
+        <code>requireUser</code>/<code>requireHouseholdUser</code>/<code>requireAdmin</code> (
+        <code>src/lib/auth.ts</code>) → <strong>Prisma</strong> (<code>src/lib/prisma.ts</code>) →{' '}
+        <strong>PostgreSQL</strong>.
+      </p>
+      <p>
+        <code>middleware.ts</code> runs on the Edge runtime on every request (excluding static
+        assets) purely to refresh the session cookie&apos;s <code>maxAge</code>, keeping the
+        browser cookie&apos;s lifetime in step with the sliding-expiration session stored in the
+        database (see §3). It deliberately avoids importing Prisma, since Prisma&apos;s Node
+        runtime isn&apos;t supported on the Edge.
+      </p>
+
+      <h2>2. Data model</h2>
+      <p>
+        Defined in <code>prisma/schema.prisma</code>. Every domain model is scoped to a{' '}
+        <code>Household</code> (multi-tenant by household, not by individual user), and most also
+        record <code>createdById</code> for attribution.
+      </p>
+      <ul>
+        <li><strong>Household</strong> — the tenant boundary. Has a unique <code>inviteCode</code> for joining.</li>
+        <li><strong>User</strong> — belongs to at most one household; <code>role</code> is <code>ADMIN</code>, <code>MEMBER</code>, or <code>BACKUP_ADMIN</code>.</li>
+        <li><strong>Session</strong> — opaque token, <code>expiresAt</code>, sliding expiration (see §3).</li>
+        <li><strong>VerificationToken</strong> — short-lived 6-digit login codes with an <code>attempts</code> counter.</li>
+        <li><strong>Expense</strong> — a recurring or one-off bill/subscription (<code>billingCycle</code>: weekly / monthly / quarterly / termly / annual / once), with category, payment account link, optional linked savings Goal, contract end date, usage rating, and pause/active state.</li>
+        <li><strong>Income</strong> — recurring or one-off income, with frequency, optional <code>nextPayDate</code>, and a linked deposit Account.</li>
+        <li><strong>Account</strong> — a bank account, card, or loan. Sensitive fields (<code>accountNumberEnc</code>, <code>routingNumberEnc</code>, <code>loginUsernameEnc</code>, <code>loginPasswordEnc</code>, <code>loginUrlEnc</code>, <code>securityNotesEnc</code>) are stored AES-256-GCM encrypted at the application layer — see §4. Loan-specific fields (<code>originalAmount</code>, <code>interestRate</code>, <code>termMonths</code>, <code>payoffDate</code>) are plaintext, as they aren&apos;t secrets on their own.</li>
+        <li><strong>Transfer</strong> — a single, dated real money movement (&quot;money journey&quot; ledger). Either side (<code>fromAccountId</code>/<code>toAccountId</code>) can be null to represent money crossing the household boundary, with a free-text <code>externalLabel</code>. Optionally linked to the recurring Expense/Income record it corresponds to.</li>
+        <li><strong>Goal</strong> — a savings target, optionally linked to an Account and/or to one or more Expenses (for goals that fund a periodic bill, e.g. an annual subscription paid via monthly top-ups).</li>
+        <li><strong>StatementImport</strong> — a single upload of a bank/card statement, optionally scoped to one Account (so matching doesn&apos;t cross accounts).</li>
+        <li><strong>StatementTransaction</strong> — one normalized row from an import: <code>status</code> (UNMATCHED / MATCHED / IGNORED), <code>matchConfidence</code>, optional links to a matched Expense/Transfer, a learned <code>suggestedCategory</code>, and a <code>vendorName</code> nickname.</li>
+        <li><strong>MerchantAlias</strong> — a learned <code>(householdId, pattern)</code> → <code>vendorName</code>/<code>category</code> mapping, built up as the household confirms statement matches, so cryptic bank descriptions (&quot;IEPROS&quot;) get recognized and auto-categorized automatically next time. <code>matchCount</code> tracks how many times it&apos;s been reinforced.</li>
+        <li><strong>Category</strong> — household-defined custom spending categories (in addition to the fixed built-in set in <code>src/data/categories.ts</code>), each with its own icon/colour, unique per household by name.</li>
+        <li><strong>DatabaseBackup</strong> — a stored full-household JSON export snapshot, created by admins.</li>
+      </ul>
+      <p>Nearly every model indexes <code>householdId</code>, since virtually every query is household-scoped.</p>
+
+      <h2>3. Authentication &amp; sessions</h2>
+      <p>
+        Tally uses <strong>passwordless, 6-digit magic-code sign-in</strong> — there are no stored
+        passwords anywhere.
+      </p>
+      <ul>
+        <li><code>POST /api/auth/send-code</code> — issues a VerificationToken (6-digit code, 15-minute expiry) for the given email and emails it via Resend.</li>
+        <li><code>POST /api/auth/verify-code</code> — checks the code (with an attempts limit against brute-forcing), creates a Session row, and sets an httpOnly <code>tally_session</code> cookie.</li>
+        <li><code>getSessionUser()</code> (<code>src/lib/auth.ts</code>) is the single source of truth for &quot;who is making this request&quot; on every API route — request bodies are never trusted for identity, user ID, household ID, or role.</li>
+      </ul>
+      <p>
+        <strong>Sliding expiration</strong>: sessions last 30 days from creation, but{' '}
+        <code>getSessionUser()</code> transparently extends (&quot;touches&quot;) a session back
+        out to a fresh 30 days once its remaining life drops under ~25 days.{' '}
+        <code>middleware.ts</code> mirrors this by refreshing the cookie&apos;s own{' '}
+        <code>maxAge</code> on every request, so the browser cookie and the DB session never drift
+        out of sync — anyone who opens the app at least once every ~25–30 days stays signed in
+        indefinitely without re-entering a code.
+      </p>
+      <p>Three composable guard helpers wrap every protected route handler:</p>
+      <ul>
+        <li><code>requireUser()</code> — any authenticated user.</li>
+        <li><code>requireHouseholdUser()</code> — authenticated <strong>and</strong> belongs to a household.</li>
+        <li><code>requireAdmin()</code> — authenticated, in a household, and role is ADMIN or BACKUP_ADMIN.</li>
+      </ul>
+      <p>
+        Separately from the 30-day session, the client also enforces a{' '}
+        <strong>30-minute idle auto-sign-out</strong> in an open tab, and a{' '}
+        <strong>90-second privacy blur</strong> that hides on-screen figures after inactivity or
+        when the tab loses focus — both independent of the underlying session lifetime.
+      </p>
+
+      <h2>4. Security &amp; encryption</h2>
+      <ul>
+        <li>
+          <strong>Field-level encryption</strong> (<code>src/lib/crypto.ts</code>): sensitive
+          Account fields are encrypted with <strong>AES-256-GCM</strong> before being written to
+          the database — a random 12-byte IV per value, with the GCM auth tag appended so
+          tampering/corruption is detectable on decrypt. Stored format:{' '}
+          <code>base64(iv):base64(authTag):base64(ciphertext)</code>.
+        </li>
+        <li>
+          The key comes from <code>CREDENTIALS_ENCRYPTION_KEY</code> (32 raw bytes,
+          base64-encoded — generate with <code>openssl rand -base64 32</code>). If unset,
+          encryption calls throw rather than silently falling back to plaintext.
+        </li>
+        <li>
+          Encrypted fields are <strong>never selected</strong> in list/summary API responses —
+          only decrypted on an explicit &quot;reveal&quot; action (
+          <code>POST /api/accounts/[id]/reveal</code>), or for statement-import account
+          verification, via an on-the-fly comparison that returns only a match/mismatch boolean,
+          never the decrypted value.
+        </li>
+        <li><code>npm run rotate-key</code> (<code>scripts/rotate-encryption-key.ts</code>) re-encrypts all sensitive fields under a new key.</li>
+        <li><strong>Passwordless auth</strong> removes password-database risk entirely (see §3).</li>
+        <li><strong>httpOnly, secure, sameSite=lax session cookie</strong> — inaccessible to client-side scripts, mitigating XSS-based session theft.</li>
+        <li><strong>Household-scoped queries everywhere</strong> — every Prisma query for domain data filters by the requester&apos;s own householdId from the session, never from client input.</li>
+        <li><strong>AI data isolation</strong> — every AI call (<code>src/lib/ai.ts</code>) is passed only the requesting household&apos;s own data, assembled server-side; the model is never given cross-household context, and nothing is sent unless the user actively triggers that specific action.</li>
+        <li><strong>Privacy blur</strong> and <strong>idle auto-sign-out</strong> as defense-in-depth for shared/unattended screens.</li>
+      </ul>
+      <p>
+        Full user-facing detail: the <a href="/privacy">Privacy</a> and{' '}
+        <a href="/ai-transparency">AI Transparency</a> pages.
+      </p>
+
+      <h2>5. AI features</h2>
+      <p>
+        All AI capability is implemented in <code>src/lib/ai.ts</code> using Google&apos;s Gemini
+        API (<code>gemini-flash-latest</code>, text + vision), gated behind{' '}
+        <code>GOOGLE_AI_API_KEY</code>. Every function is called on-demand from a specific user
+        action — nothing runs automatically in the background or on a schedule.
+      </p>
+      <table>
+        <thead>
+          <tr><th>Function</th><th>Used by</th><th>What it does</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>askAboutHouseholdData</code></td>
+            <td><code>POST /api/assistant/ask</code></td>
+            <td>Answers a plain-English question, routed to either the household&apos;s own JSON data or a static app-feature guide, never inventing data or features outside what&apos;s provided.</td>
+          </tr>
+          <tr>
+            <td><code>analyzeReceiptImage</code></td>
+            <td><code>POST /api/assistant/scan-receipt</code></td>
+            <td>Vision extraction of vendor, amount, currency, date, billing-cycle guess, category guess, and paid status from a bill/receipt photo — also matches against existing bill names to avoid duplicates.</td>
+          </tr>
+          <tr>
+            <td><code>analyzeStatementDocument</code></td>
+            <td><code>POST /api/statements/extract</code></td>
+            <td>Vision/document extraction of every transaction row plus account-level details (bank name, account holder, account number, sort code/IBAN, statement period, balances) from a PDF or photo statement.</td>
+          </tr>
+          <tr>
+            <td><code>draftVendorEmail</code></td>
+            <td><code>POST /api/expenses/[id]/draft-email</code></td>
+            <td>Drafts a short negotiate/cancel/renewal-terms email for a given bill; always returned to the human for review, never sent automatically.</td>
+          </tr>
+          <tr>
+            <td><code>analyzeMoneyFlow</code></td>
+            <td><code>POST /api/insights/money-flow</code></td>
+            <td>Reviews accounts, transfers, goals, and recurring bills/income to surface idle cash, timing risk, consolidation opportunities, and savings suggestions.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        All prompts explicitly instruct the model to use <strong>only</strong> the supplied JSON
+        context and to avoid inventing data, and all responses are parsed defensively before being
+        trusted.
+      </p>
+
+      <h2>6. API reference</h2>
+      <p>
+        All routes live under <code>app/api/</code>, are household-scoped via the guard helpers in
+        §3, and return <code>{'{ status: \'error\', message }'}</code> on failure.
+      </p>
+      <table>
+        <thead>
+          <tr><th>Route</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>auth/send-code</code>, <code>auth/verify-code</code>, <code>auth/logout</code>, <code>auth/me</code></td><td>Passwordless sign-in flow and current-session lookup</td></tr>
+          <tr><td><code>users</code></td><td>Household member management (admin)</td></tr>
+          <tr><td><code>workspace</code>, <code>workspace/invite</code>, <code>workspace/join</code></td><td>Household workspace info, invites, and joining via link/code</td></tr>
+          <tr><td><code>expenses</code>, <code>expenses/[id]</code></td><td>CRUD for recurring/one-off bills</td></tr>
+          <tr><td><code>expenses/[id]/draft-email</code>, <code>expenses/[id]/send-vendor-email</code></td><td>AI vendor-email drafting and sending</td></tr>
+          <tr><td><code>income</code></td><td>CRUD for income sources</td></tr>
+          <tr><td><code>accounts</code>, <code>accounts/[id]</code>, <code>accounts/[id]/reveal</code></td><td>CRUD for bank accounts/cards/loans, and on-demand decrypt-and-reveal</td></tr>
+          <tr><td><code>accounts/[id]/compare-statement</code></td><td>Server-side account-number/sort-code match check against a statement, without exposing the decrypted value</td></tr>
+          <tr><td><code>transfers</code></td><td>CRUD for the Flow money-movement ledger</td></tr>
+          <tr><td><code>goals</code></td><td>CRUD for savings goals</td></tr>
+          <tr><td><code>categories</code>, <code>categories/[id]</code></td><td>CRUD for household-defined custom spending categories</td></tr>
+          <tr><td><code>statements</code>, <code>statements/[id]</code></td><td>Statement import CRUD (including rename)</td></tr>
+          <tr><td><code>statements/extract</code></td><td>AI extraction of a PDF/photo statement into transaction rows + account info</td></tr>
+          <tr><td><code>statements/[id]/transactions</code>, <code>statements/[id]/transactions/[txId]/resolve</code></td><td>List/manage statement rows and resolve them (confirm match, add as expense, log as transfer, ignore, rename merchant)</td></tr>
+          <tr><td><code>insights/summary</code>, <code>insights/money-flow</code></td><td>Rule-based savings-opportunity summary, and on-demand AI money-flow analysis</td></tr>
+          <tr><td><code>assistant/ask</code>, <code>assistant/scan-receipt</code></td><td>AI Q&amp;A and AI receipt/bill scanning</td></tr>
+          <tr><td><code>exchange-rate</code></td><td>Live currency conversion (ECB daily rates)</td></tr>
+          <tr><td><code>admin/backup</code></td><td>Full household database export (admin)</td></tr>
+          <tr><td><code>cron/reminders</code></td><td>Scheduled job: emails the household at 30/14/7 days before a contract end date</td></tr>
+        </tbody>
+      </table>
+
+      <h2>7. Frontend structure</h2>
+      <ul>
+        <li><strong><code>app/</code></strong> — Next.js App Router pages: the main app shell, plus standalone pages for <code>guide</code>, <code>technical-overview</code>, <code>privacy</code>, <code>terms</code>, and <code>ai-transparency</code>.</li>
+        <li><strong><code>src/components/</code></strong> — one component per feature area (e.g. AccountsSection, StatementImportModal, StatementsSection, MoneyMap, GoalsSection, AssistantBox, OptimizationInsights, AdminSection), plus shared modals and chrome (Navbar, PrivacyBlurOverlay, HelpGuideModal, ChangelogModal).</li>
+        <li><strong><code>src/hooks/</code></strong> — shared client-side hooks.</li>
+        <li><strong><code>src/lib/</code></strong> — server-only logic: <code>auth.ts</code>, <code>crypto.ts</code>, <code>prisma.ts</code>, <code>ai.ts</code>, <code>billing.ts</code> (billing-cycle math), <code>statementMatching.ts</code> (statement-to-bill matching/scoring), <code>mail.ts</code> (Resend integration), <code>errors.ts</code>.</li>
+        <li><strong><code>src/services/storage.ts</code></strong> — client-side persistence helpers.</li>
+        <li><strong><code>src/data/</code></strong> — static/shared reference data: <code>categories.ts</code>, <code>presets.ts</code>, <code>helpGuide.ts</code> (structured content powering both the in-app Help guide and the AI&apos;s &quot;how do I…&quot; answers), <code>changelog.ts</code>, <code>sampleExpenses.ts</code>.</li>
+        <li><strong><code>src/types/</code></strong> and <strong><code>src/utils/</code></strong> — shared TypeScript types and utility functions.</li>
+      </ul>
+
+      <h2>8. Feature reference</h2>
+      <p>A structured inventory of user-facing functionality (see the <a href="/guide">User Guide</a> for the narrative walkthrough):</p>
+      <ul>
+        <li><strong>Passwordless authentication</strong> — 6-digit email codes, 30-day sliding-expiration sessions, 30-minute idle auto-sign-out.</li>
+        <li><strong>Household workspaces</strong> — shared ledger per household; email invites and shareable invite links/codes; Admin / Member / Backup Admin roles; a household can never be left without at least one Admin.</li>
+        <li><strong>Spending ledger</strong> — recurring and one-off bills across built-in categories plus household-defined custom categories; one-click Catalog presets; usage-rating-based cancellation candidates; pause/resume; contract-renewal badges and automated 30/14/7-day reminder emails; AI-drafted vendor emails, always human-reviewed before sending.</li>
+        <li><strong>Income tracking</strong> — recurring/one-off income with a next pay date that auto-rolls forward, linked to a deposit account.</li>
+        <li><strong>Bills calendar</strong> — a 31-day renewal view with 7-day urgency indicators.</li>
+        <li><strong>Accounts</strong> — bank accounts, cards, and loans with encrypted sensitive fields, loan amortization fields, and reveal-on-demand.</li>
+        <li><strong>Flow (money journey ledger)</strong> — a dated, real transfer ledger, optionally linked to a recurring Expense/Income record.</li>
+        <li><strong>Statement imports</strong> — CSV, PDF, or photo/screenshot upload; AI extraction for non-CSV formats; account-number/sort-code cross-checking; inline &quot;add a new account&quot;; confidence-scored auto-suggested matching with a learned MerchantAlias system; equal-weighted confirm/correct UI; merchant renaming; bulk &quot;add all as expense&quot;; import renaming; non-destructive dialog dismissal.</li>
+        <li><strong>Goals</strong> — savings targets with progress bars, optional account link, optional link to a recurring Expense, and an equal-payments split calculator.</li>
+        <li><strong>Planned expenses</strong> — future/not-yet-required costs that don&apos;t affect any totals or insights until explicitly activated; due-soon badges; optional goal linking.</li>
+        <li><strong>Money Map</strong> — a node-graph visualization of real money flow or a projected monthly view, filterable by time window.</li>
+        <li><strong>Insights</strong> — an on-demand AI money-flow analysis and a separate rule-based &quot;what could we save&quot; breakdown across 1/12/36/60-month horizons.</li>
+        <li><strong>AI assistant</strong> — plain-English Q&amp;A over the household&apos;s own data or the app&apos;s own feature set, plus AI bill/receipt scanning with duplicate-bill matching and one-click foreign-currency conversion.</li>
+        <li><strong>Multi-currency</strong> — EUR-standardized ledger with live conversion for GBP/USD/CAD/AUD/JPY.</li>
+        <li><strong>Data export &amp; backup</strong> — CSV and full JSON export for any user; full database backup snapshots for admins.</li>
+        <li><strong>Privacy controls</strong> — auto-blur after inactivity/tab blur with a manual toggle, and the encryption/AI-isolation model described in §4–§5.</li>
+      </ul>
+
+      <h2>9. Environment variables</h2>
+      <table>
+        <thead>
+          <tr><th>Variable</th><th>Required</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>DATABASE_URL</code></td><td>Yes</td><td>Pooled PostgreSQL connection string (Prisma Client)</td></tr>
+          <tr><td><code>DIRECT_URL</code></td><td>Yes</td><td>Direct (non-pooled) PostgreSQL connection string (Prisma migrations)</td></tr>
+          <tr><td><code>CREDENTIALS_ENCRYPTION_KEY</code></td><td>Yes, to store account credentials</td><td>Base64-encoded 32-byte AES-256-GCM key</td></tr>
+          <tr><td><code>GOOGLE_AI_API_KEY</code></td><td>Yes, for any AI feature</td><td>Gemini API key</td></tr>
+          <tr><td><code>RESEND_API_KEY</code></td><td>Yes, to send emails</td><td>Login codes, invites, renewal reminders</td></tr>
+          <tr><td><code>NEXT_PUBLIC_APP_URL</code></td><td>Optional</td><td>Base URL used in emails/links (defaults to localhost in dev)</td></tr>
+        </tbody>
+      </table>
+
+      <h2>10. Local development &amp; deployment</h2>
+      <pre><code>{`npm install
+npm run db:push && npx prisma generate
+npm run db:seed        # seeds an initial workspace + admin account
+npm run dev -- -p 5174`}</code></pre>
+      <pre><code>{`npm run build           # prisma generate && next build
+npm start                # production server
+npm run lint             # eslint`}</code></pre>
+      <p>Deployable to Vercel, Netlify, or any Node.js/Docker host.</p>
+    </LegalPageLayout>
+  );
+}

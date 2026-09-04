@@ -14,6 +14,10 @@ export default function GuidePage() {
         in-app Help guide and the &quot;Ask Tally&quot; assistant&apos;s answers to how-to
         questions, so it&apos;s always kept in sync with what the app can actually do.
       </p>
+      <p>
+        Looking for architecture, the data model, or the API reference instead? See the{' '}
+        <a href="/technical-overview">Technical Overview</a>.
+      </p>
 
       {HELP_GUIDE_SECTIONS.map((section) => (
         <div key={section.id}>

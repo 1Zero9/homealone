@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.23.0';
+export const APP_VERSION = '1.24.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.24.0',
+    date: '2026-09-04',
+    changes: [
+      'Added an in-app Technical Overview page (/technical-overview) covering architecture, data model, API reference, and security model — linked from the User Guide and the legal-page footer nav.',
+    ],
+  },
   {
     version: '1.23.0',
     date: '2026-09-04',

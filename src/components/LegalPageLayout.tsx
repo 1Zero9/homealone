@@ -107,6 +107,12 @@ export const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({ title, lastUpd
           <Link href="/ai-transparency" style={{ color: 'var(--ha-muted)' }}>
             AI Transparency
           </Link>
+          <Link href="/guide" style={{ color: 'var(--ha-muted)' }}>
+            User Guide
+          </Link>
+          <Link href="/technical-overview" style={{ color: 'var(--ha-muted)' }}>
+            Technical Overview
+          </Link>
         </div>
       </main>
 
@@ -165,6 +171,49 @@ export const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({ title, lastUpd
           font-size: 0.85rem;
           line-height: 1.6;
           margin-bottom: 1.5rem;
+        }
+        .ha-legal-content table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 1.25rem;
+          font-size: 0.82rem;
+        }
+        .ha-legal-content th,
+        .ha-legal-content td {
+          text-align: left;
+          padding: 0.5rem 0.6rem;
+          border: 1px solid var(--ha-line);
+          vertical-align: top;
+          line-height: 1.5;
+        }
+        .ha-legal-content th {
+          background-color: var(--ha-paper);
+          font-weight: 700;
+          color: var(--ha-ink);
+        }
+        .ha-legal-content code {
+          background-color: var(--ha-paper);
+          border: 1px solid var(--ha-line);
+          border-radius: 4px;
+          padding: 0.1rem 0.35rem;
+          font-size: 0.82em;
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+        .ha-legal-content pre {
+          background-color: var(--ha-ink);
+          color: var(--ha-white);
+          border-radius: var(--ha-radius-sm);
+          padding: 0.9rem 1rem;
+          overflow-x: auto;
+          font-size: 0.8rem;
+          line-height: 1.6;
+          margin-bottom: 1.25rem;
+        }
+        .ha-legal-content pre code {
+          background: none;
+          border: none;
+          padding: 0;
+          color: inherit;
         }
       `}</style>
     </div>
