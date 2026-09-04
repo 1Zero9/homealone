@@ -3,6 +3,7 @@ import { X, ScanLine, Upload, CheckCircle2, Sparkles, ArrowRightLeft, Loader2 } 
 import type { ExpenseItem, ExpenseCategory, BillingCycle, CurrencyCode } from '../types/expense';
 import { getCategoryMeta } from '../data/categories';
 import { formatCurrency } from '../utils/formatters';
+import { useOverlayClose } from '../hooks/useOverlayClose';
 
 interface ReceiptScanResult {
   vendor: string;
@@ -72,6 +73,8 @@ export const ScanReceiptModal: React.FC<ScanReceiptModalProps> = ({
     reset();
     onClose();
   };
+
+  const overlayHandlers = useOverlayClose(handleClose);
 
   const scanImage = useCallback(async (img: { dataUrl: string; base64: string; mimeType: string }) => {
     setIsScanning(true);
@@ -210,7 +213,7 @@ export const ScanReceiptModal: React.FC<ScanReceiptModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
+    <div className="modal-overlay" {...overlayHandlers}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
         <div style={{
           display: 'flex',

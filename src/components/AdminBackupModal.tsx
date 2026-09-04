@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { DatabaseBackupRecord, UserProfile } from '../types/expense';
 import { getErrorMessage } from '../lib/errors';
 import { X, ShieldAlert, Database, History, RefreshCw, CheckCircle2, UserCheck, AlertCircle } from 'lucide-react';
+import { useOverlayClose } from '../hooks/useOverlayClose';
 
 interface AdminBackupModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const AdminBackupModal: React.FC<AdminBackupModalProps> = ({
   users,
   onDataRestored,
 }) => {
+  const overlayHandlers = useOverlayClose(onClose);
   const [backups, setBackups] = useState<DatabaseBackupRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -99,7 +101,7 @@ export const AdminBackupModal: React.FC<AdminBackupModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayHandlers}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '640px' }}>
         {/* Header */}
         <div style={{

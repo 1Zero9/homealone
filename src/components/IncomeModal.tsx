@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { IncomeItem, IncomeCategory, BillingCycle, CurrencyCode, UserProfile, AccountItem } from '../types/expense';
 import { CURRENCIES } from '../utils/currencies';
 import { X } from 'lucide-react';
+import { useOverlayClose } from '../hooks/useOverlayClose';
 
 const INCOME_CATEGORIES: { id: IncomeCategory; label: string }[] = [
   { id: 'salary', label: 'Salary / wages' },
@@ -30,6 +31,7 @@ export const IncomeModal: React.FC<IncomeModalProps> = ({
   currentUserId,
   accounts = [],
 }) => {
+  const overlayHandlers = useOverlayClose(onClose);
   const [name, setName] = useState('');
   const [amount, setAmount] = useState<number | string>('');
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
@@ -92,7 +94,7 @@ export const IncomeModal: React.FC<IncomeModalProps> = ({
   const currencySymbol = CURRENCIES[currency]?.symbol || '€';
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayHandlers}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div style={{
           display: 'flex',

@@ -4,6 +4,7 @@ import { getCategoryMeta } from '../data/categories';
 import type { ExpenseItem, PresetItem } from '../types/expense';
 import { formatCurrency, formatBillingCycle } from '../utils/formatters';
 import { X, Search, Plus, Check } from 'lucide-react';
+import { useOverlayClose } from '../hooks/useOverlayClose';
 
 interface PresetsModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const PresetsModal: React.FC<PresetsModalProps> = ({
   expenses,
   onAddFromPreset,
 }) => {
+  const overlayHandlers = useOverlayClose(onClose);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -41,7 +43,7 @@ export const PresetsModal: React.FC<PresetsModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayHandlers}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '720px' }}>
         {/* Header */}
         <div style={{

@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.25.0';
+export const APP_VERSION = '1.26.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.26.0',
+    date: '2026-09-04',
+    changes: [
+      'Fixed a bug across every modal in the app (accounts, expenses, goals, transfers, settings, sharing, and more) where selecting text inside the modal and releasing the mouse outside its edge would unexpectedly close it — clicking outside now only closes a modal when the click genuinely started and ended on the backdrop.',
+    ],
+  },
   {
     version: '1.25.0',
     date: '2026-09-04',

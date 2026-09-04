@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { UserProfile } from '../types/expense';
 import { X, Sparkles, Plus, UserPlus, Download, Bell, Mail, ShieldCheck, Landmark, ArrowLeftRight, Target, Activity, CalendarClock, UserCog, FileSpreadsheet, ScanLine, BookOpen } from 'lucide-react';
 import { HELP_GUIDE_SECTIONS } from '../data/helpGuide';
+import { useOverlayClose } from '../hooks/useOverlayClose';
 
 interface HelpGuideModalProps {
   isOpen: boolean;
@@ -29,13 +30,14 @@ const SECTION_ICONS: Record<string, React.ReactNode> = {
 };
 
 export const HelpGuideModal: React.FC<HelpGuideModalProps> = ({ isOpen, onClose, currentUser }) => {
+  const overlayHandlers = useOverlayClose(onClose);
   if (!isOpen) return null;
 
   const isAdmin = currentUser?.role === 'ADMIN';
   const visibleSections = HELP_GUIDE_SECTIONS.filter((s) => !s.adminOnly || isAdmin);
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayHandlers}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '640px' }}>
         <div style={{
           display: 'flex',

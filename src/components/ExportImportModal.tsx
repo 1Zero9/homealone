@@ -3,6 +3,7 @@ import type { ExpenseItem, CurrencyCode, CustomCategoryItem } from '../types/exp
 import { exportExpensesCSV, exportExpensesJSON, importExpensesJSON, resetToDefaults } from '../services/storage';
 import { getErrorMessage } from '../lib/errors';
 import { X, Upload, FileSpreadsheet, FileCode, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useOverlayClose } from '../hooks/useOverlayClose';
 
 interface ExportImportModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
   onDataUpdated,
   customCategories = [],
 }) => {
+  const overlayHandlers = useOverlayClose(onClose);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayHandlers}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '540px' }}>
         {/* Header */}
         <div style={{

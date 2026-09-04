@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { ExpenseItem } from '../types/expense';
 import { X, Sparkles, Send } from 'lucide-react';
+import { useOverlayClose } from '../hooks/useOverlayClose';
 
 type Intent = 'negotiate' | 'cancel' | 'ask';
 
@@ -10,6 +11,7 @@ interface ContactVendorModalProps {
 }
 
 export const ContactVendorModal: React.FC<ContactVendorModalProps> = ({ expense, onClose }) => {
+  const overlayHandlers = useOverlayClose(onClose);
   const [intent, setIntent] = useState<Intent>('negotiate');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -78,7 +80,7 @@ export const ContactVendorModal: React.FC<ContactVendorModalProps> = ({ expense,
   ];
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayHandlers}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '560px' }}>
         <div style={{
           display: 'flex',

@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Sparkles } from 'lucide-react';
 import { APP_VERSION, CHANGELOG, MOBILE_APP_VERSION, MOBILE_CHANGELOG } from '../data/changelog';
+import { useOverlayClose } from '../hooks/useOverlayClose';
 
 interface ChangelogModalProps {
   isOpen: boolean;
@@ -9,13 +10,14 @@ interface ChangelogModalProps {
 }
 
 export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose, variant = 'desktop' }) => {
+  const overlayHandlers = useOverlayClose(onClose);
   if (!isOpen) return null;
 
   const version = variant === 'mobile' ? MOBILE_APP_VERSION : APP_VERSION;
   const entries = variant === 'mobile' ? MOBILE_CHANGELOG : CHANGELOG;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayHandlers}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
         <div style={{
           display: 'flex',
