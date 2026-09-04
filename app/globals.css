@@ -1087,6 +1087,66 @@ input:checked + .slider:before {
   background: var(--ha-line);
 }
 
+/* Privacy screen */
+.ha-privacy-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(246, 244, 239, 0.74);
+  backdrop-filter: blur(9px) saturate(0.55);
+  -webkit-backdrop-filter: blur(9px) saturate(0.55);
+}
+
+.ha-privacy-card {
+  width: min(100%, 360px);
+  padding: 1.55rem 1.75rem 1.65rem;
+  background: var(--ha-white);
+  border: 1px solid var(--ha-line);
+  border-radius: var(--ha-radius-lg);
+  box-shadow: var(--ha-shadow-elevated);
+  text-align: center;
+}
+
+.ha-privacy-brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.ha-privacy-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 0.9rem;
+  border-radius: 50%;
+  background: var(--ha-blue-light);
+  color: var(--ha-blue);
+}
+
+.ha-privacy-title {
+  color: var(--ha-ink);
+  font-family: var(--ha-font-display);
+  font-size: 1.15rem;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+}
+
+.ha-privacy-copy {
+  margin: 0.3rem 0 1rem;
+  color: var(--ha-muted);
+  font-size: 0.8rem;
+}
+
+.ha-privacy-reveal {
+  width: 100%;
+}
+
 /* Overview Dashboard 2-Column Layout */
 .ha-overview-grid {
   display: grid;
