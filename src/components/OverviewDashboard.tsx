@@ -88,6 +88,21 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
     ? `conic-gradient(${gradientStops.join(', ')})`
     : 'var(--ha-line)';
 
+  // Bills vs one-off split — recurring bills/contracts vs incidental spending, same monthly-equivalent basis as the category donut above.
+  const billsTotal = activeExpenses.filter((e) => e.isBill !== false).reduce((sum, item) => {
+    const amountInDisplay = convertCurrency(item.amount, item.currency, currency);
+    return sum + getMonthlyEquivalent(amountInDisplay, item.billingCycle);
+  }, 0);
+  const oneOffTotal = activeExpenses.filter((e) => e.isBill === false).reduce((sum, item) => {
+    const amountInDisplay = convertCurrency(item.amount, item.currency, currency);
+    return sum + getMonthlyEquivalent(amountInDisplay, item.billingCycle);
+  }, 0);
+  const billsVsOneOffTotal = billsTotal + oneOffTotal;
+  const billsPct = billsVsOneOffTotal > 0 ? (billsTotal / billsVsOneOffTotal) * 100 : 0;
+  const billsVsOneOffGradient = billsVsOneOffTotal > 0
+    ? `conic-gradient(var(--ha-blue) 0% ${billsPct}%, var(--ha-lime) ${billsPct}% 100%)`
+    : 'var(--ha-line)';
+
   return (
     <div>
       {/* Stat Cards */}
@@ -296,8 +311,8 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
                   <div style={{
                     position: 'relative',
-                    width: '160px',
-                    height: '160px',
+                    width: '208px',
+                    height: '208px',
                     borderRadius: '50%',
                     background: donutGradient,
                   }}>
@@ -306,8 +321,8 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
-                      width: '104px',
-                      height: '104px',
+                      width: '140px',
+                      height: '140px',
                       borderRadius: '50%',
                       backgroundColor: 'var(--ha-white)',
                       display: 'flex',
@@ -315,10 +330,10 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}>
-                      <div className="tabular-nums" style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
+                      <div className="tabular-nums" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
                         {formatCurrency(totalMonthly, currency)}
                       </div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--ha-muted)' }}>/month</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--ha-muted)' }}>/month</div>
                     </div>
                   </div>
                 </div>
@@ -358,6 +373,51 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                     </button>
                   )}
                 </div>
+
+                {billsVsOneOffTotal > 0 && (
+                  <div style={{ marginTop: '1.4rem', paddingTop: '1.1rem', borderTop: '1px solid var(--ha-line)' }}>
+                    <h4 style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ha-muted)', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: '0.75rem' }}>
+                      Bills vs one-off
+                    </h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.1rem' }}>
+                      <div style={{
+                        position: 'relative',
+                        width: '84px',
+                        height: '84px',
+                        borderRadius: '50%',
+                        background: billsVsOneOffGradient,
+                        flexShrink: 0,
+                      }}>
+                        <div style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          width: '54px',
+                          height: '54px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--ha-white)',
+                        }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span className="ha-color-marker" style={{ backgroundColor: 'var(--ha-blue)' }} />
+                          <span style={{ fontSize: '0.82rem', color: 'var(--ha-ink)', fontWeight: 500 }}>Bills</span>
+                          <span className="tabular-nums" style={{ fontSize: '0.78rem', color: 'var(--ha-muted)' }}>
+                            {formatCurrency(billsTotal, currency)} ({Math.round(billsPct)}%)
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span className="ha-color-marker" style={{ backgroundColor: 'var(--ha-lime)' }} />
+                          <span style={{ fontSize: '0.82rem', color: 'var(--ha-ink)', fontWeight: 500 }}>One-off</span>
+                          <span className="tabular-nums" style={{ fontSize: '0.78rem', color: 'var(--ha-muted)' }}>
+                            {formatCurrency(oneOffTotal, currency)} ({Math.round(100 - billsPct)}%)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <div style={{ textAlign: 'center', color: 'var(--ha-muted)', fontSize: '0.85rem', padding: '1.5rem 0' }}>

@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.35.1';
+export const APP_VERSION = '1.36.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.36.0',
+    date: '2026-09-04',
+    changes: [
+      'Overview now leads with a bigger spending-by-category donut, plus a new "Bills vs one-off" split showing how much of this month\'s spend is recurring bills/contracts versus incidental one-off purchases.',
+    ],
+  },
   {
     version: '1.35.1',
     date: '2026-09-04',
