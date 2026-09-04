@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.19.0';
+export const APP_VERSION = '1.20.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.20.0',
+    date: '2026-09-04',
+    changes: [
+      'Statement import rows can now be given a merchant nickname — click the pencil next to any cryptic bank description (e.g. "IEPROS") and rename it to something recognisable (e.g. "Smyths Toy Shop"). It updates that row plus every past and future row for the same merchant, and groups rows under the nickname too.',
+      'Savings goals can now be linked to any bill, not just Planned ones — handy for something cheaper paid annually that you can\'t afford in one go: link a goal, top it up monthly, and watch its progress right on that ledger row.',
+    ],
+  },
   {
     version: '1.19.0',
     date: '2026-09-03',

@@ -344,6 +344,11 @@ model StatementTransaction {
   // repeat merchants get faster (and more consistent) categorization over time.
   suggestedCategory     String?
 
+  // A friendly nickname for this merchant (e.g. "Smyths Toy Shop" for a raw
+  // description of "IEPROS"), either learned from a previously-confirmed
+  // MerchantAlias or set directly by the household via "Rename merchant".
+  vendorName            String?
+
   importId String
   import   StatementImport @relation(fields: [importId], references: [id], onDelete: Cascade)
 

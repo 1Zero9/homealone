@@ -100,8 +100,45 @@ export async function POST(
       return NextResponse.json({ status: 'ok', transaction: updated });
     }
 
+    if (action === 'rename_merchant') {
+      const vendorName = typeof body.vendorName === 'string' ? body.vendorName.trim() : '';
+      if (!vendorName) {
+        return NextResponse.json({ status: 'error', message: 'Enter a name for this merchant' }, { status: 400 });
+      }
+
+      const updated = await prisma.statementTransaction.update({
+        where: { id: txId },
+        data: { vendorName },
+        include: TX_INCLUDE,
+      });
+
+      if (auth.user.householdId) {
+        // Apply the nickname to every other row for this same merchant
+        // (across imports too) so it's recognised consistently from now on.
+        await prisma.statementTransaction.updateMany({
+          where: {
+            householdId: auth.user.householdId,
+            normalizedDescription: tx.normalizedDescription,
+            id: { not: txId },
+          },
+          data: { vendorName },
+        });
+
+        const pattern = buildAliasPattern(tx.normalizedDescription);
+        if (pattern) {
+          await prisma.merchantAlias.upsert({
+            where: { householdId_pattern: { householdId: auth.user.householdId, pattern } },
+            create: { householdId: auth.user.householdId, pattern, vendorName, matchCount: 1 },
+            update: { vendorName },
+          });
+        }
+      }
+
+      return NextResponse.json({ status: 'ok', transaction: updated });
+    }
+
     if (action === 'log_transfer') {
-      const vendorName = typeof body.vendorName === 'string' && body.vendorName.trim() ? body.vendorName.trim() : tx.rawDescription;
+      const vendorName = typeof body.vendorName === 'string' && body.vendorName.trim() ? body.vendorName.trim() : tx.vendorName || tx.rawDescription;
 
       const transfer = await prisma.transfer.create({
         data: {
@@ -141,7 +178,7 @@ export async function POST(
         return NextResponse.json({ status: 'error', message: 'A valid category must be selected' }, { status: 400 });
       }
 
-      const vendorName = typeof body.vendorName === 'string' && body.vendorName.trim() ? body.vendorName.trim() : tx.rawDescription;
+      const vendorName = typeof body.vendorName === 'string' && body.vendorName.trim() ? body.vendorName.trim() : tx.vendorName || tx.rawDescription;
       const meta = CATEGORIES[category];
       const statementImport = await prisma.statementImport.findUnique({ where: { id: tx.importId } });
       const dayOfMonth = new Date(tx.date).getDate();

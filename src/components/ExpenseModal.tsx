@@ -179,7 +179,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         usageRating,
         isVariable,
         paymentAccountId: paymentAccountId || null,
-        linkedGoalId: isPending ? (linkedGoalId || null) : null,
+        linkedGoalId: linkedGoalId || null,
         createdById: assignedUserId || currentUserId,
       },
       editingExpense?.id
@@ -332,7 +332,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             </span>
           </label>
 
-          {isPending && goals.length > 0 && (
+          {goals.length > 0 && (
             <div>
               <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
                 Link to a savings goal (optional)
@@ -348,7 +348,9 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 ))}
               </select>
               <p style={{ fontSize: '0.72rem', color: 'var(--ha-muted)', marginTop: '0.3rem' }}>
-                Shows savings progress towards this cost right on the Planned list.
+                {isPending
+                  ? 'Shows savings progress towards this cost right on the Planned list.'
+                  : "Handy for a cheaper annual/lump-sum bill you can't cover all at once — link a mini goal here and top it up monthly until it's covered. Progress shows right on this ledger row."}
               </p>
             </div>
           )}

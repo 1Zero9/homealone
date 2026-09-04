@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   ChevronDown,
   ChevronRight,
+  Edit2,
 } from 'lucide-react';
 import type { ExpenseItem, StatementTransactionItem, CurrencyCode, AccountItem, ExpenseCategory } from '../types/expense';
 import { formatCurrency } from '../utils/formatters';
@@ -91,6 +92,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const [selectedExpenseId, setSelectedExpenseId] = useState<Record<string, string>>({});
   const [categorizingTxId, setCategorizingTxId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Record<string, ExpenseCategory | ''>>({});
+  const [renamingTxId, setRenamingTxId] = useState<string | null>(null);
+  const [nicknameInput, setNicknameInput] = useState<Record<string, string>>({});
   const [isLoadingReview, setIsLoadingReview] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [busyGroupKey, setBusyGroupKey] = useState<string | null>(null);
@@ -130,6 +133,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     setSelectedExpenseId({});
     setCategorizingTxId(null);
     setSelectedCategory({});
+    setRenamingTxId(null);
+    setNicknameInput({});
     setCollapsedGroups(new Set());
     setBusyGroupKey(null);
     setAiRows(null);
@@ -395,9 +400,10 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
       });
       const data = await res.json();
       if (data.status === 'ok') {
-        setTransactions((prev) => prev.map((t) => (t.id === txId ? data.transaction : t)));
+        setTransactions((prev) => prev.map((t) => (t.id === txId || (action === 'rename_merchant' && t.normalizedDescription === data.transaction.normalizedDescription) ? { ...t, vendorName: data.transaction.vendorName ?? t.vendorName, ...(t.id === txId ? data.transaction : {}) } : t)));
         setLinkingTxId(null);
         setCategorizingTxId(null);
+        setRenamingTxId(null);
       }
     } finally {
       setBusyTxId(null);
@@ -418,7 +424,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
       const unmatched = group.items.filter((t) => t.status === 'UNMATCHED');
       await Promise.all(
         unmatched.map((tx) =>
-          resolveTx(tx.id, action, action === 'log_transfer' ? { vendorName: tx.rawDescription } : undefined)
+          resolveTx(tx.id, action, action === 'log_transfer' ? { vendorName: tx.vendorName || tx.rawDescription } : undefined)
         )
       );
     } finally {
@@ -453,7 +459,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
       const arr = map.get(key);
       if (arr) arr.push(tx); else map.set(key, [tx]);
     }
-    return Array.from(map.entries()).map(([key, items]) => ({ key, label: key, items }));
+    return Array.from(map.entries()).map(([key, items]) => ({ key, label: items[0].vendorName || key, items }));
   })();
 
   return (
@@ -931,12 +937,45 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                           opacity: isBusy ? 0.6 : 1,
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem' }}>
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--ha-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {tx.rawDescription}
-                              </div>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              {renamingTxId === tx.id ? (
+                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginBottom: '2px' }}>
+                                  <input
+                                    type="text"
+                                    autoFocus
+                                    placeholder="e.g. Smyths Toy Shop"
+                                    value={nicknameInput[tx.id] ?? tx.vendorName ?? ''}
+                                    onChange={(e) => setNicknameInput((prev) => ({ ...prev, [tx.id]: e.target.value }))}
+                                    className="ha-input"
+                                    style={{ fontSize: '0.8rem', padding: '0.3rem 0.5rem' }}
+                                  />
+                                  <button
+                                    disabled={isBusy || !(nicknameInput[tx.id] ?? tx.vendorName ?? '').trim()}
+                                    onClick={() => resolveTx(tx.id, 'rename_merchant', { vendorName: nicknameInput[tx.id] })}
+                                    className="btn btn-primary"
+                                    style={{ fontSize: '0.72rem', padding: '0.3rem 0.5rem', flexShrink: 0 }}
+                                  >
+                                    {isBusy ? <Loader2 size={11} className="spin" /> : <CheckCircle2 size={11} />}
+                                  </button>
+                                  <button onClick={() => setRenamingTxId(null)} className="btn btn-ghost" style={{ fontSize: '0.72rem', padding: '0.3rem 0.4rem', flexShrink: 0 }}>
+                                    <X size={11} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div
+                                  style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}
+                                  onClick={() => { setRenamingTxId(tx.id); setNicknameInput((prev) => ({ ...prev, [tx.id]: tx.vendorName ?? '' })); }}
+                                  title="Give this merchant a nickname"
+                                >
+                                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--ha-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {tx.vendorName || tx.rawDescription}
+                                  </span>
+                                  <Edit2 size={11} color="var(--ha-muted)" style={{ flexShrink: 0 }} />
+                                </div>
+                              )}
                               <div style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
                                 {tx.date}
+                                {tx.vendorName && tx.vendorName !== tx.rawDescription && <span> • {tx.rawDescription}</span>}
                                 {tx.notes && <span> • {tx.notes}</span>}
                               </div>
                             </div>
@@ -1039,7 +1078,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                                     disabled={!(selectedCategory[tx.id] || tx.suggestedCategory) || isBusy}
                                     onClick={() => resolveTx(tx.id, 'categorize', {
                                       category: selectedCategory[tx.id] || tx.suggestedCategory,
-                                      vendorName: tx.rawDescription,
+                                      vendorName: tx.vendorName || tx.rawDescription,
                                     })}
                                     className="btn btn-primary"
                                     style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
@@ -1080,7 +1119,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                                   </button>
                                   <button
                                     disabled={isBusy}
-                                    onClick={() => resolveTx(tx.id, 'log_transfer', { vendorName: tx.rawDescription })}
+                                    onClick={() => resolveTx(tx.id, 'log_transfer', { vendorName: tx.vendorName || tx.rawDescription })}
                                     className="btn btn-ghost"
                                     style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
                                   >

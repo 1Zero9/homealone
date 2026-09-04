@@ -365,6 +365,10 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
             const daysUntilContractEnd = item.contractEndDate ? daysUntilDate(item.contractEndDate) : null;
             const showContractBadge = item.isActive && daysUntilContractEnd !== null && daysUntilContractEnd <= 60;
             const isExpanded = expandedId === item.id;
+            const goal = item.linkedGoal;
+            const goalPct = goal && goal.targetAmount > 0
+              ? Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100))
+              : null;
 
             return (
               <div key={item.id} style={{ borderBottom: '1px solid var(--ha-line)' }}>
@@ -402,6 +406,15 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                         <span className="ha-badge ha-badge-blue" style={{ fontSize: '0.68rem', display: 'flex', alignItems: 'center', gap: '2px' }}>
                           <User size={10} />
                           <span>{item.createdBy.name.split(' ')[0]}</span>
+                        </span>
+                      )}
+                      {goal && (
+                        <span
+                          className="ha-badge ha-badge-blue"
+                          style={{ fontSize: '0.68rem' }}
+                          title={`Linked to savings goal: ${goal.name}`}
+                        >
+                          {goalPct}% saved
                         </span>
                       )}
                       {showContractBadge && (
@@ -569,6 +582,28 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                       <span>Added by: <strong style={{ color: 'var(--ha-ink)' }}>{item.createdBy.name}</strong></span>
                     )}
                   </div>
+
+                  {goal && goalPct !== null && (
+                    <div style={{ paddingBottom: '0.85rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--ha-muted)' }}>
+                          Saving towards <strong style={{ color: 'var(--ha-ink)' }}>{goal.name}</strong> — {formatCurrency(goal.currentAmount, goal.currency || currency)} of {formatCurrency(goal.targetAmount, goal.currency || currency)}
+                        </span>
+                        <span className="tabular-nums" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
+                          {goalPct}%
+                        </span>
+                      </div>
+                      <div style={{ height: '6px', borderRadius: '999px', backgroundColor: 'var(--ha-line)', overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%',
+                          width: `${goalPct}%`,
+                          borderRadius: '999px',
+                          backgroundColor: goalPct >= 100 ? 'var(--ha-lime)' : 'var(--ha-blue)',
+                          transition: 'width 0.3s ease',
+                        }} />
+                      </div>
+                    </div>
+                  )}
 
                   {item.notes && (
                     <div style={{ fontSize: '0.82rem', color: 'var(--ha-ink)', paddingBottom: '0.25rem', lineHeight: 1.5 }}>

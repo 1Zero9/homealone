@@ -225,6 +225,7 @@ export interface StatementTransactionItem {
   matchConfidence?: number | null;
   notes?: string | null;
   suggestedCategory?: ExpenseCategory | null;
+  vendorName?: string | null;
 
   matchedExpenseId?: string | null;
   matchedExpense?: { id: string; name: string; vendor?: string | null; category: ExpenseCategory } | null;

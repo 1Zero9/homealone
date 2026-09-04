@@ -155,10 +155,9 @@ export async function POST(request: Request) {
             matchedTransferId: p.match.matchedTransferId || null,
             matchConfidence: p.match.matchConfidence ?? null,
             suggestedCategory: p.match.suggestedCategory ?? null,
+            vendorName: p.match.suggestedVendorName ?? null,
             notes: recurringFlags.has(String(idx))
               ? 'Appears more than once and looks untracked — worth checking.'
-              : p.match.suggestedVendorName
-              ? `Possibly ${p.match.suggestedVendorName}`
               : null,
           },
           include: {

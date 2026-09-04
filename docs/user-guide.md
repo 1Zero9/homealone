@@ -89,6 +89,7 @@ Under Flow, **Statement imports** lets you cross-check a real bank or credit-car
 - From a PDF or photo, Tally also extracts whatever account-level details are printed — bank name, account holder, account number, sort code/IBAN, statement period, opening/closing balance — and, once you pick the account, checks the account number and sort code against what's saved for it. A mismatch is flagged; if the account has nothing saved yet, you can save the extracted value in one click.
 - Tally suggests matches against your existing bills and transfers and flags recurring-but-untracked charges worth checking — but only ever auto-confirms a merchant you've personally confirmed before; everything else waits in **Needs review** for an explicit "Confirm match".
 - For anything that isn't a bill you've tracked, **Add as expense** logs it with a proper spending category (remembered per merchant for next time) instead of an anonymous transfer — or use **Log as transfer** for a quick, uncategorized entry.
+- **Rename a merchant**: click the pencil next to any row's description to give a cryptic bank description a friendly nickname (e.g. "IEPROS" → "Smyths Toy Shop"). It updates that row plus every past and future row for the same merchant, and groups rows under the nickname too.
 - Clicking outside the import dialog never discards anything — only the visible buttons (Back, Import, Done, the X) can close or navigate it.
 
 ## 8. Goals
@@ -97,7 +98,7 @@ Track savings targets — an emergency fund, a holiday, a deposit. Each goal has
 
 Use **Split into equal payments** when adding or editing a goal to see what the remaining amount works out to per instalment (2, 4, 12, 20, or a custom number) — it's a quick on-screen calculator only, nothing is saved.
 
-A goal can also be linked from a [Planned expense](#9-planned-expenses) — e.g. saving towards a known future cost like college fees — so its progress bar shows up right on that planned item too.
+A goal can also be linked from a [Planned expense](#9-planned-expenses), or from any regular bill in the ledger — handy for something cheaper paid annually that you can't afford in one go, like a subscription. Link a mini goal, top it up monthly, and its progress bar shows right on that ledger row (or planned item).
 
 ## 9. Planned expenses
 
