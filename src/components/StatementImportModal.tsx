@@ -31,6 +31,7 @@ interface StatementImportModalProps {
   accounts: AccountItem[];
   householdCurrency: CurrencyCode;
   onImported: () => void;
+  onExpensesChanged?: () => void;
   initialImportId?: string | null;
 }
 
@@ -64,6 +65,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   accounts,
   householdCurrency,
   onImported,
+  onExpensesChanged,
   initialImportId,
 }) => {
   const [step, setStep] = useState<Step>('upload');
@@ -94,6 +96,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<Record<string, ExpenseCategory | ''>>({});
   const [renamingTxId, setRenamingTxId] = useState<string | null>(null);
   const [nicknameInput, setNicknameInput] = useState<Record<string, string>>({});
+  const [categorizingGroupKey, setCategorizingGroupKey] = useState<string | null>(null);
+  const [selectedGroupCategory, setSelectedGroupCategory] = useState<Record<string, ExpenseCategory | ''>>({});
   const [isLoadingReview, setIsLoadingReview] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [busyGroupKey, setBusyGroupKey] = useState<string | null>(null);
@@ -135,6 +139,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     setSelectedCategory({});
     setRenamingTxId(null);
     setNicknameInput({});
+    setCategorizingGroupKey(null);
+    setSelectedGroupCategory({});
     setCollapsedGroups(new Set());
     setBusyGroupKey(null);
     setAiRows(null);
@@ -404,6 +410,9 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
         setLinkingTxId(null);
         setCategorizingTxId(null);
         setRenamingTxId(null);
+        if (['categorize', 'confirm', 'link_expense', 'log_transfer'].includes(action)) {
+          onExpensesChanged?.();
+        }
       }
     } finally {
       setBusyTxId(null);
@@ -427,6 +436,21 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
           resolveTx(tx.id, action, action === 'log_transfer' ? { vendorName: tx.vendorName || tx.rawDescription } : undefined)
         )
       );
+    } finally {
+      setBusyGroupKey(null);
+    }
+  };
+
+  const resolveGroupCategorize = async (group: TxGroup, category: ExpenseCategory) => {
+    setBusyGroupKey(group.key);
+    try {
+      const unmatched = group.items.filter((t) => t.status === 'UNMATCHED');
+      await Promise.all(
+        unmatched.map((tx) =>
+          resolveTx(tx.id, 'categorize', { category, vendorName: tx.vendorName || tx.rawDescription })
+        )
+      );
+      setCategorizingGroupKey(null);
     } finally {
       setBusyGroupKey(null);
     }
@@ -905,6 +929,14 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                                   <>
                                     <button
                                       disabled={isGroupBusy}
+                                      onClick={() => setCategorizingGroupKey(categorizingGroupKey === group.key ? null : group.key)}
+                                      className="btn btn-secondary"
+                                      style={{ fontSize: '0.72rem', padding: '0.3rem 0.5rem' }}
+                                    >
+                                      {isGroupBusy ? <Loader2 size={11} className="spin" /> : <Tag size={11} />} Add all as expense
+                                    </button>
+                                    <button
+                                      disabled={isGroupBusy}
                                       onClick={() => resolveGroup(group, 'log_transfer')}
                                       className="btn btn-secondary"
                                       style={{ fontSize: '0.72rem', padding: '0.3rem 0.5rem' }}
@@ -922,6 +954,44 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                                   </>
                                 )}
                               </div>
+                            </div>
+                          )}
+
+                          {isMultiple && categorizingGroupKey === group.key && (
+                            <div
+                              style={{
+                                display: 'flex',
+                                gap: '0.4rem',
+                                flexWrap: 'wrap',
+                                alignItems: 'center',
+                                padding: '0.5rem 0.75rem',
+                                borderRadius: 'var(--ha-radius-sm)',
+                                backgroundColor: '#f0f0ec',
+                              }}
+                            >
+                              <span style={{ fontSize: '0.72rem', color: 'var(--ha-muted)' }}>
+                                Category for all {group.items.filter((t) => t.status === 'UNMATCHED').length} unmatched:
+                              </span>
+                              <select
+                                className="ha-input"
+                                style={{ fontSize: '0.78rem', padding: '0.4rem 0.6rem' }}
+                                value={selectedGroupCategory[group.key] ?? group.items[0].suggestedCategory ?? ''}
+                                onChange={(e) => setSelectedGroupCategory((prev) => ({ ...prev, [group.key]: e.target.value as ExpenseCategory }))}
+                              >
+                                <option value="">— Choose a category —</option>
+                                {CATEGORY_LIST.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                              </select>
+                              <button
+                                disabled={!(selectedGroupCategory[group.key] || group.items[0].suggestedCategory) || isGroupBusy}
+                                onClick={() => resolveGroupCategorize(group, (selectedGroupCategory[group.key] || group.items[0].suggestedCategory) as ExpenseCategory)}
+                                className="btn btn-primary"
+                                style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
+                              >
+                                {isGroupBusy ? <Loader2 size={12} className="spin" /> : <Tag size={12} />} Add all
+                              </button>
+                              <button onClick={() => setCategorizingGroupKey(null)} className="btn btn-ghost" style={{ fontSize: '0.75rem', padding: '0.4rem 0.5rem' }}>
+                                Cancel
+                              </button>
                             </div>
                           )}
 

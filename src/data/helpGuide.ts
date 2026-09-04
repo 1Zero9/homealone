@@ -59,6 +59,7 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
       'Tally suggests matches against your existing bills and transfers, but only ever auto-confirms a merchant it\'s seen you personally confirm before — everything else sits in "Needs review" until you click "Confirm match".',
       'For rows that aren\'t a bill you\'ve tracked, use "Add as expense" to log them with a proper spending category (Tally remembers the category per merchant for next time), or "Log as transfer" for a quick, uncategorized entry.',
       'Click the pencil next to any row\'s description to give that merchant a nickname (e.g. "IEPROS" → "Smyths Toy Shop") — it updates every past and future row from that merchant, not just the one you renamed.',
+      'For a merchant with several rows in the same statement (e.g. five Starbucks visits), use "Add all as expense" on that group to pick a category once and log all of them in one go, instead of one at a time.',
       'Clicking outside the import dialog never discards anything — only the visible buttons (Back, Import, Done, the X) can close or navigate it.',
     ],
   },

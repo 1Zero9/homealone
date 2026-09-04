@@ -90,6 +90,7 @@ Under Flow, **Statement imports** lets you cross-check a real bank or credit-car
 - Tally suggests matches against your existing bills and transfers and flags recurring-but-untracked charges worth checking — but only ever auto-confirms a merchant you've personally confirmed before; everything else waits in **Needs review** for an explicit "Confirm match".
 - For anything that isn't a bill you've tracked, **Add as expense** logs it with a proper spending category (remembered per merchant for next time) instead of an anonymous transfer — or use **Log as transfer** for a quick, uncategorized entry.
 - **Rename a merchant**: click the pencil next to any row's description to give a cryptic bank description a friendly nickname (e.g. "IEPROS" → "Smyths Toy Shop"). It updates that row plus every past and future row for the same merchant, and groups rows under the nickname too.
+- **Add all as expense**: for a merchant with several rows in the same statement (e.g. five Starbucks visits), pick a category once on that group and log all of them as expenses in one go, instead of one row at a time.
 - Clicking outside the import dialog never discards anything — only the visible buttons (Back, Import, Done, the X) can close or navigate it.
 
 ## 8. Goals

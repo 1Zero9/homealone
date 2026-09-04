@@ -7,9 +7,10 @@ interface StatementsSectionProps {
   expenses: ExpenseItem[];
   accounts: AccountItem[];
   householdCurrency: CurrencyCode;
+  onExpensesChanged?: () => void;
 }
 
-export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, accounts, householdCurrency }) => {
+export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, accounts, householdCurrency, onExpensesChanged }) => {
   const [imports, setImports] = useState<StatementImportSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -111,6 +112,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
         accounts={accounts}
         householdCurrency={householdCurrency}
         onImported={fetchImports}
+        onExpensesChanged={onExpensesChanged}
       />
 
       <StatementImportModal
@@ -120,6 +122,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
         accounts={accounts}
         householdCurrency={householdCurrency}
         onImported={fetchImports}
+        onExpensesChanged={onExpensesChanged}
         initialImportId={reviewImportId}
       />
     </div>

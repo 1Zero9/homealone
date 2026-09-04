@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.20.0';
+export const APP_VERSION = '1.20.1';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.20.1',
+    date: '2026-09-04',
+    changes: [
+      'Fixed "Add as expense" and other statement-import actions not showing up in the ledger or Overview until a manual page refresh — resolving a statement row now updates your live data straight away.',
+      'Added "Add all as expense" for a merchant group in statement review — pick a category once and it\'s applied to every unmatched row from that merchant in the statement, instead of doing it one row at a time.',
+    ],
+  },
   {
     version: '1.20.0',
     date: '2026-09-04',
