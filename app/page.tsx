@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { EyeOff } from 'lucide-react';
-import type { ExpenseItem, IncomeItem, CurrencyCode, PresetItem, UserProfile, AccountItem, TransferItem, GoalItem } from '@/src/types/expense';
+import type { ExpenseItem, IncomeItem, CurrencyCode, PresetItem, UserProfile, AccountItem, TransferItem, GoalItem, CustomCategoryItem } from '@/src/types/expense';
 import { loadCurrency, saveCurrency, resetToDefaults } from '@/src/services/storage';
 import { calculateSpendingSummary, calculateIncomeSummary } from '@/src/utils/calculations';
 import { Navbar, SPENDING_TABS } from '@/src/components/Navbar';
@@ -55,6 +55,7 @@ export default function TallyPage() {
   const [encryptionConfigured, setEncryptionConfigured] = useState(false);
   const [transfers, setTransfers] = useState<TransferItem[]>([]);
   const [goals, setGoals] = useState<GoalItem[]>([]);
+  const [customCategories, setCustomCategories] = useState<CustomCategoryItem[]>([]);
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -144,6 +145,13 @@ export default function TallyPage() {
       const goalData = await goalRes.json();
       if (goalData.status === 'ok' && Array.isArray(goalData.goals)) {
         setGoals(goalData.goals);
+      }
+
+      // 7. Fetch household-defined custom Categories
+      const catRes = await fetch('/api/categories');
+      const catData = await catRes.json();
+      if (catData.status === 'ok' && Array.isArray(catData.categories)) {
+        setCustomCategories(catData.categories);
       }
     } catch (err) {
       console.error('Failed to load from database:', err);
@@ -296,7 +304,7 @@ export default function TallyPage() {
   const plannedExpenses = expenses.filter((e) => e.isPending);
 
   // Compute spend analytics summary
-  const summary = calculateSpendingSummary(liveExpenses, currency);
+  const summary = calculateSpendingSummary(liveExpenses, currency, customCategories);
   const incomeSummary = calculateIncomeSummary(incomes, currency);
   const hasData = liveExpenses.length > 0 || incomes.length > 0;
   const firstName = currentUser?.name?.split(' ')[0] || 'there';
@@ -466,6 +474,10 @@ export default function TallyPage() {
       console.error('Failed to delete expense from DB:', err);
       fetchDatabaseData();
     }
+  };
+
+  const handleCategoryCreated = (category: CustomCategoryItem) => {
+    setCustomCategories((prev) => (prev.some((c) => c.id === category.id) ? prev : [...prev, category]));
   };
 
   // Add from catalog preset
@@ -835,6 +847,7 @@ export default function TallyPage() {
             summary={summary}
             incomeSummary={incomeSummary}
             currency={currency}
+            customCategories={customCategories}
             onEditExpense={(item) => {
               setEditingExpense(item);
               setInitialCategory(null);
@@ -894,6 +907,7 @@ export default function TallyPage() {
                 currency={currency}
                 selectedCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}
+                customCategories={customCategories}
               />
             )}
 
@@ -903,6 +917,7 @@ export default function TallyPage() {
               currency={currency}
               selectedCategory={selectedCategory}
               onSelectCategory={setSelectedCategory}
+              customCategories={customCategories}
               onToggleActive={handleToggleActive}
               onTogglePaid={handleTogglePaid}
               onEditExpense={(item) => {
@@ -1098,12 +1113,20 @@ export default function TallyPage() {
             accounts={accounts}
             transfers={transfers}
             currency={currency}
+            customCategories={customCategories}
           />
         )}
 
         {activeTab === 'flow' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-            <StatementsSection expenses={liveExpenses} accounts={accounts} householdCurrency={currency} onExpensesChanged={fetchDatabaseData} />
+            <StatementsSection
+              expenses={liveExpenses}
+              accounts={accounts}
+              householdCurrency={currency}
+              onExpensesChanged={fetchDatabaseData}
+              customCategories={customCategories}
+              onCategoryCreated={handleCategoryCreated}
+            />
             <TransfersSection
               transfers={transfers}
               onEditTransfer={(item) => {
@@ -1138,6 +1161,7 @@ export default function TallyPage() {
           <PlannedExpensesSection
             expenses={expenses}
             currency={currency}
+            customCategories={customCategories}
             onEditExpense={(item) => {
               setEditingExpense(item);
               setInitialCategory(null);
@@ -1250,6 +1274,8 @@ export default function TallyPage() {
         currentUserId={currentUser?.id}
         accounts={accounts}
         goals={goals}
+        customCategories={customCategories}
+        onCategoryCreated={handleCategoryCreated}
       />
 
       {/* Scan a bill screenshot */}
@@ -1343,6 +1369,7 @@ export default function TallyPage() {
         onClose={() => setIsExportModalOpen(false)}
         expenses={expenses}
         currency={currency}
+        customCategories={customCategories}
         onDataUpdated={setExpenses}
       />
 

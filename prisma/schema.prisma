@@ -53,6 +53,7 @@ model Household {
   statementImports      StatementImport[]
   statementTransactions StatementTransaction[]
   merchantAliases       MerchantAlias[]
+  categories            Category[]
 }
 
 model User {
@@ -76,6 +77,7 @@ model User {
   goalsCreated     Goal[]
 
   statementImportsCreated StatementImport[]
+  categoriesCreated       Category[]
 }
 
 model Session {
@@ -391,6 +393,29 @@ model MerchantAlias {
   updatedAt DateTime @updatedAt
 
   @@unique([householdId, pattern])
+  @@index([householdId])
+}
+
+/// A household-defined spending category, in addition to the fixed built-in
+/// set (Streaming, Utilities, etc — see src/data/categories.ts). Created
+/// on the fly ("+ Create category") when nothing built-in fits (e.g. "Tolls").
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  icon        String   @default("Tag")
+  color       String   @default("#676B73")
+  bgColor     String   @default("#f1f2f4")
+  borderColor String   @default("#e7e8ea")
+
+  householdId String?
+  household   Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@unique([householdId, name])
   @@index([householdId])
 }
 

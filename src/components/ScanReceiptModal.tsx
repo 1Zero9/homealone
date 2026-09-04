@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { X, ScanLine, Upload, CheckCircle2, Sparkles, ArrowRightLeft, Loader2 } from 'lucide-react';
 import type { ExpenseItem, ExpenseCategory, BillingCycle, CurrencyCode } from '../types/expense';
-import { CATEGORIES } from '../data/categories';
+import { getCategoryMeta } from '../data/categories';
 import { formatCurrency } from '../utils/formatters';
 
 interface ReceiptScanResult {
@@ -322,7 +322,7 @@ export const ScanReceiptModal: React.FC<ScanReceiptModalProps> = ({
                   <span>Amount: <strong style={{ color: 'var(--ha-ink)' }}>{formatCurrency(result.extracted.amount, (result.extracted.currency as CurrencyCode) || 'EUR')}</strong></span>
                 )}
                 {result.extracted.date && <span>Date: {result.extracted.date}</span>}
-                {result.extracted.categoryGuess && <span>Category guess: {CATEGORIES[result.extracted.categoryGuess as ExpenseCategory]?.name || result.extracted.categoryGuess}</span>}
+                {result.extracted.categoryGuess && <span>Category guess: {getCategoryMeta(result.extracted.categoryGuess).name}</span>}
                 <span>{result.extracted.isPaid ? 'Detected as already paid' : 'Detected as not yet paid'}</span>
                 {result.extracted.notes && <span style={{ fontStyle: 'italic' }}>{result.extracted.notes}</span>}
               </div>

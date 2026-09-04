@@ -4,8 +4,8 @@ import { getErrorMessage } from '@/src/lib/errors';
 import { requireHouseholdUser } from '@/src/lib/auth';
 import { getMonthlyEquivalent } from '@/src/utils/calculations';
 import { rolloverIfDue } from '@/src/lib/billing';
-import { CATEGORIES } from '@/src/data/categories';
-import type { BillingCycle, ExpenseCategory } from '@/src/types/expense';
+import { getCategoryMeta } from '@/src/data/categories';
+import type { BillingCycle } from '@/src/types/expense';
 
 function daysUntil(dateStr: string): number {
   const today = new Date();
@@ -26,6 +26,10 @@ export async function GET() {
     });
 
     const incomes = await prisma.income.findMany({
+      where: { householdId: auth.user.householdId },
+    });
+
+    const customCategories = await prisma.category.findMany({
       where: { householdId: auth.user.householdId },
     });
 
@@ -81,7 +85,7 @@ export async function GET() {
     const topCategory = topCategoryEntry
       ? {
           category: topCategoryEntry[0],
-          name: CATEGORIES[topCategoryEntry[0] as ExpenseCategory]?.name || topCategoryEntry[0],
+          name: getCategoryMeta(topCategoryEntry[0], customCategories).name,
           monthlyAmount: topCategoryEntry[1],
           percentage: monthlyTotal > 0 ? Math.round((topCategoryEntry[1] / monthlyTotal) * 1000) / 10 : 0,
         }

@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.21.0';
+export const APP_VERSION = '1.22.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.22.0',
+    date: '2026-09-04',
+    changes: [
+      'You can now create your own categories (e.g. "Tolls") right from the category picker on any expense or statement row — pick "+ Create new category…", give it a name, and it\'s instantly available everywhere with its own colour, and shared across the household.',
+      'Statement review: "Confirm match" no longer looks like the default/safe option — it\'s now equal-weight with the correction button and shows a reassurance note ("Just a guess — pick whichever button below is actually right") whenever the suggested match isn\'t highly confident, so a wrong guess is just as easy to fix as to confirm.',
+      'Imported statements can now be renamed — click the pencil next to a statement\'s name in the Statements list, or from inside the review screen.',
+      'Made a few icon-only buttons in the top nav clearer: "Ask Tally", "Scan" and the privacy blur toggle now show text labels, and the blur toggle now visibly highlights when it\'s active.',
+    ],
+  },
   {
     version: '1.21.0',
     date: '2026-09-04',

@@ -1,6 +1,6 @@
 import React from 'react';
-import type { ExpenseItem, CurrencyCode } from '../types/expense';
-import { CATEGORIES } from '../data/categories';
+import type { ExpenseItem, CurrencyCode, CustomCategoryItem } from '../types/expense';
+import { getCategoryMeta } from '../data/categories';
 import { getDaysUntilRenewal } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle, formatDate } from '../utils/formatters';
 import { Plus, Edit2, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
@@ -11,6 +11,7 @@ interface PlannedExpensesSectionProps {
   onEditExpense: (expense: ExpenseItem) => void;
   onOpenAddModal: () => void;
   onActivate: (id: string) => void;
+  customCategories?: CustomCategoryItem[];
 }
 
 export const PlannedExpensesSection: React.FC<PlannedExpensesSectionProps> = ({
@@ -19,6 +20,7 @@ export const PlannedExpensesSection: React.FC<PlannedExpensesSectionProps> = ({
   onEditExpense,
   onOpenAddModal,
   onActivate,
+  customCategories = [],
 }) => {
   const plannedItems = expenses.filter((e) => e.isPending);
 
@@ -64,7 +66,7 @@ export const PlannedExpensesSection: React.FC<PlannedExpensesSectionProps> = ({
         ) : (
           <div>
             {plannedItems.map((item) => {
-              const catInfo = CATEGORIES[item.category];
+              const catInfo = getCategoryMeta(item.category, customCategories);
               const daysLeft = item.nextRenewalDate
                 ? getDaysUntilRenewal(item.nextRenewalDate, item.billingCycle)
                 : null;
@@ -95,7 +97,7 @@ export const PlannedExpensesSection: React.FC<PlannedExpensesSectionProps> = ({
                           )}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--ha-muted)' }}>
-                          {catInfo?.name || item.category}
+                          {catInfo.name}
                           {item.nextRenewalDate && <> • Expected {formatDate(item.nextRenewalDate)}</>}
                         </div>
                       </div>

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { FileSpreadsheet, Upload, Trash2, ChevronRight } from 'lucide-react';
-import type { ExpenseItem, StatementImportSummary, CurrencyCode, AccountItem } from '../types/expense';
+import { FileSpreadsheet, Upload, Trash2, ChevronRight, Edit2, Loader2 } from 'lucide-react';
+import type { ExpenseItem, StatementImportSummary, CurrencyCode, AccountItem, CustomCategoryItem } from '../types/expense';
 import { StatementImportModal } from './StatementImportModal';
 
 interface StatementsSectionProps {
@@ -8,13 +8,18 @@ interface StatementsSectionProps {
   accounts: AccountItem[];
   householdCurrency: CurrencyCode;
   onExpensesChanged?: () => void;
+  customCategories?: CustomCategoryItem[];
+  onCategoryCreated?: (category: CustomCategoryItem) => void;
 }
 
-export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, accounts, householdCurrency, onExpensesChanged }) => {
+export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, accounts, householdCurrency, onExpensesChanged, customCategories = [], onCategoryCreated }) => {
   const [imports, setImports] = useState<StatementImportSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reviewImportId, setReviewImportId] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameInput, setRenameInput] = useState('');
+  const [isSavingRename, setIsSavingRename] = useState(false);
 
   const fetchImports = useCallback(() => {
     fetch('/api/statements')
@@ -35,6 +40,25 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
     const data = await res.json();
     if (data.status === 'ok') {
       setImports((prev) => prev.filter((i) => i.id !== id));
+    }
+  };
+
+  const handleSaveRename = async (id: string) => {
+    if (!renameInput.trim()) return;
+    setIsSavingRename(true);
+    try {
+      const res = await fetch(`/api/statements/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: renameInput.trim() }),
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        setImports((prev) => prev.map((i) => (i.id === id ? { ...i, label: data.import.label } : i)));
+        setRenamingId(null);
+      }
+    } finally {
+      setIsSavingRename(false);
     }
   };
 
@@ -69,37 +93,76 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
           {imports.map((imp) => (
             <div
               key={imp.id}
-              onClick={() => setReviewImportId(imp.id)}
+              onClick={() => renamingId !== imp.id && setReviewImportId(imp.id)}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem',
                 padding: '0.65rem 0.85rem', borderRadius: 'var(--ha-radius-md)', border: '1px solid var(--ha-line)',
-                cursor: 'pointer',
+                cursor: renamingId === imp.id ? 'default' : 'pointer',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0, flex: 1 }}>
                 <FileSpreadsheet size={16} color="var(--ha-muted)" style={{ flexShrink: 0 }} />
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--ha-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {imp.label}
-                  </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--ha-muted)' }}>
-                    {imp.account && <span style={{ fontWeight: 600, color: 'var(--ha-ink)' }}>{imp.account.name} • </span>}
-                    {imp.total} rows • {imp.matched} matched
-                    {imp.unmatched > 0 && <span style={{ color: 'var(--ha-red)', fontWeight: 600 }}> • {imp.unmatched} need review</span>}
-                  </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  {renamingId === imp.id ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }} onClick={(e) => e.stopPropagation()}>
+                      <input
+                        autoFocus
+                        className="ha-input"
+                        value={renameInput}
+                        onChange={(e) => setRenameInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveRename(imp.id);
+                          if (e.key === 'Escape') setRenamingId(null);
+                        }}
+                        style={{ fontSize: '0.85rem', padding: '0.25rem 0.45rem', maxWidth: '220px' }}
+                      />
+                      <button
+                        onClick={() => handleSaveRename(imp.id)}
+                        disabled={isSavingRename || !renameInput.trim()}
+                        className="btn btn-primary"
+                        style={{ fontSize: '0.72rem', padding: '0.3rem 0.5rem' }}
+                      >
+                        {isSavingRename ? <Loader2 size={12} className="spin" /> : 'Save'}
+                      </button>
+                      <button onClick={() => setRenamingId(null)} className="btn btn-ghost" style={{ fontSize: '0.72rem', padding: '0.3rem 0.4rem' }}>
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--ha-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {imp.label}
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--ha-muted)' }}>
+                        {imp.account && <span style={{ fontWeight: 600, color: 'var(--ha-ink)' }}>{imp.account.name} • </span>}
+                        {imp.total} rows • {imp.matched} matched
+                        {imp.unmatched > 0 && <span style={{ color: 'var(--ha-red)', fontWeight: 600 }}> • {imp.unmatched} need review</span>}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleDelete(imp.id); }}
-                  className="btn btn-ghost"
-                  style={{ padding: '0.3rem 0.4rem', color: 'var(--ha-red)' }}
-                  title="Delete import"
-                >
-                  <Trash2 size={13} />
-                </button>
-                <ChevronRight size={16} color="var(--ha-muted)" />
-              </div>
+              {renamingId !== imp.id && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setRenameInput(imp.label); setRenamingId(imp.id); }}
+                    className="btn btn-ghost"
+                    style={{ padding: '0.3rem 0.4rem' }}
+                    title="Rename import"
+                  >
+                    <Edit2 size={13} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(imp.id); }}
+                    className="btn btn-ghost"
+                    style={{ padding: '0.3rem 0.4rem', color: 'var(--ha-red)' }}
+                    title="Delete import"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                  <ChevronRight size={16} color="var(--ha-muted)" />
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -113,6 +176,8 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
         householdCurrency={householdCurrency}
         onImported={fetchImports}
         onExpensesChanged={onExpensesChanged}
+        customCategories={customCategories}
+        onCategoryCreated={onCategoryCreated}
       />
 
       <StatementImportModal
@@ -124,6 +189,8 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
         onImported={fetchImports}
         onExpensesChanged={onExpensesChanged}
         initialImportId={reviewImportId}
+        customCategories={customCategories}
+        onCategoryCreated={onCategoryCreated}
       />
     </div>
   );

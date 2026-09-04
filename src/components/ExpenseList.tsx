@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import type { ExpenseItem, CurrencyCode } from '../types/expense';
-import { CATEGORIES, CATEGORY_LIST } from '../data/categories';
+import type { ExpenseItem, CurrencyCode, CustomCategoryItem } from '../types/expense';
+import { CATEGORY_LIST, getCategoryMeta } from '../data/categories';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle } from '../utils/formatters';
 import { Search, ArrowUpDown, Edit2, Trash2, Copy, User, Plus, Sparkles, RefreshCw, Mail, ChevronDown } from 'lucide-react';
@@ -38,6 +38,7 @@ interface ExpenseListProps {
   onOpenPresetsModal: () => void;
   onQuickUpdateAmount: (expense: ExpenseItem, newAmount: number) => void;
   onContactVendor: (expense: ExpenseItem) => void;
+  customCategories?: CustomCategoryItem[];
 }
 
 export const ExpenseList: React.FC<ExpenseListProps> = ({
@@ -54,6 +55,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   onOpenPresetsModal,
   onQuickUpdateAmount,
   onContactVendor,
+  customCategories = [],
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused' | 'unpaid' | 'overdue'>('all');
@@ -67,7 +69,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
       const matchName = item.name.toLowerCase().includes(q);
       const matchNotes = item.notes?.toLowerCase().includes(q);
       const matchMethod = item.paymentMethod.toLowerCase().includes(q);
-      const matchCategory = CATEGORIES[item.category]?.name.toLowerCase().includes(q);
+      const matchCategory = getCategoryMeta(item.category, customCategories).name.toLowerCase().includes(q);
       const matchUser = item.createdBy?.name.toLowerCase().includes(q);
       if (!matchName && !matchNotes && !matchMethod && !matchCategory && !matchUser) {
         return false;
@@ -229,7 +231,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
             All
           </button>
 
-          {CATEGORY_LIST.map((cat) => {
+          {[...CATEGORY_LIST, ...customCategories].map((cat) => {
             const isSelected = selectedCategory === cat.id;
             return (
               <button
@@ -359,7 +361,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
       ) : (
         <div>
           {sortedItems.map((item) => {
-            const cat = CATEGORIES[item.category] || CATEGORIES.utilities;
+            const cat = getCategoryMeta(item.category, customCategories);
             const monthlyAmount = getMonthlyEquivalent(convertCurrency(item.amount, item.currency, currency), item.billingCycle);
             const overdue = item.isActive && !item.isPaidThisCycle && isOverdue(item.nextRenewalDate);
             const daysUntilContractEnd = item.contractEndDate ? daysUntilDate(item.contractEndDate) : null;

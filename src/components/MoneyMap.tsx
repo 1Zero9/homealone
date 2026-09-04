@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import type { ExpenseItem, IncomeItem, AccountItem, TransferItem, CurrencyCode } from '../types/expense';
+import type { ExpenseItem, IncomeItem, AccountItem, TransferItem, CurrencyCode, CustomCategoryItem } from '../types/expense';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency } from '../utils/formatters';
-import { CATEGORIES } from '../data/categories';
+import { getCategoryMeta } from '../data/categories';
 import { Activity, Landmark, ArrowLeftRight } from 'lucide-react';
 
 interface MoneyMapProps {
@@ -11,6 +11,7 @@ interface MoneyMapProps {
   accounts: AccountItem[];
   transfers: TransferItem[];
   currency: CurrencyCode;
+  customCategories?: CustomCategoryItem[];
 }
 
 interface FlowNode {
@@ -58,7 +59,7 @@ function truncateLabel(label: string): string {
 type Period = 'all' | '30' | '90';
 type MapMode = 'journey' | 'projected';
 
-export const MoneyMap: React.FC<MoneyMapProps> = ({ incomes, expenses, accounts, transfers, currency }) => {
+export const MoneyMap: React.FC<MoneyMapProps> = ({ incomes, expenses, accounts, transfers, currency, customCategories = [] }) => {
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
   const [period, setPeriod] = useState<Period>('all');
   const hasTransferData = transfers.length > 0;
@@ -206,7 +207,7 @@ export const MoneyMap: React.FC<MoneyMapProps> = ({ incomes, expenses, accounts,
 
     const categoryList = Object.entries(categoryTotalsFlat).map(([cat, amt]) => ({
       id: `category:${cat}`,
-      label: CATEGORIES[cat as keyof typeof CATEGORIES]?.name || cat,
+      label: getCategoryMeta(cat, customCategories).name,
       total: amt,
     }));
 
@@ -236,7 +237,7 @@ export const MoneyMap: React.FC<MoneyMapProps> = ({ incomes, expenses, accounts,
     });
 
     return { leftNodes, midNodes, rightNodes, edges, height };
-  }, [incomes, expenses, accounts, currency]);
+  }, [incomes, expenses, accounts, currency, customCategories]);
 
   const data = mode === 'journey' ? journey : projected;
   const hasData = data.leftNodes.length > 0 || data.midNodes.length > 0 || data.rightNodes.length > 0;

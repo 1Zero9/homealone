@@ -1,6 +1,6 @@
-import type { ExpenseCategory, ExpenseItem, SpendingSummary, CurrencyCode, IncomeItem, IncomeSummary } from '../types/expense';
+import type { ExpenseCategory, ExpenseItem, SpendingSummary, CurrencyCode, IncomeItem, IncomeSummary, CustomCategoryItem } from '../types/expense';
 import { CURRENCIES } from './currencies';
-import { CATEGORIES } from '../data/categories';
+import { getCategoryMeta } from '../data/categories';
 
 /**
  * Normalizes any billing cycle into a monthly cost.
@@ -55,14 +55,15 @@ export function convertCurrency(
  */
 export function calculateSpendingSummary(
   expenses: ExpenseItem[],
-  displayCurrency: CurrencyCode = 'EUR'
+  displayCurrency: CurrencyCode = 'EUR',
+  customCategories: CustomCategoryItem[] = []
 ): SpendingSummary {
   let monthlyTotal = 0;
   let activeCount = 0;
   let pausedCount = 0;
   let pausedMonthlySavings = 0;
 
-  const categoryTotals: Record<ExpenseCategory, number> = {
+  const categoryTotals: Record<string, number> = {
     entertainment: 0,
     'ai-tech': 0,
     utilities: 0,
@@ -82,9 +83,7 @@ export function calculateSpendingSummary(
     if (item.isActive) {
       activeCount += 1;
       monthlyTotal += monthlyAmount;
-      if (item.category in categoryTotals) {
-        categoryTotals[item.category] = (categoryTotals[item.category] || 0) + monthlyAmount;
-      }
+      categoryTotals[item.category] = (categoryTotals[item.category] || 0) + monthlyAmount;
     } else {
       pausedCount += 1;
       pausedMonthlySavings += monthlyAmount;
@@ -106,7 +105,7 @@ export function calculateSpendingSummary(
       const pct = monthlyTotal > 0 ? (amount / monthlyTotal) * 100 : 0;
       topCategory = {
         category: cat,
-        name: CATEGORIES[cat]?.name || cat,
+        name: getCategoryMeta(cat, customCategories).name,
         amount,
         percentage: Math.round(pct * 10) / 10,
       };

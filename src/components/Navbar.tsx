@@ -139,22 +139,33 @@ export const Navbar: React.FC<NavbarProps> = ({
             })}
           </nav>
 
-          {/* Right Actions (desktop) */}
-          <div className="desktop-only" style={{ alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-            <button className="ha-icon-btn" title="Ask Tally" onClick={onFocusAsk}>
-              <Search size={17} />
+          {/* Right Actions (desktop) — icon+label buttons so key actions (especially the
+              privacy blur toggle) aren't hidden behind a bare icon + tooltip. */}
+          <div className="desktop-only" style={{ alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+            <button className="btn btn-secondary" title="Ask Tally" onClick={onFocusAsk} style={{ fontSize: '0.78rem', padding: '0.45rem 0.65rem' }}>
+              <Search size={15} />
+              <span>Ask Tally</span>
             </button>
 
             <button
-              className="ha-icon-btn"
+              className="btn"
               title={isPrivacyBlurred ? 'Reveal screen' : 'Blur screen for privacy'}
               onClick={onTogglePrivacyBlur}
+              style={{
+                fontSize: '0.78rem',
+                padding: '0.45rem 0.65rem',
+                backgroundColor: isPrivacyBlurred ? 'var(--ha-blue-light)' : 'var(--ha-white)',
+                color: isPrivacyBlurred ? 'var(--ha-blue)' : 'var(--ha-ink)',
+                borderColor: isPrivacyBlurred ? 'var(--ha-blue)' : 'var(--ha-line)',
+              }}
             >
-              {isPrivacyBlurred ? <EyeOff size={17} /> : <Eye size={17} />}
+              {isPrivacyBlurred ? <EyeOff size={15} /> : <Eye size={15} />}
+              <span>{isPrivacyBlurred ? 'Blurred' : 'Privacy'}</span>
             </button>
 
-            <button className="ha-icon-btn" title="Scan a bill" onClick={onOpenScanModal}>
-              <ScanLine size={17} />
+            <button className="btn btn-secondary" title="Scan a bill" onClick={onOpenScanModal} style={{ fontSize: '0.78rem', padding: '0.45rem 0.65rem' }}>
+              <ScanLine size={15} />
+              <span>Scan</span>
             </button>
 
             <button onClick={onOpenAddModal} className="btn btn-primary" style={{ fontSize: '0.82rem', padding: '0.5rem 0.9rem' }}>
@@ -233,6 +244,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="ha-icon-btn"
               title={isPrivacyBlurred ? 'Reveal screen' : 'Blur screen for privacy'}
               onClick={onTogglePrivacyBlur}
+              style={isPrivacyBlurred ? { backgroundColor: 'var(--ha-blue-light)', color: 'var(--ha-blue)' } : undefined}
             >
               {isPrivacyBlurred ? <EyeOff size={19} /> : <Eye size={19} />}
             </button>

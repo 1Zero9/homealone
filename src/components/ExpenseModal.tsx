@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import type { ExpenseItem, ExpenseCategory, BillingCycle, CurrencyCode, UserProfile, AccountItem, GoalItem } from '../types/expense';
-import { CATEGORY_LIST, CATEGORIES } from '../data/categories';
+import type { ExpenseItem, ExpenseCategory, BillingCycle, CurrencyCode, UserProfile, AccountItem, GoalItem, CustomCategoryItem } from '../types/expense';
+import { getCategoryMeta } from '../data/categories';
+import { CategorySelect } from './CategorySelect';
 import { PRESETS } from '../data/presets';
 import { CURRENCIES } from '../utils/currencies';
 import { X } from 'lucide-react';
@@ -30,6 +31,8 @@ interface ExpenseModalProps {
   currentUserId?: string;
   accounts?: AccountItem[];
   goals?: GoalItem[];
+  customCategories?: CustomCategoryItem[];
+  onCategoryCreated?: (category: CustomCategoryItem) => void;
 }
 
 export const ExpenseModal: React.FC<ExpenseModalProps> = ({
@@ -45,6 +48,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   currentUserId,
   accounts = [],
   goals = [],
+  customCategories = [],
+  onCategoryCreated,
 }) => {
   const [name, setName] = useState('');
   const [vendor, setVendor] = useState('');
@@ -155,7 +160,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     const resolvedNextRenewalDate = nextRenewalDate || new Date().toISOString().split('T')[0];
     const resolvedRenewalDay = Number(resolvedNextRenewalDate.split('-')[2]) || 1;
 
-    const catInfo = CATEGORIES[category];
+    const catInfo = getCategoryMeta(category, customCategories);
 
     onSave(
       {
@@ -294,15 +299,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
               Category
             </label>
-            <select
+            <CategorySelect
               value={category}
-              onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
-              className="ha-input"
-            >
-              {CATEGORY_LIST.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+              onChange={(id) => setCategory(id as ExpenseCategory)}
+              customCategories={customCategories}
+              onCategoryCreated={(cat) => onCategoryCreated?.(cat)}
+            />
           </div>
 
           {/* Pending / not-yet-required toggle */}

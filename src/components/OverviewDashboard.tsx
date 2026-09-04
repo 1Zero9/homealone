@@ -1,6 +1,6 @@
 import React from 'react';
-import type { ExpenseItem, CurrencyCode, SpendingSummary, IncomeSummary } from '../types/expense';
-import { CATEGORY_LIST, CATEGORIES } from '../data/categories';
+import type { ExpenseItem, CurrencyCode, SpendingSummary, IncomeSummary, CustomCategoryItem } from '../types/expense';
+import { CATEGORY_LIST, getCategoryMeta } from '../data/categories';
 import { convertCurrency, getMonthlyEquivalent, getDaysUntilRenewal } from '../utils/calculations';
 import { formatCurrency, formatRenewalCountdown, formatDate } from '../utils/formatters';
 import { TrendingUp, Clock, PiggyBank, ArrowRight, Edit2, CalendarClock } from 'lucide-react';
@@ -17,6 +17,7 @@ interface OverviewDashboardProps {
   onViewAllBills: () => void;
   plannedExpenses?: ExpenseItem[];
   onViewPlanned?: () => void;
+  customCategories?: CustomCategoryItem[];
 }
 
 type MobilePanel = 'recent' | 'spending' | 'bills';
@@ -33,6 +34,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   onViewAllBills,
   plannedExpenses = [],
   onViewPlanned,
+  customCategories = [],
 }) => {
   const [mobilePanel, setMobilePanel] = React.useState<MobilePanel>('recent');
   const activeExpenses = expenses.filter((e) => e.isActive);
@@ -64,7 +66,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
       return { ...item, daysLeft };
     });
 
-  const categoryData = CATEGORY_LIST.map((cat) => {
+  const categoryData = [...CATEGORY_LIST, ...customCategories].map((cat) => {
     const catItems = activeExpenses.filter((e) => e.category === cat.id);
     const monthlyAmount = catItems.reduce((sum, item) => {
       const amountInDisplay = convertCurrency(item.amount, item.currency, currency);
@@ -244,7 +246,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.35rem', flexWrap: 'wrap' }}>
                           <span className="ha-badge ha-badge-neutral" style={{ fontSize: '0.68rem' }}>
-                            {CATEGORIES[item.category]?.name || item.category}
+                            {getCategoryMeta(item.category, customCategories).name}
                           </span>
                           <span
                             className={`ha-badge ${item.isPaidThisCycle ? 'ha-badge-blue' : overdue ? 'ha-badge-red' : 'ha-badge-neutral'}`}

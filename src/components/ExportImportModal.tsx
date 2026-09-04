@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import type { ExpenseItem, CurrencyCode } from '../types/expense';
+import type { ExpenseItem, CurrencyCode, CustomCategoryItem } from '../types/expense';
 import { exportExpensesCSV, exportExpensesJSON, importExpensesJSON, resetToDefaults } from '../services/storage';
 import { getErrorMessage } from '../lib/errors';
 import { X, Upload, FileSpreadsheet, FileCode, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -10,6 +10,7 @@ interface ExportImportModalProps {
   expenses: ExpenseItem[];
   currency: CurrencyCode;
   onDataUpdated: (newExpenses: ExpenseItem[]) => void;
+  customCategories?: CustomCategoryItem[];
 }
 
 export const ExportImportModal: React.FC<ExportImportModalProps> = ({
@@ -17,6 +18,7 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
   onClose,
   expenses,
   onDataUpdated,
+  customCategories = [],
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState<string | null>(null);
@@ -123,7 +125,7 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div
-                onClick={() => exportExpensesCSV(expenses)}
+                onClick={() => exportExpensesCSV(expenses, customCategories)}
                 className="ha-card-interactive"
                 style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}
               >

@@ -3,7 +3,7 @@ import { prisma } from '@/src/lib/prisma';
 import { getErrorMessage } from '@/src/lib/errors';
 import { requireHouseholdUser } from '@/src/lib/auth';
 import { buildAliasPattern } from '@/src/lib/statementMatching';
-import { CATEGORIES } from '@/src/data/categories';
+import { getCategoryMeta, isBuiltinCategory } from '@/src/data/categories';
 import type { ExpenseCategory } from '@/src/types/expense';
 
 const TX_INCLUDE = {
@@ -174,12 +174,15 @@ export async function POST(
 
     if (action === 'categorize') {
       const category = typeof body.category === 'string' ? (body.category as ExpenseCategory) : null;
-      if (!category || !CATEGORIES[category]) {
+      const customCategoryMatch = category && !isBuiltinCategory(category)
+        ? await prisma.category.findFirst({ where: { id: category, householdId: auth.user.householdId } })
+        : null;
+      if (!category || (!isBuiltinCategory(category) && !customCategoryMatch)) {
         return NextResponse.json({ status: 'error', message: 'A valid category must be selected' }, { status: 400 });
       }
 
       const vendorName = typeof body.vendorName === 'string' && body.vendorName.trim() ? body.vendorName.trim() : tx.vendorName || tx.rawDescription;
-      const meta = CATEGORIES[category];
+      const meta = getCategoryMeta(category, customCategoryMatch ? [customCategoryMatch] : undefined);
       const statementImport = await prisma.statementImport.findUnique({ where: { id: tx.importId } });
       const dayOfMonth = new Date(tx.date).getDate();
 

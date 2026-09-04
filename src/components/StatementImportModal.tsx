@@ -17,11 +17,11 @@ import {
   Edit2,
   Landmark,
 } from 'lucide-react';
-import type { ExpenseItem, StatementTransactionItem, CurrencyCode, AccountItem, AccountType, ExpenseCategory } from '../types/expense';
+import type { ExpenseItem, StatementTransactionItem, CurrencyCode, AccountItem, AccountType, ExpenseCategory, CustomCategoryItem } from '../types/expense';
 import { formatCurrency } from '../utils/formatters';
 import { parseCsv, guessColumns, parseAmount, parseDateFlexible, type ColumnGuess } from '../lib/statementMatching';
 import type { StatementAccountInfo } from '../lib/ai';
-import { CATEGORY_LIST } from '../data/categories';
+import { CategorySelect } from './CategorySelect';
 
 type FieldMatch = 'match' | 'mismatch' | 'not_set' | 'no_data';
 
@@ -34,6 +34,8 @@ interface StatementImportModalProps {
   onImported: () => void;
   onExpensesChanged?: () => void;
   initialImportId?: string | null;
+  customCategories?: CustomCategoryItem[];
+  onCategoryCreated?: (category: CustomCategoryItem) => void;
 }
 
 type Step = 'upload' | 'map' | 'review';
@@ -80,6 +82,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   onImported,
   onExpensesChanged,
   initialImportId,
+  customCategories = [],
+  onCategoryCreated,
 }) => {
   const [step, setStep] = useState<Step>('upload');
   const [fileName, setFileName] = useState('');
@@ -100,6 +104,9 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const [submitError, setSubmitError] = useState('');
   const [importId, setImportId] = useState<string | null>(null);
   const [importLabel, setImportLabel] = useState('');
+  const [isRenamingImport, setIsRenamingImport] = useState(false);
+  const [renameLabelInput, setRenameLabelInput] = useState('');
+  const [isSavingRename, setIsSavingRename] = useState(false);
   const [transactions, setTransactions] = useState<StatementTransactionItem[]>([]);
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('needs_review');
   const [busyTxId, setBusyTxId] = useState<string | null>(null);
@@ -150,6 +157,9 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     setSubmitError('');
     setImportId(null);
     setImportLabel('');
+    setIsRenamingImport(false);
+    setRenameLabelInput('');
+    setIsSavingRename(false);
     setTransactions([]);
     setReviewFilter('needs_review');
     setBusyTxId(null);
@@ -502,6 +512,31 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     }
   };
 
+  const handleStartRenameImport = () => {
+    setRenameLabelInput(importLabel);
+    setIsRenamingImport(true);
+  };
+
+  const handleSaveRenameImport = async () => {
+    if (!importId || !renameLabelInput.trim()) return;
+    setIsSavingRename(true);
+    try {
+      const res = await fetch(`/api/statements/${importId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: renameLabelInput.trim() }),
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        setImportLabel(data.import.label);
+        setIsRenamingImport(false);
+        onImported();
+      }
+    } finally {
+      setIsSavingRename(false);
+    }
+  };
+
   const toggleGroup = (key: string) => {
     setCollapsedGroups((prev) => {
       const next = new Set(prev);
@@ -579,10 +614,47 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
           padding: '1.1rem 1.5rem',
           borderBottom: '1px solid var(--ha-line)',
         }}>
-          <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
-              {step === 'review' ? importLabel || 'Review statement' : 'Import a statement'}
-            </h3>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {step === 'review' && isRenamingImport ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <input
+                  autoFocus
+                  className="ha-input"
+                  value={renameLabelInput}
+                  onChange={(e) => setRenameLabelInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveRenameImport();
+                    if (e.key === 'Escape') setIsRenamingImport(false);
+                  }}
+                  style={{ fontSize: '1.1rem', fontWeight: 700, padding: '0.3rem 0.5rem', maxWidth: '260px' }}
+                />
+                <button
+                  onClick={handleSaveRenameImport}
+                  disabled={isSavingRename || !renameLabelInput.trim()}
+                  className="btn btn-primary"
+                  style={{ fontSize: '0.75rem', padding: '0.35rem 0.6rem' }}
+                >
+                  {isSavingRename ? <Loader2 size={12} className="spin" /> : 'Save'}
+                </button>
+                <button onClick={() => setIsRenamingImport(false)} className="btn btn-ghost" style={{ fontSize: '0.75rem', padding: '0.35rem 0.5rem' }}>
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                {step === 'review' ? importLabel || 'Review statement' : 'Import a statement'}
+                {step === 'review' && (
+                  <button
+                    onClick={handleStartRenameImport}
+                    className="ha-icon-btn"
+                    title="Rename this statement"
+                    style={{ padding: '0.2rem' }}
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                )}
+              </h3>
+            )}
             <p style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', marginTop: '2px' }}>
               {step === 'upload' && 'Upload a bank or credit-card statement — CSV, PDF, or a photo — to cross-check against your bills.'}
               {step === 'map' && (aiRows ? `${aiRows.length} transaction${aiRows.length === 1 ? '' : 's'} found — check the details below before importing.` : `${rows.length} rows found — tell us which columns are which.`)}
@@ -1155,15 +1227,15 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                               <span style={{ fontSize: '0.72rem', color: 'var(--ha-muted)' }}>
                                 Category for all {group.items.filter((t) => t.status === 'UNMATCHED').length} unmatched:
                               </span>
-                              <select
+                              <CategorySelect
                                 className="ha-input"
                                 style={{ fontSize: '0.78rem', padding: '0.4rem 0.6rem' }}
                                 value={selectedGroupCategory[group.key] ?? group.items[0].suggestedCategory ?? ''}
-                                onChange={(e) => setSelectedGroupCategory((prev) => ({ ...prev, [group.key]: e.target.value as ExpenseCategory }))}
-                              >
-                                <option value="">— Choose a category —</option>
-                                {CATEGORY_LIST.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                              </select>
+                                onChange={(id) => setSelectedGroupCategory((prev) => ({ ...prev, [group.key]: id as ExpenseCategory }))}
+                                customCategories={customCategories}
+                                onCategoryCreated={(cat) => onCategoryCreated?.(cat)}
+                                placeholderOption="— Choose a category —"
+                              />
                               <button
                                 disabled={!(selectedGroupCategory[group.key] || group.items[0].suggestedCategory) || isGroupBusy}
                                 onClick={() => resolveGroupCategorize(group, (selectedGroupCategory[group.key] || group.items[0].suggestedCategory) as ExpenseCategory)}
@@ -1281,15 +1353,20 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                               )}
 
                               {tx.matchedExpense && (
-                                <div style={{ fontSize: '0.78rem', color: 'var(--ha-ink)', marginBottom: '0.4rem' }}>
+                                <div style={{ fontSize: '0.78rem', color: 'var(--ha-ink)', marginBottom: '0.3rem' }}>
                                   Possible match: <strong>{tx.matchedExpense.name}</strong>
                                   {typeof tx.matchConfidence === 'number' && <span style={{ color: 'var(--ha-muted)' }}> ({Math.round(tx.matchConfidence * 100)}% confident)</span>}
                                 </div>
                               )}
                               {!tx.matchedExpense && tx.matchedTransfer && (
-                                <div style={{ fontSize: '0.78rem', color: 'var(--ha-ink)', marginBottom: '0.4rem' }}>
+                                <div style={{ fontSize: '0.78rem', color: 'var(--ha-ink)', marginBottom: '0.3rem' }}>
                                   Possible match: transfer <strong>{tx.matchedTransfer.externalLabel || 'logged payment'}</strong>
                                   {typeof tx.matchConfidence === 'number' && <span style={{ color: 'var(--ha-muted)' }}> ({Math.round(tx.matchConfidence * 100)}% confident)</span>}
+                                </div>
+                              )}
+                              {(tx.matchedExpense || tx.matchedTransfer) && (typeof tx.matchConfidence !== 'number' || tx.matchConfidence < 0.9) && (
+                                <div style={{ fontSize: '0.72rem', color: 'var(--ha-muted)', marginBottom: '0.5rem' }}>
+                                  Just a guess — pick whichever button below is actually right. Corrections are remembered for next time.
                                 </div>
                               )}
 
@@ -1318,15 +1395,15 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                                 </div>
                               ) : categorizingTxId === tx.id ? (
                                 <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                                  <select
+                                  <CategorySelect
                                     className="ha-input"
                                     style={{ fontSize: '0.78rem', padding: '0.4rem 0.6rem' }}
                                     value={selectedCategory[tx.id] ?? tx.suggestedCategory ?? ''}
-                                    onChange={(e) => setSelectedCategory((prev) => ({ ...prev, [tx.id]: e.target.value as ExpenseCategory }))}
-                                  >
-                                    <option value="">— Choose a category —</option>
-                                    {CATEGORY_LIST.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                  </select>
+                                    onChange={(id) => setSelectedCategory((prev) => ({ ...prev, [tx.id]: id as ExpenseCategory }))}
+                                    customCategories={customCategories}
+                                    onCategoryCreated={(cat) => onCategoryCreated?.(cat)}
+                                    placeholderOption="— Choose a category —"
+                                  />
                                   <button
                                     disabled={!(selectedCategory[tx.id] || tx.suggestedCategory) || isBusy}
                                     onClick={() => resolveTx(tx.id, 'categorize', {
@@ -1348,10 +1425,10 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                                     <button
                                       disabled={isBusy}
                                       onClick={() => resolveTx(tx.id, 'confirm')}
-                                      className="btn btn-primary"
-                                      style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
+                                      className="btn btn-secondary"
+                                      style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem', color: 'var(--ha-blue)', borderColor: 'var(--ha-blue)' }}
                                     >
-                                      {isBusy ? <Loader2 size={12} className="spin" /> : <CheckCircle2 size={12} />} Confirm match
+                                      {isBusy ? <Loader2 size={12} className="spin" /> : <CheckCircle2 size={12} />} Yes, that&apos;s right
                                     </button>
                                   )}
                                   <button
@@ -1360,7 +1437,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                                     className="btn btn-secondary"
                                     style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
                                   >
-                                    <Link2 size={12} /> Link to a bill
+                                    <Link2 size={12} /> {(tx.matchedExpense || tx.matchedTransfer) ? 'No, link a different bill' : 'Link to a bill'}
                                   </button>
                                   <button
                                     disabled={isBusy}

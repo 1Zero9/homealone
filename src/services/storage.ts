@@ -1,6 +1,6 @@
-import type { CurrencyCode, ExpenseItem } from '../types/expense';
+import type { CurrencyCode, ExpenseItem, CustomCategoryItem } from '../types/expense';
 import { INITIAL_EXPENSES } from '../data/sampleExpenses';
-import { CATEGORIES } from '../data/categories';
+import { getCategoryMeta } from '../data/categories';
 import { getMonthlyEquivalent, getAnnualEquivalent } from '../utils/calculations';
 
 const STORAGE_KEY_EXPENSES = 'tally_expenses_v3';
@@ -112,7 +112,7 @@ export function exportExpensesJSON(expenses: ExpenseItem[]): void {
   URL.revokeObjectURL(url);
 }
 
-export function exportExpensesCSV(expenses: ExpenseItem[]): void {
+export function exportExpensesCSV(expenses: ExpenseItem[], customCategories: CustomCategoryItem[] = []): void {
   const headers = [
     'Name',
     'Category',
@@ -132,7 +132,7 @@ export function exportExpensesCSV(expenses: ExpenseItem[]): void {
 
   const rows = expenses.map((item) => [
     `"${item.name.replace(/"/g, '""')}"`,
-    `"${CATEGORIES[item.category]?.name || item.category}"`,
+    `"${getCategoryMeta(item.category, customCategories).name}"`,
     item.amount.toFixed(2),
     item.currency || 'EUR',
     item.billingCycle,

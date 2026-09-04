@@ -1,4 +1,4 @@
-export type ExpenseCategory = 
+export type BuiltinExpenseCategory =
   | 'entertainment'  // Netflix, Spotify, Apple TV+, Disney+, YouTube
   | 'ai-tech'        // ChatGPT Plus, Claude Pro, Cursor, Midjourney, Copilot, Cloud
   | 'utilities'      // Electricity, Gas/Heating, Water, Broadband, Mobile
@@ -8,6 +8,22 @@ export type ExpenseCategory =
   | 'shopping'       // Groceries & general shopping — one lump total, not itemized
   | 'big-ticket'     // Mortgage, car/personal loan repayments, holidays & other big purchases
   | 'insurance';     // Car/life/health insurance, motor tax, NCT & vehicle renewals
+
+// A household-defined custom category's id is a Prisma cuid — an arbitrary
+// string. The `(string & {})` branded-union trick keeps autocomplete for the
+// 9 built-ins while still accepting any custom category id without a cast.
+export type ExpenseCategory = BuiltinExpenseCategory | (string & {});
+
+export interface CustomCategoryItem {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  createdById?: string | null;
+  createdAt?: string | Date;
+}
 
 export type IncomeCategory = 'salary' | 'freelance' | 'rental' | 'benefits' | 'other';
 

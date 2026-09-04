@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PRESETS } from '../data/presets';
-import { CATEGORIES } from '../data/categories';
+import { getCategoryMeta } from '../data/categories';
 import type { ExpenseItem, PresetItem } from '../types/expense';
 import { formatCurrency, formatBillingCycle } from '../utils/formatters';
 import { X, Search, Plus, Check } from 'lucide-react';
@@ -122,7 +122,7 @@ export const PresetsModal: React.FC<PresetsModalProps> = ({
           overflowY: 'auto',
         }}>
           {filteredPresets.map((preset) => {
-            const cat = CATEGORIES[preset.category];
+            const cat = getCategoryMeta(preset.category);
             const isAlreadyAdded = expenses.some((e) => e.name.toLowerCase().includes(preset.name.toLowerCase().split(' ')[0]));
 
             return (
