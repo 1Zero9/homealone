@@ -10,6 +10,7 @@ export async function GET() {
 
   try {
     const backups = await prisma.databaseBackup.findMany({
+      where: { householdId: auth.user.householdId },
       orderBy: { createdAt: 'desc' },
       take: 20,
     });
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
     const backup = await prisma.databaseBackup.create({
       data: {
         createdById: auth.user.id,
+        householdId: auth.user.householdId,
         payloadJson: allExpenses as unknown as Prisma.InputJsonValue,
         recordCount: allExpenses.length,
         notes: body.notes || `Snapshot created on ${new Date().toLocaleString()}`,
@@ -76,7 +78,7 @@ export async function PUT(request: Request) {
       where: { id: body.backupId },
     });
 
-    if (!backup || !backup.payloadJson) {
+    if (!backup || !backup.payloadJson || backup.householdId !== auth.user.householdId) {
       return NextResponse.json(
         { status: 'error', message: 'Backup not found' },
         { status: 404 }

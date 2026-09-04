@@ -66,6 +66,7 @@ model Household {
   statementTransactions StatementTransaction[]
   merchantAliases       MerchantAlias[]
   categories            Category[]
+  databaseBackups       DatabaseBackup[]
 
   mapNodes MapNode[]
   mapEdges MapEdge[]
@@ -475,6 +476,14 @@ model DatabaseBackup {
   recordCount Int
   notes       String?
   createdAt   DateTime @default(now())
+
+  // Nullable so pre-existing rows created before this column was added
+  // don't need a backfill — they simply stop being listed/restorable,
+  // which is the safe (fail-closed) default for un-attributed backups.
+  householdId String?
+  household   Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId])
 }
 
 /// A freeform, user-positioned node on the editable "My map" canvas — either

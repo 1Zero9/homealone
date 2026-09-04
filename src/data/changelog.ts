@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.34.0';
+export const APP_VERSION = '1.35.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.35.0',
+    date: '2026-09-04',
+    changes: [
+      'Security self-review: audited every API route for cross-household data access, reviewed encryption/session handling, and ran a dependency vulnerability scan — findings written up in the public technical review doc.',
+      'Fixed a gap where database backups (Admin → Backups) had no household boundary — an admin could list or restore another household\'s backup. Backups are now scoped to your own household like every other record.',
+      'Patched two dependency vulnerabilities (Prisma\'s config merging, PostCSS) via safe, non-breaking version pins — no functional changes.',
+    ],
+  },
   {
     version: '1.34.0',
     date: '2026-09-04',

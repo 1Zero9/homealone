@@ -342,3 +342,70 @@ Collected from the `[EVIDENCE NEEDED]` markers above:
 6. What are the current file size, page count, and timeout limits on `statements/extract`?
 7. Is there any account deletion or data retention behaviour, and does the Privacy page describe it?
 8. Does `BACKUP_ADMIN` satisfy the minimum-one-admin constraint?
+
+---
+
+## 9. Developer self-review — 4 September 2026
+
+**Basis:** Direct code access this time (grep across all source files, and a full manual read of every one of the 39 route handlers under `app/api/`), prompted by the question "do we need a paid penetration test before this goes in front of real users?" Answer: no — nothing found below needs a specialist to catch, and a paid pen test is better value once the app has non-family users. This section closes out several `[EVIDENCE NEEDED]` items from Section 8 and adds one new finding.
+
+### 9.1 IDOR / cross-household access control — audited, one gap found
+
+Every one of the 39 API route handlers was checked against the rule in `src/lib/auth.ts`: never trust a `householdId`/`userId`/`role` from the request, always derive it from the session, and verify ownership before reading, writing, or deleting a record.
+
+**38 of 39 are correctly scoped**, including every `PUT`/`DELETE`-by-id handler (`expenses`, `income`, `goals`, `transfers`, `categories`, `map/nodes`, `map/edges`, `statements`, `statements/.../resolve`, `users`, `bugs`, `accounts/[id]/reveal`), every `findMany` list query, and the multi-action `statements/[id]/transactions/[txId]/resolve` route (which separately re-verifies the target expense and custom category on `link_expense`/`confirm`/`categorize`). The one exception is Section 9.2 below.
+
+The five routes with no `requireUser`/`requireHouseholdUser`/`requireAdmin`/`getSessionUser` call are all intentionally public or pre-auth by design: `auth/send-code`, `auth/verify-code`, `auth/logout` (scoped by the session token itself, not by role), `cron/reminders` (see 9.2 answer to open question 3), and `workspace/join` (hard-disabled, returns `410` unconditionally — self-service joining was removed).
+
+### 9.2 New finding: `DatabaseBackup` has no household boundary — Medium/High — FIXED (v1.35.0)
+
+`admin/backup` (`GET`/`PUT`) is the one route that breaks the pattern above, and it's a schema-level gap rather than a missed check in the route itself:
+
+```prisma
+model DatabaseBackup {
+  id          String   @id @default(cuid())
+  createdById String?
+  payloadJson Json
+  recordCount Int
+  notes       String?
+  createdAt   DateTime @default(now())
+}
+```
+
+Unlike every other tenant-scoped model, `DatabaseBackup` has no `householdId` column, so there is nothing for a query to filter on:
+
+- `GET` lists the 20 most recent backups **system-wide**, across every household, to any admin. Each one carries the full `payloadJson` snapshot of that household's expenses (names, amounts, vendors, notes).
+- `PUT` (restore) looks a backup up by `id` alone before using its `payloadJson`. The restore *write* is correctly pinned to the caller's own household (`householdId: auth.user.householdId` on every created record, and only that household's expenses are deleted first) — but the *read* of another household's backup is not blocked, so an admin who supplies a `backupId` belonging to a different household can copy that household's expense data into their own.
+
+This answers open question 4 as a side effect: `admin/backup` only ever snapshots the `Expense` table (`prisma.expense.findMany`), never `Account`, so the six encrypted `*Enc` credential fields are never included in a backup. The credential-dump half of the original 3.5 concern does not apply — but the household-boundary gap above is a new, separate issue in the same route.
+
+**Real-world severity was contained even before the fix**: this deployment currently runs as a single household, and triggering either path requires the `ADMIN` (or `BACKUP_ADMIN`) role, not just any member.
+
+**Fix shipped in v1.35.0**: added a nullable `householdId` column to `DatabaseBackup` (nullable so pre-existing rows don't need a backfill — they simply stop being listed/restorable, the safe fail-closed default). `GET` now filters by `auth.user.householdId`, `POST` stamps every new backup with the creator's household, and `PUT` checks `backup.householdId !== auth.user.householdId` before reading `payloadJson`, returning 404 on mismatch exactly like every other by-id route in the app.
+
+### 9.3 Everything else checked, confirmed clean
+
+- **SQL injection**: zero matches for `$queryRaw`, `$executeRaw`, or their `*Unsafe` variants anywhere in the codebase. Every query goes through Prisma's parameterised query builder — there is no string-built SQL to inject into.
+- **Encryption** (resolves 3.4): `src/lib/crypto.ts` uses AES-256-GCM with a random 12-byte IV per value and an auth tag for tamper detection, and every encrypted value now carries a `v1:` key-version prefix so rotation can resume safely instead of requiring trial decryption. Fails closed — it throws rather than storing plaintext if `CREDENTIALS_ENCRYPTION_KEY` isn't set.
+- **Session cookies**: `httpOnly: true`, `secure` in production, `sameSite: 'lax'`, confirmed in both `middleware.ts` and the cookie-setting code in the auth routes.
+- **`getSessionUser()` re-reads on every request** (resolves open question 2): it looks up the `Session` row and its joined `user` fresh on each call — role and household are never trusted from a cached token, so a role change or removal takes effect on the member's very next request.
+- **OTP brute force**: `verify-code` caps guesses at `MAX_ATTEMPTS = 5` before invalidating the code.
+- **`send-code` rate limiting** (partially resolves 3.2): per-IP throttle (20 requests / 10 minutes) and a 30-second per-email resend cooldown are both in place, plus a generic response message regardless of whether the email exists, to prevent account enumeration. The AI-route quota half of 3.2 (Gemini calls on `assistant/ask`, `assistant/scan-receipt`, `statements/extract`) is still open — no per-household cap exists yet.
+- **Cron protection** (resolves open question 3 / Section 3.3): `GET /api/cron/reminders` checks `Authorization: Bearer ${CRON_SECRET}` when the env var is set, and a `SentReminder` row (unique on expense + threshold + day) prevents duplicate sends on repeat invocations. Minor: the header comparison is a plain `!==`, not constant-time — low practical risk given the secret is high-entropy and never exposed client-side, but worth a `crypto.timingSafeEqual` swap if this is tightened further.
+- **Upload limits** (partially resolves open question 6): `statements/extract` enforces a 15MB cap on the incoming base64 payload and validates the MIME type is `application/pdf` or `image/*` server-side. Page-count and timeout behaviour on very large statements remains unverified.
+- **`BACKUP_ADMIN` and the last-admin guard** (resolves open question 8): the "cannot demote/delete the last admin" check in `users/route.ts` counts only `role: 'ADMIN'` — `BACKUP_ADMIN` accounts don't count towards that minimum, and removing/demoting a `BACKUP_ADMIN` is never blocked. Consistent, but worth stating explicitly since 4.1 already flags the two roles as functionally identical elsewhere.
+
+### 9.4 Dependency audit (`npm audit`) — FIXED (v1.35.0)
+
+5 known advisories (1 moderate, 4 high) as of this review, both transitive:
+
+| Package | Via | Severity | Reachable from user input? |
+|---|---|---|---|
+| `deepmerge-ts` → `@prisma/config` → `prisma` | Prisma CLI's config-file merging | High (stack exhaustion) | No — build/dev-time only, not loaded by the deployed app |
+| `postcss` (bundled inside `next`'s build pipeline) | XSS via unescaped `</style>`, and path traversal via `sourceMappingURL` | High / Moderate | No — processes the app's own CSS at build time, never user-supplied stylesheets at runtime |
+
+Neither was on a path an attacker could reach through the running application — both packages only run during `npm run build` / `prisma generate`, not in any request handler. `npm audit`'s own suggested fix required major-version bumps (`prisma` → 6.12.0, `next` → 16.3.4). Instead, both transitive packages were pinned directly to their patched versions via `overrides` in `package.json` (`deepmerge-ts@^8.0.2`, `postcss@^8.5.28`), which resolves both advisories with no change to `prisma` or `next` and no breaking changes. `npm audit` now reports 0 vulnerabilities.
+
+### 9.5 Bottom line
+
+No finding here needs a paid penetration test to have caught — they're the kind of thing a focused internal review turns up. Both actionable items (9.2 and 9.4) were fixed the same day, in v1.35.0. Everything else is either already resolved, a pre-existing item on the Section 7 build order, or low severity and non-urgent.
