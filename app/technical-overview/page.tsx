@@ -31,7 +31,7 @@ export default function TechnicalOverviewPage() {
           <tr><td>Auth</td><td>Passwordless 6-digit OTP, first-party session cookies (no third-party auth provider)</td></tr>
           <tr><td>AI</td><td>Google Gemini (<code>@google/generative-ai</code>, model <code>gemini-flash-latest</code>) — text and vision</td></tr>
           <tr><td>Email</td><td>Resend</td></tr>
-          <tr><td>Styling</td><td>Hand-rolled CSS design tokens (<code>--ha-*</code>), no CSS framework</td></tr>
+          <tr><td>Styling</td><td>Hand-rolled responsive household UI and CSS design tokens (<code>--ha-*</code>), with no CSS framework</td></tr>
           <tr><td>Icons</td><td>Lucide React</td></tr>
           <tr><td>Deployment target</td><td>Vercel, Netlify, or a Node.js/Docker host</td></tr>
         </tbody>

@@ -4,7 +4,7 @@ import { CATEGORY_LIST, getCategoryMeta } from '../data/categories';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle } from '../utils/formatters';
 import { hasTextSelection } from '../utils/dom';
-import { Search, ArrowUpDown, Edit2, Trash2, Copy, User, Plus, Sparkles, RefreshCw, Mail, ChevronDown } from 'lucide-react';
+import { Search, ArrowUpDown, Edit2, Trash2, Copy, User, Plus, Sparkles, RefreshCw, Mail, ChevronDown, MoreHorizontal } from 'lucide-react';
 
 function isOverdue(dateStr: string): boolean {
   if (!dateStr) return false;
@@ -62,6 +62,8 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused' | 'unpaid' | 'overdue'>('all');
   const [sortBy, setSortBy] = useState<'amount-desc' | 'amount-asc' | 'renewal' | 'name'>('amount-desc');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [openActionsId, setOpenActionsId] = useState<string | null>(null);
+  const allCategories = [...CATEGORY_LIST, ...customCategories];
 
   // Filter items
   const filteredItems = expenses.filter((item) => {
@@ -115,17 +117,8 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   ];
 
   return (
-    <div className="ha-card" style={{ marginBottom: '2.5rem', overflow: 'hidden' }}>
-      {/* Controls Bar */}
-      <div style={{
-        padding: '1.25rem 1.5rem',
-        borderBottom: '1px solid var(--ha-line)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '1rem',
-      }}>
+    <div className="ha-card ha-ledger-card" style={{ marginBottom: '2.5rem' }}>
+      <div className="ha-ledger-header">
         <div>
           <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
             Household ledger
@@ -140,14 +133,13 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
           </p>
         </div>
 
-        {/* Search & Sort Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          {/* Search Input */}
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+        <div className="ha-ledger-toolbar">
+          <div className="ha-ledger-search">
             <Search size={15} color="var(--ha-muted)" style={{ position: 'absolute', left: '0.75rem', pointerEvents: 'none' }} />
             <input
               type="text"
-              placeholder="Filter expenses, college, sports..."
+              placeholder="Search expenses"
+              aria-label="Search expenses"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="ha-input"
@@ -170,136 +162,61 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                   cursor: 'pointer',
                   fontSize: '0.8rem',
                 }}
+                aria-label="Clear search"
               >
                 ✕
               </button>
             )}
           </div>
 
-          {/* Sort Dropdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <label className="ha-ledger-select-wrap">
+            <span>Category</span>
+            <select
+              aria-label="Filter by category"
+              value={selectedCategory ?? ''}
+              onChange={(e) => onSelectCategory(e.target.value || null)}
+              className="ha-ledger-select"
+            >
+              <option value="">All categories</option>
+              {allCategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </label>
+
+          <div className="ha-ledger-status" role="group" aria-label="Filter by status">
+            {STATUS_FILTERS.map(({ id, label, count }) => {
+              const isSelected = statusFilter === id;
+              const isAlertFilter = id === 'overdue' || id === 'unpaid';
+              return (
+                <button
+                  key={id}
+                  onClick={() => setStatusFilter(id)}
+                  disabled={count === 0 && id !== 'all'}
+                  className={`${isSelected ? 'is-active' : ''}${isAlertFilter ? ' is-alert' : ''}`}
+                  aria-pressed={isSelected}
+                >
+                  <span>{label}</span>
+                  <span className="ha-ledger-status-count">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <label className="ha-ledger-sort">
             <ArrowUpDown size={14} color="var(--ha-muted)" />
             <select
+              aria-label="Sort expenses"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'amount-desc' | 'amount-asc' | 'renewal' | 'name')}
-              style={{
-                backgroundColor: '#fafaf7',
-                color: 'var(--ha-ink)',
-                border: '1px solid var(--ha-line)',
-                borderRadius: 'var(--ha-radius-md)',
-                padding: '0.55rem 0.75rem',
-                fontSize: '0.85rem',
-                outline: 'none',
-                cursor: 'pointer',
-              }}
+              className="ha-ledger-select"
             >
               <option value="amount-desc">Highest amount</option>
               <option value="amount-asc">Lowest amount</option>
               <option value="renewal">Renewal day (1–31)</option>
               <option value="name">Name (A–Z)</option>
             </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter Tabs / Segmented Controls */}
-      <div style={{
-        padding: '0.75rem 1.5rem',
-        backgroundColor: '#fafaf7',
-        borderBottom: '1px solid var(--ha-line)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '0.75rem',
-      }}>
-        {/* Category filters */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => onSelectCategory(null)}
-            style={{
-              padding: '0.3rem 0.65rem',
-              borderRadius: 'var(--ha-radius-sm)',
-              border: '1px solid',
-              borderColor: selectedCategory === null ? 'var(--ha-blue)' : 'var(--ha-line)',
-              backgroundColor: selectedCategory === null ? 'var(--ha-blue-light)' : 'var(--ha-white)',
-              color: selectedCategory === null ? 'var(--ha-blue)' : 'var(--ha-muted)',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            All
-          </button>
-
-          {[...CATEGORY_LIST, ...customCategories].map((cat) => {
-            const isSelected = selectedCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => onSelectCategory(isSelected ? null : cat.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  padding: '0.3rem 0.65rem',
-                  borderRadius: 'var(--ha-radius-sm)',
-                  border: '1px solid',
-                  borderColor: isSelected ? 'var(--ha-blue)' : 'var(--ha-line)',
-                  backgroundColor: isSelected ? 'var(--ha-blue-light)' : 'var(--ha-white)',
-                  color: isSelected ? 'var(--ha-blue)' : 'var(--ha-muted)',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                <span className="ha-color-marker" style={{ backgroundColor: cat.color }} />
-                <span>{cat.name}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Status filters */}
-        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-          {STATUS_FILTERS.map(({ id, label, count }) => {
-            const isSelected = statusFilter === id;
-            const isAlertFilter = id === 'overdue' || id === 'unpaid';
-            return (
-              <button
-                key={id}
-                onClick={() => setStatusFilter(id)}
-                disabled={count === 0 && id !== 'all'}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.3rem',
-                  padding: '0.25rem 0.55rem',
-                  borderRadius: 'var(--ha-radius-sm)',
-                  border: '1px solid',
-                  borderColor: isSelected ? (isAlertFilter ? 'var(--ha-red)' : 'var(--ha-ink)') : 'var(--ha-line)',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  backgroundColor: isSelected ? (isAlertFilter ? 'var(--ha-red)' : 'var(--ha-ink)') : 'var(--ha-white)',
-                  color: isSelected ? 'var(--ha-white)' : count === 0 && id !== 'all' ? '#c3c9bd' : isAlertFilter ? 'var(--ha-red)' : 'var(--ha-muted)',
-                  cursor: count === 0 && id !== 'all' ? 'default' : 'pointer',
-                  opacity: count === 0 && id !== 'all' ? 0.6 : 1,
-                }}
-              >
-                <span>{label}</span>
-                <span style={{
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  padding: '0 0.35rem',
-                  borderRadius: '999px',
-                  backgroundColor: isSelected ? 'rgba(255,255,255,0.25)' : 'var(--ha-line)',
-                  color: isSelected ? 'var(--ha-white)' : 'var(--ha-muted)',
-                }}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+          </label>
         </div>
       </div>
 
@@ -471,87 +388,118 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                   )}
                 </div>
 
-                {/* 3. Paid/Active Status Toggles & Inline Actions */}
+                {/* 3. Payment state, active state, and restrained row actions */}
                 <div className="ha-ledger-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '1rem' }}>
-                  <span
-                    className={`ha-badge ${item.isPaidThisCycle ? 'ha-badge-neutral' : overdue ? 'ha-badge-red' : 'ha-badge-blue'}`}
-                    style={{ fontSize: '0.68rem', cursor: 'pointer' }}
+                  <button
+                    className={`ha-payment-status${item.isPaidThisCycle ? ' is-paid' : overdue ? ' is-overdue' : ' is-unpaid'}`}
                     onClick={(e) => { e.stopPropagation(); onTogglePaid(item.id); }}
                     title={item.isPaidThisCycle ? 'Paid — click to mark unpaid' : 'Unpaid — click to mark paid'}
                   >
                     {item.isPaidThisCycle ? 'Paid' : 'Unpaid'}
-                  </span>
+                  </button>
 
-                  <label className="toggle-switch" title={item.isActive ? 'Active — click to pause' : 'Paused — click to activate'} onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      checked={item.isActive}
-                      onChange={() => onToggleActive(item.id)}
-                    />
-                    <span className="slider"></span>
-                  </label>
-
-                  {item.isVariable && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const input = window.prompt(`New amount for "${item.name}" this cycle:`, String(item.amount));
-                        if (input === null) return;
-                        const parsed = Number(input);
-                        if (!Number.isFinite(parsed) || parsed < 0) return;
-                        onQuickUpdateAmount(item, parsed);
-                      }}
-                      className="btn btn-ghost"
-                      style={{ padding: '0.35rem 0.45rem' }}
-                      title="This bill varies — quickly update just the amount"
-                    >
-                      <RefreshCw size={14} color="var(--ha-blue)" />
-                    </button>
-                  )}
-
-                  {item.vendorEmail && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onContactVendor(item); }}
-                      className="btn btn-ghost"
-                      style={{ padding: '0.35rem 0.45rem' }}
-                      title="Draft an email to the vendor about this contract"
-                    >
-                      <Mail size={14} color="var(--ha-blue)" />
-                    </button>
-                  )}
+                  <div className="ha-active-control" title={item.isActive ? 'Active — click to pause' : 'Paused — click to activate'} onClick={(e) => e.stopPropagation()}>
+                    <span>{item.isActive ? 'Active' : 'Paused'}</span>
+                    <label className="toggle-switch">
+                      <input
+                        type="checkbox"
+                        checked={item.isActive}
+                        onChange={() => onToggleActive(item.id)}
+                        aria-label={`${item.isActive ? 'Pause' : 'Activate'} ${item.name}`}
+                      />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
 
                   <button
                     onClick={(e) => { e.stopPropagation(); onEditExpense(item); }}
-                    className="btn btn-ghost"
-                    style={{ padding: '0.35rem 0.45rem' }}
+                    className="ha-row-edit"
                     title="Edit record"
                   >
                     <Edit2 size={14} />
+                    <span>Edit</span>
                   </button>
+
+                  <div className="ha-row-menu-wrap">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenActionsId(openActionsId === item.id ? null : item.id);
+                      }}
+                      className="ha-row-more"
+                      title="More actions"
+                      aria-label={`More actions for ${item.name}`}
+                      aria-haspopup="menu"
+                      aria-expanded={openActionsId === item.id}
+                    >
+                      <MoreHorizontal size={17} />
+                    </button>
+
+                    {openActionsId === item.id && (
+                      <>
+                        <button
+                          className="ha-row-menu-overlay"
+                          aria-label="Close actions menu"
+                          onClick={(e) => { e.stopPropagation(); setOpenActionsId(null); }}
+                        />
+                        <div className="ha-row-menu" role="menu" onClick={(e) => e.stopPropagation()}>
+                          {item.isVariable && (
+                            <button
+                              role="menuitem"
+                              onClick={() => {
+                                setOpenActionsId(null);
+                                const input = window.prompt(`New amount for "${item.name}" this cycle:`, String(item.amount));
+                                if (input === null) return;
+                                const parsed = Number(input);
+                                if (!Number.isFinite(parsed) || parsed < 0) return;
+                                onQuickUpdateAmount(item, parsed);
+                              }}
+                            >
+                              <RefreshCw size={14} />
+                              <span>Update amount</span>
+                            </button>
+                          )}
+                          {item.vendorEmail && (
+                            <button
+                              role="menuitem"
+                              onClick={() => { setOpenActionsId(null); onContactVendor(item); }}
+                            >
+                              <Mail size={14} />
+                              <span>Contact vendor</span>
+                            </button>
+                          )}
+                          <button
+                            role="menuitem"
+                            onClick={() => { setOpenActionsId(null); onDuplicateExpense(item); }}
+                          >
+                            <Copy size={14} />
+                            <span>Duplicate</span>
+                          </button>
+                          <div className="ha-row-menu-divider" />
+                          <button
+                            role="menuitem"
+                            className="is-destructive"
+                            onClick={() => { setOpenActionsId(null); onDeleteExpense(item.id); }}
+                          >
+                            <Trash2 size={14} />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
 
                   <button
-                    onClick={(e) => { e.stopPropagation(); onDuplicateExpense(item); }}
-                    className="btn btn-ghost"
-                    style={{ padding: '0.35rem 0.45rem' }}
-                    title="Duplicate record"
+                    className="ha-row-expand"
+                    onClick={(e) => { e.stopPropagation(); setExpandedId(isExpanded ? null : item.id); }}
+                    aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${item.name} details`}
+                    aria-expanded={isExpanded}
                   >
-                    <Copy size={14} />
+                    <ChevronDown
+                      size={16}
+                      style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}
+                    />
                   </button>
-
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onDeleteExpense(item.id); }}
-                    className="btn btn-ghost"
-                    style={{ padding: '0.35rem 0.45rem', color: 'var(--ha-red)' }}
-                    title="Delete record"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-
-                  <ChevronDown
-                    size={16}
-                    color="var(--ha-muted)"
-                    style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}
-                  />
                 </div>
               </div>
 

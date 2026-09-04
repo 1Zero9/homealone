@@ -919,8 +919,6 @@ export default function TallyPage() {
               <CategoryBreakdownChart
                 expenses={liveExpenses}
                 currency={currency}
-                selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
                 customCategories={customCategories}
               />
             )}

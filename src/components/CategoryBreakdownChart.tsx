@@ -7,16 +7,12 @@ import { formatCurrency } from '../utils/formatters';
 interface CategoryBreakdownChartProps {
   expenses: ExpenseItem[];
   currency: CurrencyCode;
-  selectedCategory: string | null;
-  onSelectCategory: (category: string | null) => void;
   customCategories?: CustomCategoryItem[];
 }
 
 export const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
   expenses,
   currency,
-  selectedCategory,
-  onSelectCategory,
   customCategories = [],
 }) => {
   const activeExpenses = expenses.filter((e) => e.isActive);
@@ -42,20 +38,10 @@ export const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
 
   return (
     <div className="ha-card" style={{ padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem', gap: '0.75rem', flexWrap: 'wrap' }}>
+      <div style={{ marginBottom: '0.65rem' }}>
         <h3 style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ha-muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-          Category distribution
+          Monthly spending mix
         </h3>
-
-        {selectedCategory && (
-          <button
-            onClick={() => onSelectCategory(null)}
-            className="btn btn-secondary"
-            style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
-          >
-            Show all categories
-          </button>
-        )}
       </div>
 
       {/* Horizontal Stacked Proportion Track */}
@@ -84,40 +70,22 @@ export const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
         })}
       </div>
 
-      {/* Compact Category Legend / Filter Chips */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-        {categoryData.filter((cat) => cat.itemCount > 0).map((cat) => {
-          const isSelected = selectedCategory === cat.id;
-
-          return (
-            <button
-              key={cat.id}
-              onClick={() => onSelectCategory(isSelected ? null : cat.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.3rem 0.6rem',
-                borderRadius: 'var(--ha-radius-sm)',
-                backgroundColor: isSelected ? 'var(--ha-blue-light)' : '#fafaf7',
-                border: isSelected ? '1px solid var(--ha-blue)' : '1px solid var(--ha-line)',
-                cursor: 'pointer',
-                transition: 'background-color 0.12s ease',
-              }}
-            >
-              <span className="ha-color-marker" style={{ backgroundColor: cat.color }} />
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
-                {cat.name}
-              </span>
-              <span className="tabular-nums" style={{ fontSize: '0.78rem', color: 'var(--ha-muted)' }}>
-                {formatCurrency(cat.monthlyAmount, currency)}
-              </span>
-              <span className="tabular-nums" style={{ fontSize: '0.72rem', color: 'var(--ha-muted)' }}>
-                {cat.percentage}%
-              </span>
-            </button>
-          );
-        })}
+      {/* Informational legend. Filtering lives with the ledger controls below. */}
+      <div className="ha-spending-legend">
+        {categoryData.filter((cat) => cat.itemCount > 0).map((cat) => (
+          <div key={cat.id} className="ha-spending-legend-item">
+            <span className="ha-color-marker" style={{ backgroundColor: cat.color }} />
+            <span className="ha-spending-legend-name">
+              {cat.name}
+            </span>
+            <span className="tabular-nums ha-spending-legend-amount">
+              {formatCurrency(cat.monthlyAmount, currency)}
+            </span>
+            <span className="tabular-nums ha-spending-legend-percent">
+              {cat.percentage}%
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -62,8 +62,10 @@ The **Spending** tab (and its sub-views: **All**, **AI & Tech**, **Utilities**, 
 - **Catalog**: add common household bills (Netflix, electricity, broadband, etc.) in one click instead of typing them from scratch.
 - **Usage rating**: mark a subscription as low/medium/high usage — low-usage items are flagged as cancellation candidates in Insights.
 - **Pause / resume**: pause a subscription instead of deleting it, so you keep the history and see it counted in your "already saving" total.
+- **Find and filter**: use the ledger toolbar to search by name, choose one category, filter by payment/activity status, or change the sort order. The spending-mix legend above it is a quick visual summary and does not change the ledger.
+- **Row controls**: **Paid/Unpaid** tracks the current payment cycle; the separately labelled **Active/Paused** switch controls whether the expense is ongoing. **Edit** stays visible, while less common actions—including update amount, contact vendor, duplicate, and delete—are under **More** (•••).
 - **Contract renewal reminders**: once an expense's contract end date is within 60 days, a badge appears on it, and the household is emailed automatically at 30, 14 and 7 days before it ends.
-- **Contact a vendor**: if an expense has a vendor email saved, click the mail icon to have Tally draft a polite email (negotiate a better rate, cancel, or ask about renewal terms). You always review and send it yourself — nothing is emailed automatically.
+- **Contact a vendor**: if an expense has a vendor email saved, open **More** (•••) and choose **Contact vendor** to have Tally draft a polite email (negotiate a better rate, cancel, or ask about renewal terms). You always review and send it yourself — nothing is emailed automatically.
 
 ## 4. Bills (calendar)
 

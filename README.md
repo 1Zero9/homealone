@@ -17,7 +17,7 @@ See [`docs/user-guide.md`](./docs/user-guide.md) for a full walkthrough of every
   - **Member** (Normal user/family): Ability to view, log, categorize, and edit household expenses.
   - **Backup Admin**: Disaster recovery and emergency failover role.
 - **Collaborative Sharing**: Shareable workspace invite links and direct email invitations for partners, spouses, or family members.
-- **Light-Mode Editorial Design System**: Custom Tally design system tokens (`--ha-*`), Barlow Condensed display headings, Inter UI typography, and tabular figures for financial accuracy.
+- **Warm Household Design System**: Custom Tally design tokens (`--ha-*`), friendly system typography, accessible focus states, responsive controls, and tabular figures for financial accuracy.
 - **Money Journey**: Log real transfers between accounts and to/from external payees (Flow), track savings Goals with progress bars (with a quick split-into-instalments calculator), and visualize the actual multi-hop money journey (Money Map).
 - **AI Statement Import**: Cross-check a bank/card statement (CSV, PDF, or a photo/screenshot) against your bills — Tally reads PDFs and photos with AI, auto-matches recognised charges, extracts and verifies the account number/sort code against your saved accounts, and flags anything worth a second look.
 - **AI Money-Flow Insights**: On-demand AI analysis of idle cash, direct-debit timing risk, account consolidation opportunities, and savings suggestions.

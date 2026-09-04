@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.30.1';
+export const APP_VERSION = '1.31.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.31.0',
+    date: '2026-09-04',
+    changes: [
+      'Simplified Spending so categories are no longer repeated across three rows: the spending mix is now a compact informational legend, while category, status, search and sort controls live together in one ledger toolbar.',
+      'Clarified every ledger row by separating Paid/Unpaid from the labelled Active/Paused switch, keeping Edit visible, and moving occasional actions such as amount updates, vendor contact, duplicate and delete into a clearly labelled More menu.',
+      'Improved the responsive ledger toolbar and spending legend so filters remain compact and readable on tablets and phones.',
+    ],
+  },
   {
     version: '1.30.1',
     date: '2026-09-04',
@@ -342,9 +351,16 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
 ];
 
-export const MOBILE_APP_VERSION = '1.1.1';
+export const MOBILE_APP_VERSION = '1.2.0';
 
 export const MOBILE_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.2.0',
+    date: '2026-09-04',
+    changes: [
+      'Simplified Spending filters into a responsive toolbar and replaced crowded row icons with labelled status controls and a compact More menu.',
+    ],
+  },
   {
     version: '1.1.1',
     date: '2026-09-04',

@@ -20,6 +20,8 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
     body: [
       'Click "Add expense" in the top bar to record a bill, subscription or one-off cost. Set the amount, billing cycle, category and payment method.',
       'Use "Catalog" to add common household bills (Netflix, electricity, broadband, etc.) in one click instead of typing them from scratch.',
+      'Use the Spending ledger toolbar to search, choose a category, filter by status, or change the sort order. The spending-mix legend is a summary only, so it never changes your filters.',
+      'Paid/Unpaid tracks this payment cycle; Active/Paused controls whether the expense is ongoing. Edit stays visible, while occasional actions such as update amount, contact vendor, duplicate and delete are under the three-dot More menu.',
       'Big one-off costs like a mortgage, loan repayment or large purchase have their own "Mortgage, Loans & Big Purchases" category, kept separate from everyday bills.',
       'Don\'t see a category that fits (e.g. road tolls)? Pick "+ Create new category…" at the bottom of the category dropdown, give it a name, and it\'s ready to use everywhere — for everyone in the household.',
       'Switch to the "Income" tab to record salary, freelance or rental income and see your money in vs money out.',
@@ -113,8 +115,8 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
     id: 'vendor',
     title: 'Contacting a vendor',
     body: [
-      'If an expense has a vendor email saved, a mail icon appears next to it in the ledger.',
-      'Click it to have a draft email prepared for you (ask for a better rate, cancel, or ask about renewal terms) — review and edit it, then send it yourself. Nothing is ever emailed automatically without you clicking send.',
+      'If an expense has a vendor email saved, open its three-dot More menu in the ledger and choose "Contact vendor".',
+      'Tally prepares a draft email for you (ask for a better rate, cancel, or ask about renewal terms) — review and edit it, then send it yourself. Nothing is ever emailed automatically without you clicking send.',
     ],
   },
   {

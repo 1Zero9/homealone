@@ -793,6 +793,300 @@ input:checked + .slider:before {
   display: none;
 }
 
+/* Spending overview and ledger */
+.ha-spending-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 1.1rem;
+}
+
+.ha-spending-legend-item {
+  display: inline-grid;
+  grid-template-columns: auto auto auto auto;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--ha-muted);
+  font-size: 0.76rem;
+}
+
+.ha-spending-legend-name {
+  color: var(--ha-ink);
+  font-weight: 650;
+}
+
+.ha-spending-legend-amount {
+  color: var(--ha-muted);
+}
+
+.ha-spending-legend-percent {
+  color: #7d8881;
+}
+
+.ha-ledger-card {
+  position: relative;
+}
+
+.ha-ledger-header {
+  display: grid;
+  gap: 1rem;
+  padding: 1.35rem 1.5rem 1.15rem;
+  border-bottom: 1px solid var(--ha-line);
+}
+
+.ha-ledger-toolbar {
+  display: grid;
+  grid-template-columns: minmax(190px, 1.2fr) minmax(180px, 0.85fr) auto minmax(170px, 0.8fr);
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.ha-ledger-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ha-ledger-search .ha-input {
+  width: 100% !important;
+  min-height: 40px;
+  background: var(--ha-white);
+}
+
+.ha-ledger-select-wrap,
+.ha-ledger-sort {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  border: 1px solid var(--ha-line);
+  border-radius: 12px;
+  background: var(--ha-white);
+  color: var(--ha-muted);
+}
+
+.ha-ledger-select-wrap {
+  padding-left: 0.7rem;
+  gap: 0.25rem;
+}
+
+.ha-ledger-select-wrap > span {
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.ha-ledger-sort {
+  padding-left: 0.7rem;
+}
+
+.ha-ledger-select {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0.45rem 1.8rem 0.45rem 0.45rem;
+  background: transparent;
+  border: 0;
+  color: var(--ha-ink);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  outline: 0;
+}
+
+.ha-ledger-select-wrap:focus-within,
+.ha-ledger-sort:focus-within {
+  border-color: var(--ha-blue);
+  box-shadow: 0 0 0 3px rgba(23, 107, 82, 0.1);
+}
+
+.ha-ledger-status {
+  display: inline-flex;
+  min-height: 40px;
+  padding: 3px;
+  overflow-x: auto;
+  border: 1px solid var(--ha-line);
+  border-radius: 12px;
+  background: #f5f7f3;
+  scrollbar-width: none;
+}
+
+.ha-ledger-status::-webkit-scrollbar {
+  display: none;
+}
+
+.ha-ledger-status button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 32px;
+  padding: 0.3rem 0.52rem;
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  color: var(--ha-muted);
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.ha-ledger-status button:hover:not(:disabled) {
+  color: var(--ha-ink);
+}
+
+.ha-ledger-status button.is-active {
+  background: var(--ha-white);
+  color: var(--ha-ink);
+  box-shadow: 0 1px 4px rgba(31, 49, 40, 0.1);
+}
+
+.ha-ledger-status button.is-alert:not(.is-active) {
+  color: var(--ha-red);
+}
+
+.ha-ledger-status button:disabled {
+  cursor: default;
+  opacity: 0.42;
+}
+
+.ha-ledger-status-count {
+  color: inherit;
+  font-size: 0.64rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ha-ledger-row .ha-badge-neutral {
+  background: transparent;
+  border: 1px solid var(--ha-line);
+  color: var(--ha-muted);
+}
+
+.ha-payment-status,
+.ha-row-edit,
+.ha-row-more,
+.ha-row-expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.ha-payment-status {
+  padding: 0.25rem 0.58rem;
+  border: 1px solid transparent;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.ha-payment-status.is-paid {
+  background: #edf1eb;
+  color: #617067;
+}
+
+.ha-payment-status.is-unpaid {
+  background: var(--ha-blue-light);
+  color: var(--ha-blue);
+}
+
+.ha-payment-status.is-overdue {
+  background: var(--ha-red-tint);
+  color: var(--ha-red);
+}
+
+.ha-active-control {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--ha-muted);
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+.ha-row-edit {
+  gap: 0.35rem;
+  padding: 0.35rem 0.55rem;
+  background: transparent;
+  border: 0;
+  color: var(--ha-muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.ha-row-edit:hover,
+.ha-row-more:hover,
+.ha-row-expand:hover {
+  background: #eef2ed;
+  color: var(--ha-ink);
+}
+
+.ha-row-menu-wrap {
+  position: relative;
+}
+
+.ha-row-more,
+.ha-row-expand {
+  width: 34px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--ha-muted);
+}
+
+.ha-row-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 69;
+  background: transparent;
+  border: 0;
+}
+
+.ha-row-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 70;
+  width: 180px;
+  padding: 0.35rem;
+  background: var(--ha-white);
+  border: 1px solid var(--ha-line);
+  border-radius: 12px;
+  box-shadow: var(--ha-shadow-elevated);
+}
+
+.ha-row-menu > button {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.58rem 0.65rem;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ha-ink);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.ha-row-menu > button:hover {
+  background: #eef2ed;
+}
+
+.ha-row-menu > button.is-destructive {
+  color: var(--ha-red);
+}
+
+.ha-row-menu > button.is-destructive:hover {
+  background: var(--ha-red-tint);
+}
+
+.ha-row-menu-divider {
+  height: 1px;
+  margin: 0.25rem;
+  background: var(--ha-line);
+}
+
 /* Overview Dashboard 2-Column Layout */
 .ha-overview-grid {
   display: grid;
@@ -838,6 +1132,16 @@ input:checked + .slider:before {
   animation: scaleIn 0.15s ease-out;
 }
 
+@media (max-width: 1100px) {
+  .ha-ledger-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ha-ledger-status {
+    justify-content: space-between;
+  }
+}
+
 @media (max-width: 900px) {
   .hide-mobile {
     display: none !important;
@@ -871,6 +1175,21 @@ input:checked + .slider:before {
 
   .ha-ledger-actions .btn-ghost {
     padding: 0.3rem !important;
+  }
+
+  .ha-ledger-search,
+  .ha-ledger-status {
+    grid-column: 1 / -1;
+  }
+
+  .ha-ledger-status button {
+    justify-content: center;
+    flex: 1;
+  }
+
+  .ha-row-edit span,
+  .ha-active-control > span {
+    display: inline;
   }
 
   .desktop-only {
@@ -1014,6 +1333,36 @@ input:checked + .slider:before {
 
   .ha-ledger-row {
     padding: 0.9rem;
+  }
+
+  .ha-ledger-header {
+    padding: 1.1rem 1rem 1rem;
+  }
+
+  .ha-ledger-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .ha-ledger-search,
+  .ha-ledger-status {
+    grid-column: auto;
+  }
+
+  .ha-ledger-status {
+    justify-content: flex-start;
+  }
+
+  .ha-ledger-status button {
+    flex: 0 0 auto;
+  }
+
+  .ha-spending-legend {
+    gap: 0.4rem 0.8rem;
+  }
+
+  .ha-spending-legend-item {
+    width: 100%;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
   }
 
   .ha-stat-row > div {
