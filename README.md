@@ -4,7 +4,7 @@
 
 Tally is an editorial light-mode household expense, subscription, and utility tracking web application built with Next.js App Router (15+), TypeScript, React 19, and PostgreSQL via Prisma ORM.
 
-See [`docs/user-guide.md`](./docs/user-guide.md) for a full walkthrough of every feature.
+See [`docs/user-guide.md`](./docs/user-guide.md) for a full walkthrough of every feature, or [`docs/technical-overview.md`](./docs/technical-overview.md) for the full technical architecture, data model, API reference, and security model.
 
 ---
 
