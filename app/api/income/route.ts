@@ -90,7 +90,7 @@ export async function POST(request: Request) {
         isActive: typeof body.isActive === 'boolean' ? body.isActive : true,
         notes: body.notes || null,
         depositAccountId: body.depositAccountId || null,
-        createdById: auth.user.id,
+        createdById: body.createdById !== undefined ? (body.createdById || null) : auth.user.id,
         householdId: auth.user.householdId,
       },
       include: {
@@ -149,6 +149,7 @@ export async function PUT(request: Request) {
         isActive: typeof body.isActive === 'boolean' ? body.isActive : true,
         notes: body.notes || null,
         ...(body.depositAccountId !== undefined ? { depositAccountId: body.depositAccountId || null } : {}),
+        ...(body.createdById !== undefined ? { createdById: body.createdById || null } : {}),
       },
       include: {
         createdBy: {

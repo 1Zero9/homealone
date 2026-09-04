@@ -185,7 +185,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         isVariable,
         paymentAccountId: paymentAccountId || null,
         linkedGoalId: linkedGoalId || null,
-        createdById: assignedUserId || currentUserId,
+        createdById: assignedUserId || null,
       },
       editingExpense?.id
     );

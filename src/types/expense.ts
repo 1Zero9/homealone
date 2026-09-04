@@ -98,7 +98,7 @@ export interface ExpenseItem {
     currency: CurrencyCode;
     targetDate?: string | null;
   } | null;
-  createdById?: string;
+  createdById?: string | null;
   createdBy?: {
     id: string;
     name: string;
@@ -120,7 +120,7 @@ export interface IncomeItem {
   notes?: string;
   depositAccountId?: string | null;
   depositAccount?: AccountSummary | null;
-  createdById?: string;
+  createdById?: string | null;
   createdBy?: {
     id: string;
     name: string;

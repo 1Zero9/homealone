@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.31.2';
+export const APP_VERSION = '1.31.3';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.31.3',
+    date: '2026-09-04',
+    changes: [
+      'Fixed expense and income "Assigned Household Member" dropdowns silently ignoring the "Household (Shared)" option — picking Shared now actually saves as unassigned instead of falling back to whoever was signed in, and editing an existing expense/income now correctly saves a change of assignment (it was previously not persisted at all).',
+    ],
+  },
   {
     version: '1.31.2',
     date: '2026-09-04',

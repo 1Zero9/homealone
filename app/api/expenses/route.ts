@@ -102,7 +102,7 @@ export async function POST(request: Request) {
         isVariable: typeof body.isVariable === 'boolean' ? body.isVariable : false,
         paymentAccountId: body.paymentAccountId || null,
         linkedGoalId: body.linkedGoalId || null,
-        createdById: auth.user.id,
+        createdById: body.createdById !== undefined ? (body.createdById || null) : auth.user.id,
         householdId: auth.user.householdId,
       },
       include: {
@@ -179,6 +179,7 @@ export async function PUT(request: Request) {
         isVariable: typeof body.isVariable === 'boolean' ? body.isVariable : false,
         ...(body.paymentAccountId !== undefined ? { paymentAccountId: body.paymentAccountId || null } : {}),
         ...(body.linkedGoalId !== undefined ? { linkedGoalId: body.linkedGoalId || null } : {}),
+        ...(body.createdById !== undefined ? { createdById: body.createdById || null } : {}),
         ...(typeof body.isPaidThisCycle === 'boolean' ? { isPaidThisCycle: body.isPaidThisCycle } : {}),
         ...(markingPaid ? { lastPaidAt: new Date() } : {}),
         ...(markingUnpaid ? { lastPaidAt: null } : {}),

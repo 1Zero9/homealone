@@ -82,7 +82,7 @@ export const IncomeModal: React.FC<IncomeModalProps> = ({
         isActive: true,
         notes: notes.trim(),
         depositAccountId: depositAccountId || null,
-        createdById: assignedUserId || currentUserId,
+        createdById: assignedUserId || null,
       },
       editingIncome?.id
     );
