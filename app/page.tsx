@@ -45,6 +45,7 @@ import { GoalsSection } from '@/src/components/GoalsSection';
 import { GoalModal } from '@/src/components/GoalModal';
 import { PrivacyBlurOverlay } from '@/src/components/PrivacyBlurOverlay';
 import { usePrivacyBlur } from '@/src/hooks/usePrivacyBlur';
+import { useSensitiveReveal } from '@/src/hooks/useSensitiveReveal';
 import { useIdleLogout } from '@/src/hooks/useIdleLogout';
 import { ChangelogModal } from '@/src/components/ChangelogModal';
 import { ScanReceiptModal } from '@/src/components/ScanReceiptModal';
@@ -105,6 +106,7 @@ export default function TallyPage() {
   const [editingGoal, setEditingGoal] = useState<GoalItem | null>(null);
 
   const { isBlurred: isPrivacyBlurred, reveal: revealPrivacyBlur, toggle: togglePrivacyBlur, blurNow: hidePrivacyNow } = usePrivacyBlur();
+  const { isRevealed: isSensitiveRevealed, reveal: revealSensitive } = useSensitiveReveal();
 
   // Fetch users & expenses from Prisma PostgreSQL API
   const fetchDatabaseData = useCallback(async () => {
@@ -915,6 +917,8 @@ export default function TallyPage() {
             onViewAllBills={() => setActiveTab('calendar')}
             plannedExpenses={plannedExpenses}
             onViewPlanned={() => setActiveTab('planned')}
+            isSensitiveRevealed={isSensitiveRevealed}
+            onRevealSensitive={revealSensitive}
           />
         )}
 
@@ -1011,6 +1015,8 @@ export default function TallyPage() {
                 setEditingIncome(null);
                 setIsIncomeModalOpen(true);
               }}
+              isSensitiveRevealed={isSensitiveRevealed}
+              onRevealSensitive={revealSensitive}
             />
           </>
         )}

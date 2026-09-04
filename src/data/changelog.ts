@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.36.0';
+export const APP_VERSION = '1.37.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.37.0',
+    date: '2026-09-04',
+    changes: [
+      'Added a second, per-figure privacy blur for the most sensitive amounts — "Left after bills" on Overview and every income figure (monthly total plus each salary/other income row) — that stays blurred even when the main screen privacy blur is off. Each one only unblurs when you click it, independently of the others, and stays revealed for the rest of your session.',
+    ],
+  },
   {
     version: '1.36.0',
     date: '2026-09-04',

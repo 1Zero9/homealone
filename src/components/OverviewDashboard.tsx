@@ -4,6 +4,7 @@ import { CATEGORY_LIST, getCategoryMeta } from '../data/categories';
 import { convertCurrency, getMonthlyEquivalent, getDaysUntilRenewal } from '../utils/calculations';
 import { formatCurrency, formatRenewalCountdown, formatDate } from '../utils/formatters';
 import { TrendingUp, Clock, PiggyBank, ArrowRight, Edit2, CalendarClock } from 'lucide-react';
+import { SensitiveValue } from './SensitiveValue';
 
 interface OverviewDashboardProps {
   expenses: ExpenseItem[];
@@ -18,6 +19,8 @@ interface OverviewDashboardProps {
   plannedExpenses?: ExpenseItem[];
   onViewPlanned?: () => void;
   customCategories?: CustomCategoryItem[];
+  isSensitiveRevealed: (id: string) => boolean;
+  onRevealSensitive: (id: string) => void;
 }
 
 type MobilePanel = 'recent' | 'spending' | 'bills';
@@ -35,6 +38,8 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   plannedExpenses = [],
   onViewPlanned,
   customCategories = [],
+  isSensitiveRevealed,
+  onRevealSensitive,
 }) => {
   const [mobilePanel, setMobilePanel] = React.useState<MobilePanel>('recent');
   const activeExpenses = expenses.filter((e) => e.isActive);
@@ -156,8 +161,13 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
           </div>
           {hasIncome ? (
             <div className="tabular-nums ha-stat-amount" style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
-              {netAfterBills >= 0 ? '+' : ''}{formatCurrency(netAfterBills, currency)}
-              <span style={{ fontSize: '0.85rem', color: 'var(--ha-muted)', fontWeight: 500 }}>/mo</span>
+              <SensitiveValue
+                revealed={isSensitiveRevealed('overview-left-after-bills')}
+                onReveal={() => onRevealSensitive('overview-left-after-bills')}
+              >
+                {netAfterBills >= 0 ? '+' : ''}{formatCurrency(netAfterBills, currency)}
+                <span style={{ fontSize: '0.85rem', color: 'var(--ha-muted)', fontWeight: 500 }}>/mo</span>
+              </SensitiveValue>
             </div>
           ) : (
             <button onClick={onOpenAddIncome} className="btn btn-secondary" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>

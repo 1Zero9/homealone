@@ -4,6 +4,7 @@ import { convertCurrency, getMonthlyEquivalent, getDaysUntilRenewal } from '../u
 import { formatCurrency, formatBillingCycle, formatDate } from '../utils/formatters';
 import { Edit2, Trash2, Plus, Wallet, User } from 'lucide-react';
 import { CollapsibleSection } from './CollapsibleSection';
+import { SensitiveValue } from './SensitiveValue';
 
 const CATEGORY_LABELS: Record<string, string> = {
   salary: 'Salary / wages',
@@ -21,6 +22,8 @@ interface IncomeSectionProps {
   onEditIncome: (income: IncomeItem) => void;
   onDeleteIncome: (id: string) => void;
   onOpenAddModal: () => void;
+  isSensitiveRevealed: (id: string) => boolean;
+  onRevealSensitive: (id: string) => void;
 }
 
 export const IncomeSection: React.FC<IncomeSectionProps> = ({
@@ -31,6 +34,8 @@ export const IncomeSection: React.FC<IncomeSectionProps> = ({
   onEditIncome,
   onDeleteIncome,
   onOpenAddModal,
+  isSensitiveRevealed,
+  onRevealSensitive,
 }) => {
   const monthlyTotal = incomes
     .filter((i) => i.isActive)
@@ -60,7 +65,12 @@ export const IncomeSection: React.FC<IncomeSectionProps> = ({
                 Monthly total
               </div>
               <div className="tabular-nums" style={{ fontSize: '1.65rem', fontWeight: 700, color: 'var(--ha-blue)' }}>
-                {formatCurrency(monthlyTotal, currency)}
+                <SensitiveValue
+                  revealed={isSensitiveRevealed('income-monthly-total')}
+                  onReveal={() => onRevealSensitive('income-monthly-total')}
+                >
+                  {formatCurrency(monthlyTotal, currency)}
+                </SensitiveValue>
               </div>
             </div>
             <button onClick={onOpenAddModal} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>
@@ -147,17 +157,22 @@ export const IncomeSection: React.FC<IncomeSectionProps> = ({
                   </div>
 
                   <div className="ha-ledger-amount" style={{ textAlign: 'right', minWidth: '130px' }}>
-                    <div className="tabular-nums" style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
-                      {formatCurrency(item.amount, item.currency)}
-                      <span style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', fontWeight: 400, marginLeft: '2px' }}>
-                        {formatBillingCycle(item.frequency)}
-                      </span>
-                    </div>
-                    {item.frequency !== 'monthly' && (
-                      <div className="tabular-nums" style={{ fontSize: '0.72rem', color: 'var(--ha-muted)' }}>
-                        ≈ {formatCurrency(monthlyAmount, currency)}/mo
+                    <SensitiveValue
+                      revealed={isSensitiveRevealed(`income-amount-${item.id}`)}
+                      onReveal={() => onRevealSensitive(`income-amount-${item.id}`)}
+                    >
+                      <div className="tabular-nums" style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
+                        {formatCurrency(item.amount, item.currency)}
+                        <span style={{ fontSize: '0.75rem', color: 'var(--ha-muted)', fontWeight: 400, marginLeft: '2px' }}>
+                          {formatBillingCycle(item.frequency)}
+                        </span>
                       </div>
-                    )}
+                      {item.frequency !== 'monthly' && (
+                        <div className="tabular-nums" style={{ fontSize: '0.72rem', color: 'var(--ha-muted)' }}>
+                          ≈ {formatCurrency(monthlyAmount, currency)}/mo
+                        </div>
+                      )}
+                    </SensitiveValue>
                   </div>
 
                   <div className="ha-ledger-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '1rem' }}>
