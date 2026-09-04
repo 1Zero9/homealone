@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.35.0';
+export const APP_VERSION = '1.35.1';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.35.1',
+    date: '2026-09-04',
+    changes: [
+      'Fixed the "Screen hidden for privacy" card appearing lower than expected on load — it now stays centered on screen regardless of page length or scroll position, instead of centering within the full (sometimes very tall) page content.',
+    ],
+  },
   {
     version: '1.35.0',
     date: '2026-09-04',

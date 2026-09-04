@@ -1087,11 +1087,14 @@ input:checked + .slider:before {
   background: var(--ha-line);
 }
 
-/* Privacy screen */
+/* Privacy screen — fixed to the viewport (not the content wrapper) so the
+   card stays centered on screen no matter how tall the underlying page is
+   or how far the user has scrolled. Sits below the sticky navbar's z-index
+   (50) so nav stays visible and usable while blurred. */
 .ha-privacy-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 40;
   display: flex;
   align-items: center;
   justify-content: center;
