@@ -333,6 +333,26 @@ export interface PresetItem {
   notes?: string;
 }
 
+export type BugSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type BugStatus = 'OPEN' | 'FIXED';
+
+export interface BugReportItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  area?: string | null;
+  severity: BugSeverity;
+  status: BugStatus;
+  createdById?: string | null;
+  createdBy?: {
+    id: string;
+    name: string;
+    role: UserRole;
+  } | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface SpendingSummary {
   monthlyTotal: number;
   annualTotal: number;

@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.31.3';
+export const APP_VERSION = '1.32.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.32.0',
+    date: '2026-09-04',
+    changes: [
+      'Added a Bug log (Menu → Bug log): jot down issues as you spot them — title, area, severity and steps to reproduce — then export the whole list to a Markdown file with one click to hand to an AI coding tool or paste into an issue tracker.',
+    ],
+  },
   {
     version: '1.31.3',
     date: '2026-09-04',

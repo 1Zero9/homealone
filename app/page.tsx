@@ -28,6 +28,7 @@ import { ExportImportModal } from '@/src/components/ExportImportModal';
 import { ShareWorkspaceModal } from '@/src/components/ShareWorkspaceModal';
 import { ContactVendorModal } from '@/src/components/ContactVendorModal';
 import { HelpGuideModal } from '@/src/components/HelpGuideModal';
+import { BugLogModal } from '@/src/components/BugLogModal';
 import { SettingsModal } from '@/src/components/SettingsModal';
 import { OverviewDashboard } from '@/src/components/OverviewDashboard';
 import { AssistantBox } from '@/src/components/AssistantBox';
@@ -81,6 +82,7 @@ export default function TallyPage() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [isBugLogModalOpen, setIsBugLogModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isChangelogModalOpen, setIsChangelogModalOpen] = useState(false);
   const [changelogVariant, setChangelogVariant] = useState<'desktop' | 'mobile'>('desktop');
@@ -818,6 +820,7 @@ export default function TallyPage() {
         }}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         onOpenHelpModal={() => setIsHelpModalOpen(true)}
+        onOpenBugLog={() => setIsBugLogModalOpen(true)}
         onFocusAsk={handleFocusAsk}
         onLogout={handleLogout}
         currentUser={currentUser}
@@ -1429,6 +1432,12 @@ export default function TallyPage() {
         isOpen={isHelpModalOpen}
         onClose={() => setIsHelpModalOpen(false)}
         currentUser={currentUser}
+      />
+
+      {/* Bug Log Modal */}
+      <BugLogModal
+        isOpen={isBugLogModalOpen}
+        onClose={() => setIsBugLogModalOpen(false)}
       />
 
       {/* Settings & Preferences Modal */}

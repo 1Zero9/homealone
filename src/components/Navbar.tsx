@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { UserProfile } from '../types/expense';
-import { Plus, Search, Settings, HelpCircle, LogOut, ShieldCheck, Menu, X, ChevronDown, Eye, EyeOff, ScanLine } from 'lucide-react';
+import { Plus, Search, Settings, HelpCircle, LogOut, ShieldCheck, Menu, X, ChevronDown, Eye, EyeOff, ScanLine, Bug } from 'lucide-react';
 import { TallyLogo } from './TallyLogo';
 import { APP_VERSION, MOBILE_APP_VERSION } from '../data/changelog';
 
@@ -33,6 +33,7 @@ interface NavbarProps {
   onOpenScanModal: () => void;
   onOpenSettings: () => void;
   onOpenHelpModal: () => void;
+  onOpenBugLog: () => void;
   onFocusAsk: () => void;
   onLogout: () => void;
   currentUser: UserProfile | null;
@@ -48,6 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenScanModal,
   onOpenSettings,
   onOpenHelpModal,
+  onOpenBugLog,
   onFocusAsk,
   onLogout,
   currentUser,
@@ -159,6 +161,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <button className="ha-dropdown-item" onClick={() => { onOpenHelpModal(); setIsAvatarMenuOpen(false); }}>
                         <HelpCircle size={15} />
                         <span>Help guide</span>
+                      </button>
+                      <button className="ha-dropdown-item" onClick={() => { onOpenBugLog(); setIsAvatarMenuOpen(false); }}>
+                        <Bug size={15} />
+                        <span>Bug log</span>
                       </button>
                       <div className="ha-dropdown-divider" />
                       <button className="ha-dropdown-item destructive" onClick={() => { onLogout(); setIsAvatarMenuOpen(false); }}>
@@ -295,6 +301,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button onClick={() => { onOpenHelpModal(); setIsDrawerOpen(false); }} className="ha-dropdown-item">
                 <HelpCircle size={15} />
                 <span>Help guide</span>
+              </button>
+              <button onClick={() => { onOpenBugLog(); setIsDrawerOpen(false); }} className="ha-dropdown-item">
+                <Bug size={15} />
+                <span>Bug log</span>
               </button>
               <button onClick={() => { onLogout(); setIsDrawerOpen(false); }} className="ha-dropdown-item destructive">
                 <LogOut size={15} />

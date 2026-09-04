@@ -36,6 +36,18 @@ enum StatementTxDirection {
   CREDIT
 }
 
+enum BugSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum BugStatus {
+  OPEN
+  FIXED
+}
+
 model Household {
   id         String   @id @default(cuid())
   name       String   @default("Our Household")
@@ -57,6 +69,8 @@ model Household {
 
   mapNodes MapNode[]
   mapEdges MapEdge[]
+
+  bugReports BugReport[]
 }
 
 model User {
@@ -83,6 +97,8 @@ model User {
   categoriesCreated       Category[]
 
   mapNodesCreated MapNode[]
+
+  bugReportsCreated BugReport[]
 }
 
 model Session {
@@ -504,4 +520,27 @@ model MapEdge {
   @@index([householdId])
   @@index([fromNodeId])
   @@index([toNodeId])
+}
+
+/// A user-logged bug/issue report, kept in-app so problems can be recorded
+/// in the moment and later exported to Markdown for handing to an AI coding
+/// tool or tracking in an external issue tracker.
+model BugReport {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  area        String?
+  severity    BugSeverity @default(MEDIUM)
+  status      BugStatus   @default(OPEN)
+
+  householdId String?
+  household   Household?  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User?       @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([householdId])
 }
