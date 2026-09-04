@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.31.0';
+export const APP_VERSION = '1.31.2';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,20 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.31.2',
+    date: '2026-09-04',
+    changes: [
+      'Fixed the privacy screen activating too eagerly — momentary focus loss (opening a dropdown, date picker, or browser autofill popup) no longer triggers it; the screen now only hides content if focus genuinely leaves the app for a moment.',
+    ],
+  },
+  {
+    version: '1.31.1',
+    date: '2026-09-04',
+    changes: [
+      'Polished the privacy screen with stronger visual obscuring, reassuring Tally branding, and a clear keyboard-focused Reveal Tally button instead of an ambiguous click-anywhere prompt.',
+    ],
+  },
   {
     version: '1.31.0',
     date: '2026-09-04',
@@ -351,9 +365,16 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
 ];
 
-export const MOBILE_APP_VERSION = '1.2.0';
+export const MOBILE_APP_VERSION = '1.2.1';
 
 export const MOBILE_CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.2.1',
+    date: '2026-09-04',
+    changes: [
+      'Improved the privacy screen with a stronger veil, Tally branding, and a large accessible Reveal Tally button.',
+    ],
+  },
   {
     version: '1.2.0',
     date: '2026-09-04',
