@@ -284,6 +284,18 @@ export default function TallyPage() {
     setCurrentUser(null);
   };
 
+  const handleSignOutEverywhere = async () => {
+    if (!window.confirm('Sign out of every device, including this one? You will need to sign in again with a fresh code.')) return;
+    try {
+      localStorage.removeItem('tally_user');
+    } catch {}
+    try {
+      await fetch('/api/auth/sessions', { method: 'DELETE' });
+    } catch {}
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+  };
+
   // Signs out automatically after a long stretch of genuine inactivity
   // (no mouse/keyboard/touch/scroll input) — separate from the much shorter
   // privacy blur, and from the 30-day "remember me" session cookie.
@@ -1404,6 +1416,7 @@ export default function TallyPage() {
         onOpenExportModal={() => setIsExportModalOpen(true)}
         onOpenShareModal={() => setIsShareModalOpen(true)}
         onResetData={handleResetData}
+        onSignOutEverywhere={handleSignOutEverywhere}
       />
     </div>
   );

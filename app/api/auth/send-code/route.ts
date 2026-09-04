@@ -6,6 +6,36 @@ import { isEmailConfigured, sendVerificationCodeEmail } from '@/src/lib/mail';
 const CODE_TTL_MS = 15 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 30 * 1000;
 
+// Coarse per-IP throttle, in addition to the per-email cooldown below — caps
+// how many different email addresses a single source can probe in a short
+// window. In-memory only (best-effort within one server instance; resets on
+// redeploy/cold-start on serverless), but combined with the per-email
+// cooldown and the verify-code attempt cap it meaningfully raises the bar
+// for a single instance without adding infra dependencies.
+const IP_WINDOW_MS = 10 * 60 * 1000;
+const IP_MAX_REQUESTS = 20;
+const ipHits = new Map<string, number[]>();
+
+function isIpRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const hits = (ipHits.get(ip) || []).filter((t) => now - t < IP_WINDOW_MS);
+  hits.push(now);
+  ipHits.set(ip, hits);
+  if (ipHits.size > 5000) {
+    // Simple unbounded-growth guard for a long-lived instance.
+    for (const [key, times] of ipHits) {
+      if (times.every((t) => now - t >= IP_WINDOW_MS)) ipHits.delete(key);
+    }
+  }
+  return hits.length > IP_MAX_REQUESTS;
+}
+
+function getClientIp(request: Request): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return request.headers.get('x-real-ip') || 'unknown';
+}
+
 // This app is single-tenant / invite-only: nobody can self-register. A code
 // is only ever issued to an email that already exists as a User record
 // (created by an admin via the "Share workspace" invite flow). We still
@@ -15,6 +45,13 @@ const GENERIC_MESSAGE = 'If that email has access, a verification code has been 
 
 export async function POST(request: Request) {
   try {
+    if (isIpRateLimited(getClientIp(request))) {
+      return NextResponse.json(
+        { status: 'error', message: 'Too many requests. Please wait a while before trying again.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const email = (body.email || '').trim().toLowerCase();
 

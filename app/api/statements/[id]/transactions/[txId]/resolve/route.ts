@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getErrorMessage } from '@/src/lib/errors';
 import { requireHouseholdUser } from '@/src/lib/auth';
-import { buildAliasPattern } from '@/src/lib/statementMatching';
+import { buildAliasPattern, sanitizeImportedText } from '@/src/lib/statementMatching';
 import { getCategoryMeta, isBuiltinCategory } from '@/src/data/categories';
 import type { ExpenseCategory } from '@/src/types/expense';
 
@@ -101,7 +101,7 @@ export async function POST(
     }
 
     if (action === 'rename_merchant') {
-      const vendorName = typeof body.vendorName === 'string' ? body.vendorName.trim() : '';
+      const vendorName = typeof body.vendorName === 'string' ? sanitizeImportedText(body.vendorName, 120) : '';
       if (!vendorName) {
         return NextResponse.json({ status: 'error', message: 'Enter a name for this merchant' }, { status: 400 });
       }
@@ -138,7 +138,7 @@ export async function POST(
     }
 
     if (action === 'log_transfer') {
-      const vendorName = typeof body.vendorName === 'string' && body.vendorName.trim() ? body.vendorName.trim() : tx.vendorName || tx.rawDescription;
+      const vendorName = typeof body.vendorName === 'string' && body.vendorName.trim() ? sanitizeImportedText(body.vendorName, 120) : tx.vendorName || tx.rawDescription;
 
       const transfer = await prisma.transfer.create({
         data: {
@@ -181,7 +181,7 @@ export async function POST(
         return NextResponse.json({ status: 'error', message: 'A valid category must be selected' }, { status: 400 });
       }
 
-      const vendorName = typeof body.vendorName === 'string' && body.vendorName.trim() ? body.vendorName.trim() : tx.vendorName || tx.rawDescription;
+      const vendorName = typeof body.vendorName === 'string' && body.vendorName.trim() ? sanitizeImportedText(body.vendorName, 120) : tx.vendorName || tx.rawDescription;
       const meta = getCategoryMeta(category, customCategoryMatch ? [customCategoryMatch] : undefined);
       const statementImport = await prisma.statementImport.findUnique({ where: { id: tx.importId } });
       const dayOfMonth = new Date(tx.date).getDate();

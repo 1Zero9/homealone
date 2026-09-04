@@ -14,12 +14,13 @@
  *   5. Update CREDENTIALS_ENCRYPTION_KEY in your deployment's secret
  *      manager to the new key and redeploy.
  *
- * Safe to re-run: if interrupted, just re-run with the same old/new pair —
- * already-rotated rows will simply fail to decrypt with the "old" key on a
- * second pass, so ALWAYS keep a DB backup before running against prod.
+ * Safe to re-run: encrypted values carry a key-version marker (see
+ * src/lib/crypto.ts), so already-rotated fields are skipped rather than
+ * re-encrypted or mistakenly attempted with the old key on a second pass.
+ * Still, ALWAYS keep a DB backup before running against prod.
  */
 import { PrismaClient } from '@prisma/client';
-import { decryptField, encryptField, loadKeyFromEnv } from '../src/lib/crypto';
+import { decryptField, encryptField, isCurrentKeyVersion, loadKeyFromEnv } from '../src/lib/crypto';
 
 const prisma = new PrismaClient();
 
@@ -68,6 +69,12 @@ async function main() {
     for (const field of ENCRYPTED_FIELDS) {
       const encrypted = account[field] as string | null;
       if (!encrypted) continue;
+
+      if (isCurrentKeyVersion(encrypted)) {
+        // Already rotated (versioned) in a previous run — skip rather than
+        // re-encrypting or attempting to decrypt with the "old" key.
+        continue;
+      }
 
       try {
         const plaintext = decryptField(encrypted, oldKey);

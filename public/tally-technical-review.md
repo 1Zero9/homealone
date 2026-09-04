@@ -1,0 +1,344 @@
+# Tally technical review
+
+**Source documents:** User Guide v1.22.1, Technical Overview v1.24.0
+**Reviewed:** 4 September 2026
+**Basis:** Documentation only. No code access, no database access, no runtime testing. Items marked `[EVIDENCE NEEDED]` could not be confirmed from the published documentation and may already be handled in the codebase.
+
+---
+
+## 1. Summary
+
+Tally is a well-structured single-tenant-per-household Next.js application with a stronger security posture than most personal projects of its size: passwordless authentication, AES-256-GCM field-level encryption, session-derived household scoping on every query, and reveal-on-demand for sensitive account fields.
+
+Three areas need attention before the app should be trusted with real household financial records:
+
+1. **Monetary data integrity.** Amount field types, exchange rate persistence, and statement reconciliation are either unstated or absent. These determine whether the numbers can be trusted at all.
+2. **Prompt injection through statement uploads.** A path exists from attacker-influenced PDF text to an outbound email. This is the highest severity finding in this review.
+3. **Absent operational controls.** No rate limiting, no audit history, no bulk session revocation, no migration history, and no test coverage on the two most error-prone modules.
+
+The product gap worth naming separately: there is no `Budget` entity in the data model, so the app records and analyses spending but never warns before a threshold is crossed.
+
+---
+
+## 2. Data integrity findings
+
+### 2.1 Monetary field types are unstated
+
+**Risk:** High. **Effort:** Low to fix now, high to fix later.
+
+Section 2 of the technical overview does not state whether amounts use Prisma `Decimal`, integer minor units, or `Float`. If any monetary field is `Float`, accumulated totals will drift, and reconciliation will never balance cleanly.
+
+**Action:** Confirm and, if needed, migrate to `Decimal(12,2)` or integer cents across `Expense.amount`, `Income.amount`, `Transfer.amount`, `Goal` target and current values, `StatementTransaction` amount, and the loan fields on `Account`.
+
+`[EVIDENCE NEEDED: current Prisma field types for all monetary values]`
+
+### 2.2 Schema changes use db:push rather than migrations
+
+**Risk:** High. **Effort:** Low.
+
+Section 10 documents `npm run db:push`, which resolves the schema by comparison against the live database and can drop columns without an explicit confirmation step. `DIRECT_URL` is documented as the migration connection, but no migration workflow appears anywhere.
+
+For an application holding financial records, schema history should be committed and replayable.
+
+**Action:**
+- Adopt `prisma migrate dev` locally and `prisma migrate deploy` in the build pipeline
+- Commit the `prisma/migrations` directory
+- Reserve `db:push` for local throwaway databases only
+
+### 2.3 Exchange rates are applied but not persisted
+
+**Risk:** Medium. **Effort:** Low.
+
+The ledger is EUR-standardised with live ECB conversion for GBP, USD, CAD, AUD and JPY. If the applied rate is not stored on the record, historic totals cannot be reproduced once rates move, and a figure shown today will differ from the same figure shown next month.
+
+**Action:** Store four fields on any converted record: original amount, original currency code, rate applied, and rate date. Display the original alongside the converted value.
+
+### 2.4 Statement balances are extracted then discarded
+
+**Risk:** Medium. **Effort:** Medium.
+
+`analyzeStatementDocument` extracts opening and closing balances from PDF and photo statements, but `StatementImport` has no balance fields in the documented model. Those two figures are the only available proof that an import captured every row.
+
+**Action:**
+- Persist opening balance, closing balance and statement period on `StatementImport`
+- Reconcile logged rows against the balance delta after import
+- Surface the result plainly, for example "38 rows imported, £43.18 unaccounted for"
+
+### 2.5 No duplicate guard across entry routes
+
+**Risk:** Medium. **Effort:** Medium.
+
+Receipt scanning matches against existing bill names to avoid duplicates, but the same real payment can still enter three ways: manual expense entry, receipt scan, and statement import creating a `Transfer`. Nothing documented prevents the same payment counting two or three times in Money Map, Insights, or the savings horizons.
+
+**Action:** Add a dedupe check on the tuple of amount, date within a tolerance window, and account, applied at write time across all three routes, with a "possible duplicate" prompt rather than a hard block.
+
+---
+
+## 3. Security findings
+
+### 3.1 Prompt injection through statement uploads, with an email exfiltration path
+
+**Risk:** Critical. **Effort:** Medium.
+
+The chain is:
+
+1. A PDF or photo statement is uploaded to `POST /api/statements/extract`
+2. `analyzeStatementDocument` extracts free text from the document
+3. That text is written to `StatementTransaction.vendorName`, `suggestedCategory`, `MerchantAlias.vendorName`, or `Transfer.externalLabel`
+4. Server-side context assembly later includes those stored strings in prompts for `askAboutHouseholdData` or `draftVendorEmail`
+5. `POST /api/expenses/[id]/send-vendor-email` sends an outbound email
+
+Instructing the model to use only the supplied JSON is not a control against this, because the injected instruction arrives inside that JSON as legitimate-looking data. Statement descriptions are attacker-influenceable in practice: a payment reference field on an inbound transfer is free text controlled by whoever sent the money.
+
+The severity comes from step 5. A path from untrusted document text to an outbound email is a data exfiltration path.
+
+**Action, in order:**
+- Pin the recipient address server-side from the stored `Expense` vendor email. Never accept a recipient from model output or from the request body.
+- Delimit and label all statement-derived strings as untrusted data in every downstream prompt, distinct from household data assembled from first-party fields.
+- Sanitise extracted strings at write time: strip control characters, cap length, and reject or flag instruction-like patterns.
+- Validate drafted email bodies against expected shape and length before the send route will accept them.
+- Log every send with the resolved recipient, so misdirection is detectable after the fact.
+
+### 3.2 No rate limiting documented on any route
+
+**Risk:** High. **Effort:** Low.
+
+Two distinct exposures:
+
+**`POST /api/auth/send-code` is unauthenticated** and triggers a Resend email plus a `VerificationToken` row per call, against any email address supplied. That is an email bombing vector aimed at arbitrary third parties, a Resend cost vector, and a reputation risk for the sending domain.
+
+**Every AI route consumes Gemini quota per call** with no documented per-household cap. `statements/extract` in particular is a vision call on a multi-page document. One member in a loop is an uncapped bill.
+
+**Action:**
+- Rate limit `send-code` by both email address and source IP, for example five requests per address per hour
+- Add a per-household daily cap on AI calls, with a clear in-app message when it is reached
+- Return `429` with a retry hint rather than failing silently
+
+`[EVIDENCE NEEDED: whether any rate limiting exists but is undocumented]`
+
+### 3.3 Cron endpoint protection is unstated
+
+**Risk:** Medium. **Effort:** Low.
+
+`GET /api/cron/reminders` sends the 30, 14 and 7 day contract reminder emails. If it has no shared secret header or platform cron signature check, anyone who discovers the path can trigger household emails on demand. Separately, no dedupe record is documented, so a double invocation on the same day sends duplicate emails.
+
+**Action:**
+- Require a secret header, checked with a constant-time comparison, or verify the Vercel cron signature
+- Add a `SentReminder` record keyed on expense, threshold and date, checked before send
+
+`[EVIDENCE NEEDED: current authentication on cron/reminders]`
+
+### 3.4 Encrypted values carry no key identifier
+
+**Risk:** Medium. **Effort:** Low.
+
+The stored format is `base64(iv):base64(authTag):base64(ciphertext)`, with no indication of which key encrypted the value. `npm run rotate-key` re-encrypts every sensitive field, so an interruption partway through leaves a database with two keys in use and no way to determine which key applies to which row. Recovery would require trial decryption.
+
+**Action:**
+- Prefix a key identifier: `v2:base64(iv):base64(authTag):base64(ciphertext)`
+- Have decrypt select the key from the prefix, with the previous key retained during rotation
+- Make rotation resumable by processing only rows not yet on the current key identifier
+
+### 3.5 Database backups may defeat field-level encryption
+
+**Risk:** Medium to High, depending on implementation. **Effort:** Low.
+
+`DatabaseBackup` stores a full household JSON snapshot. Two possibilities, both needing an explicit decision:
+
+- If the six `*Enc` account fields are decrypted into the snapshot, the result is a plaintext credential dump stored in the same PostgreSQL instance as the encrypted originals, which removes the benefit of field-level encryption entirely.
+- If they remain encrypted, the snapshot becomes unrestorable after a key rotation, so the backup silently stops being a backup.
+
+**Action:** Exclude credential fields from snapshots entirely, or encrypt the snapshot under a separate documented backup key with its own key identifier. State the choice in the technical overview.
+
+`[EVIDENCE NEEDED: how admin/backup handles the six *Enc fields]`
+
+### 3.6 Sessions cannot be revoked in bulk
+
+**Risk:** Medium. **Effort:** Low.
+
+Sliding expiration extends a session back to 30 days whenever remaining life drops under roughly 25 days, so a session in regular use never expires. Combined with no documented bulk revocation, a stolen cookie stays valid indefinitely.
+
+There is also no documented session invalidation when an admin removes a member or changes a role. Whether removal takes effect immediately depends on whether `getSessionUser()` re-reads role and household on every request.
+
+**Action:**
+- Add a route that deletes all `Session` rows for a user, exposed as "sign out everywhere"
+- Call it automatically on member removal and on role change
+- Show active sessions with last-used timestamp and approximate location
+- Consider an absolute session ceiling, for example 90 days, beyond which sliding renewal stops
+
+`[EVIDENCE NEEDED: whether role and household are re-read from the database per request]`
+
+---
+
+## 4. Access model findings
+
+### 4.1 BACKUP_ADMIN appears functionally identical to ADMIN
+
+**Risk:** Low. **Effort:** Low.
+
+`requireAdmin()` passes for both `ADMIN` and `BACKUP_ADMIN`, so the roles carry the same permissions. It is also unclear whether a Backup Admin satisfies the "at least one Admin" constraint, which determines whether a household can lock itself out of administration.
+
+**Action:** Either give the role constrained rights, for example user management but no backup export and no role changes, or remove it. Document explicitly whether it counts towards the minimum admin rule.
+
+### 4.2 No read-only role
+
+**Risk:** Low. **Effort:** Medium.
+
+All three existing roles can write to the shared ledger. A teenager, an accountant, or a partner who should see the position without editing it has no appropriate role.
+
+**Action:** Add `VIEWER`, enforced by a `requireWriteAccess()` guard applied to every mutating route.
+
+### 4.3 No audit history
+
+**Risk:** Medium. **Effort:** Medium.
+
+`createdById` records attribution at creation only. There is no record of edits, deletions, planned-expense activations, bulk imports, role changes, or backup exports. In a shared ledger with three writeable roles and destructive bulk operations, this is the control that makes every other one verifiable.
+
+**Action:** Add an append-only `AuditLog` table capturing actor, action, entity type, entity ID, before state, after state, and timestamp. Write to it from a single helper called by every mutating route. Expose it to admins as an activity feed.
+
+### 4.4 No batch rollback for imports
+
+**Risk:** Medium. **Effort:** Low.
+
+"Add all as expense" creates multiple records in one action, and `statements/[id]/transactions/[txId]/resolve` creates records one at a time. Nothing documented reverses an import as a unit.
+
+**Action:** Stamp every record created by an import with that `statementImportId`, then offer "undo this import" as a single scoped delete.
+
+### 4.5 No account deletion or data erasure route
+
+**Risk:** Medium, given the data category. **Effort:** Medium.
+
+Section 6 lists `users` for member management and `admin/backup` for export, but no route for deleting a user account or a household. For an application processing financial data about identifiable individuals in the EU and UK, a right-to-erasure request has no documented mechanism. What happens to expenses assigned to a member who leaves is also undefined.
+
+**Action:**
+- Add a self-service account deletion route with a confirmation step
+- Define the reassignment behaviour for records assigned to a departing member, and surface the choice at removal time
+- Document a retention period for `Session`, `VerificationToken`, and `DatabaseBackup` rows, and prune on a schedule
+
+`[EVIDENCE NEEDED: current deletion and retention behaviour, and whether the Privacy page covers this]`
+
+---
+
+## 5. Engineering practice findings
+
+### 5.1 No test suite
+
+**Risk:** Medium. **Effort:** Low for the highest-value coverage.
+
+Section 10 documents `npm run lint` only. Two modules carry most of the silent-failure risk in the codebase, and both are pure functions, which makes them cheap to test:
+
+- `src/lib/billing.ts`, billing-cycle date arithmetic across weekly, monthly, quarterly, termly, annual and once, including month-end rollover and leap years
+- `src/lib/statementMatching.ts`, match scoring and confidence thresholds, including the auto-confirm boundary
+
+**Action:** Add Vitest with unit coverage on those two modules first, then on the crypto round trip in `src/lib/crypto.ts`. Run in CI on every push.
+
+### 5.2 Upload limits and timeout behaviour are unstated
+
+**Risk:** Medium. **Effort:** Low.
+
+`statements/extract` accepts PDFs and photographs and passes them to a Gemini vision call. On Vercel this meets both a request body ceiling and a serverless function timeout, and a multi-page statement extraction is not a fast call. Without explicit caps this fails opaquely on exactly the real-world inputs users will supply, such as a twelve-page annual statement or a high-resolution phone photograph.
+
+**Action:**
+- Set and document an explicit file size cap and page cap, and validate MIME type server-side rather than trusting the extension
+- Compress or downscale images client-side before upload
+- Return a specific message on timeout that tells the user what to do, rather than a generic failure
+- For large PDFs, consider chunking by page with progress feedback
+
+`[EVIDENCE NEEDED: current size limits, page limits, and observed timeout behaviour on real statements]`
+
+### 5.3 Exchange rate route has no documented caching
+
+**Risk:** Low. **Effort:** Low.
+
+ECB publishes reference rates once per working day, so any call beyond the first per day per currency pair is wasted, and the route depends on an upstream service being reachable at the moment a user saves a record.
+
+**Action:** Cache the daily rate set server-side with a 24-hour TTL, fall back to the last known set on upstream failure, and record which rate date was used per the recommendation in 2.3.
+
+### 5.4 Edge middleware refreshes the cookie without checking session validity
+
+**Risk:** Low. **Effort:** Low.
+
+`middleware.ts` deliberately avoids Prisma, so it cannot know whether the session behind the cookie still exists. It therefore refreshes `maxAge` on requests carrying an expired or revoked session, leaving the browser holding a cookie that looks valid. The user experience is a bounce to sign-in on the next data fetch.
+
+**Action:** Clear the cookie on the first `401` returned from any API route, so the client state matches the server state.
+
+---
+
+## 6. Product gaps
+
+### 6.1 No budget entity
+
+The meta description commits to keeping a budget in balance, but the data model has no `Budget`. The app records what happened and analyses it afterwards, and never warns before a threshold is crossed. This is the largest gap between what the product says it does and what the schema supports.
+
+**Suggested minimum:** per-category monthly caps, a household total cap, a configurable warning threshold, and a progress indicator on the dashboard. Deterministic, no AI call required.
+
+### 6.2 No projected balance by date
+
+The bills calendar shows a 31-day renewal view, which is renewal timing rather than cash position. The data needed for a projection already exists: billing cycles on `Expense`, `nextPayDate` on `Income`, and account links on both.
+
+**Suggested minimum:** a forward view flagging shortfall dates, for example "£180 short on the 28th, three direct debits land before payday". This is more actionable than the on-demand AI review because it is deterministic, reproducible, and free to compute.
+
+### 6.3 No price-creep or missed-payment detection
+
+Statement matching runs in one direction: it finds statement rows corresponding to known bills. Three inversions carry more value than the current matching does:
+
+- **Price creep.** Compare each matched amount against the previous instance of the same bill and report the change with a percentage.
+- **Missed payment.** Flag an expected bill that did not appear in a statement covering its due date, which catches failed direct debits.
+- **Untracked subscription.** Flag recurring merchants appearing across multiple statements with no matching tracked `Expense`.
+
+All three are computable from data already in the schema, using `MerchantAlias` for merchant identity.
+
+### 6.4 No transaction splitting
+
+A single payment cannot be split across categories, and a bill is assigned to one household member rather than apportioned. A weekly supermarket shop containing groceries, alcohol and household goods currently lands in one category, which degrades every category-level insight the app produces.
+
+**Suggested minimum:** a child-line model on `Expense` and `Transfer`, with a percentage or fixed-amount split across categories or members, and a constraint that child amounts sum to the parent.
+
+---
+
+## 7. Prioritised build order
+
+| # | Item | Section | Risk | Effort | Rationale for position |
+|---|------|---------|------|--------|------------------------|
+| 1 | Pin email recipient server-side | 3.1 | Critical | Low | Closes the exfiltration end of the injection chain on its own |
+| 2 | Confirm and fix monetary field types | 2.1 | High | Low now | Cost of fixing rises with every record added |
+| 3 | Rate limit send-code and AI routes | 3.2 | High | Low | Unauthenticated third-party email vector and uncapped spend |
+| 4 | Protect and de-duplicate the cron route | 3.3 | Medium | Low | Small change, removes an on-demand email trigger |
+| 5 | Adopt Prisma migrations | 2.2 | High | Low | Prerequisite for every schema change below |
+| 6 | Sanitise and delimit statement-derived text | 3.1 | Critical | Medium | The remaining injection surface, needs prompt restructuring |
+| 7 | Key identifier on encrypted values | 3.4 | Medium | Low | Makes rotation safe and resumable before it is next needed |
+| 8 | Resolve the backup encryption question | 3.5 | Medium to High | Low | Currently either a credential dump or a broken backup |
+| 9 | Bulk session revocation | 3.6 | Medium | Low | Also fixes removal not taking effect immediately |
+| 10 | Unit tests on billing and matching | 5.1 | Medium | Low | Guards every later change to the two riskiest modules |
+| 11 | Upload limits and timeout handling | 5.2 | Medium | Low | Real statements are already hitting these ceilings |
+| 12 | Audit log | 4.3 | Medium | Medium | Makes every other control verifiable |
+| 13 | Batch rollback on imports | 4.4 | Medium | Low | Cheap once records carry an import ID |
+| 14 | Persist exchange rates on records | 2.3 | Medium | Low | Historic figures become reproducible |
+| 15 | Budget entity and caps | 6.1 | Product | Medium | Closes the gap against the stated product promise |
+| 16 | Statement balance reconciliation | 2.4 | Medium | Medium | Proves imports are complete |
+| 17 | Cross-source duplicate guard | 2.5 | Medium | Medium | Protects the integrity of every insight |
+| 18 | Projected balance by date | 6.2 | Product | Medium | Highest-value feature per unit of effort, all data present |
+| 19 | Price creep and missed payment detection | 6.3 | Product | Medium | Inverts matching towards the questions users actually have |
+| 20 | Account deletion and retention policy | 4.5 | Medium | Medium | Needed before any non-family user is onboarded |
+| 21 | VIEWER role | 4.2 | Low | Medium | Widens who can safely be given access |
+| 22 | Transaction splitting | 6.4 | Product | Medium | Improves the quality of all category-level analysis |
+| 23 | Resolve BACKUP_ADMIN semantics | 4.1 | Low | Low | Tidy-up, no current functional impact |
+| 24 | Exchange rate caching | 5.3 | Low | Low | Cost and resilience, bundle with item 14 |
+| 25 | Clear cookie on 401 | 5.4 | Low | Low | Small user experience fix |
+
+Items 1 to 5 are the ones worth doing before adding any further household data.
+
+---
+
+## 8. Open questions
+
+Collected from the `[EVIDENCE NEEDED]` markers above:
+
+1. What Prisma types back every monetary field?
+2. Does `getSessionUser()` re-read role and household from the database on every request, or trust the session row?
+3. What authenticates `GET /api/cron/reminders`?
+4. Does `admin/backup` decrypt the six `*Enc` account fields into the snapshot?
+5. Does any rate limiting exist but go undocumented?
+6. What are the current file size, page count, and timeout limits on `statements/extract`?
+7. Is there any account deletion or data retention behaviour, and does the Privacy page describe it?
+8. Does `BACKUP_ADMIN` satisfy the minimum-one-admin constraint?

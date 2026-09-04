@@ -7,6 +7,23 @@
 
 export type StatementTxDirection = 'DEBIT' | 'CREDIT';
 
+/**
+ * Strips control/zero-width characters and caps length on free text pulled
+ * from an imported statement (raw descriptions, AI-read merchant names)
+ * before it's stored and later surfaced to AI prompt contexts elsewhere in
+ * the app (assistant Q&A, money-flow insights) — defense-in-depth against a
+ * malicious or malformed statement trying to smuggle prompt-injection text
+ * or terminal/control sequences through a free-text field.
+ */
+export function sanitizeImportedText(raw: string, maxLength = 200): string {
+  if (!raw) return '';
+  return raw
+    .replace(/[\u0000-\u001F\u007F\u200B-\u200F\u202A-\u202E]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength);
+}
+
 // ---------------------------------------------------------------------------
 // CSV parsing
 // ---------------------------------------------------------------------------

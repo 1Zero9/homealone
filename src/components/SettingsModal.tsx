@@ -1,7 +1,7 @@
 import React from 'react';
 import type { CurrencyCode } from '../types/expense';
 import { CURRENCY_LIST } from '../utils/currencies';
-import { X, Coins, LayoutGrid, UserPlus, Download, RotateCcw, ChevronRight } from 'lucide-react';
+import { X, Coins, LayoutGrid, UserPlus, Download, RotateCcw, ChevronRight, ShieldOff } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -12,6 +12,7 @@ interface SettingsModalProps {
   onOpenExportModal: () => void;
   onOpenShareModal: () => void;
   onResetData: () => void;
+  onSignOutEverywhere: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -23,6 +24,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onOpenExportModal,
   onOpenShareModal,
   onResetData,
+  onSignOutEverywhere,
 }) => {
   if (!isOpen) return null;
 
@@ -122,6 +124,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--ha-ink)' }}>Export & backup</div>
                   <div style={{ fontSize: '0.78rem', color: 'var(--ha-muted)' }}>Download as CSV or JSON</div>
+                </div>
+              </div>
+              <ChevronRight size={16} color="var(--ha-muted)" />
+            </button>
+          </div>
+
+          {/* Security */}
+          <div style={{ borderTop: '1px solid var(--ha-line)', paddingTop: '1.1rem' }}>
+            <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--ha-muted)', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: '0.6rem' }}>
+              Security
+            </h4>
+            <button
+              onClick={() => openThenClose(onSignOutEverywhere)}
+              className="ha-card-interactive"
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.85rem 1rem' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+                <div style={{ width: '30px', height: '30px', borderRadius: 'var(--ha-radius-sm)', backgroundColor: 'var(--ha-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <ShieldOff size={15} color="var(--ha-blue)" />
+                </div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--ha-ink)' }}>Sign out everywhere</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--ha-muted)' }}>Ends every session on every device, including this one</div>
                 </div>
               </div>
               <ChevronRight size={16} color="var(--ha-muted)" />

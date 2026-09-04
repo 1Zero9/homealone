@@ -49,11 +49,27 @@ export async function GET(request: Request) {
       include: { household: { include: { users: true } } },
     });
 
-    const dueForReminder = expenses.filter((e) => {
+    const candidates = expenses.filter((e) => {
       if (!e.contractEndDate) return false;
       const days = daysUntil(e.contractEndDate);
       return REMINDER_WINDOWS.includes(days);
     });
+
+    // Guard against sending the same reminder twice if the cron fires more
+    // than once for the same day (retry, manual re-trigger, clock skew).
+    const today = new Date().toISOString().split('T')[0];
+    const dueForReminder: typeof candidates = [];
+    for (const expense of candidates) {
+      const threshold = daysUntil(expense.contractEndDate as string);
+      try {
+        await prisma.sentReminder.create({
+          data: { expenseId: expense.id, threshold, sentOn: today },
+        });
+        dueForReminder.push(expense);
+      } catch {
+        // Unique constraint hit — already sent for this expense/threshold/day, skip.
+      }
+    }
 
     const byHousehold = new Map<string, typeof dueForReminder>();
     for (const expense of dueForReminder) {

@@ -419,6 +419,20 @@ model Category {
   @@index([householdId])
 }
 
+/// Records a contract-reminder email already sent for a given expense +
+/// days-out threshold, so a duplicate/overlapping cron invocation (retries,
+/// manual re-trigger, etc.) can't send the same reminder twice.
+model SentReminder {
+  id         String   @id @default(cuid())
+  expenseId  String
+  threshold  Int
+  sentOn     String
+  createdAt  DateTime @default(now())
+
+  @@unique([expenseId, threshold, sentOn])
+  @@index([expenseId])
+}
+
 model DatabaseBackup {
   id          String   @id @default(cuid())
   createdById String?

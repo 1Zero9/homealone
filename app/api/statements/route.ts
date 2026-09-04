@@ -6,6 +6,7 @@ import {
   normalizeDescription,
   matchTransaction,
   findRecurringUnmatched,
+  sanitizeImportedText,
   type StatementTxDirection,
 } from '@/src/lib/statementMatching';
 
@@ -123,7 +124,11 @@ export async function POST(request: Request) {
     });
 
     const prepared = rows.map((r) => {
-      const normalizedDescription = normalizeDescription(r.rawDescription);
+      // Sanitize before anything else touches it — this text may end up in
+      // Expense/Transfer records and later inside AI prompt contexts, so
+      // strip control chars and cap length at the point of entry.
+      const rawDescription = sanitizeImportedText(r.rawDescription, 200);
+      const normalizedDescription = normalizeDescription(rawDescription);
       const direction: StatementTxDirection = r.direction === 'CREDIT' ? 'CREDIT' : 'DEBIT';
       const currency = r.currency || 'EUR';
       const amount = Math.abs(r.amount);
@@ -131,7 +136,7 @@ export async function POST(request: Request) {
         { normalizedDescription, amount, currency, date: r.date, direction },
         { expenses, transfers, aliases }
       );
-      return { row: r, normalizedDescription, direction, currency, amount, match };
+      return { row: { ...r, rawDescription }, normalizedDescription, direction, currency, amount, match };
     });
 
     const recurringFlags = findRecurringUnmatched(

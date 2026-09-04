@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.24.0';
+export const APP_VERSION = '1.25.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.25.0',
+    date: '2026-09-04',
+    changes: [
+      'Security hardening from an external technical review: the contract-reminder cron can no longer send duplicate emails on a re-trigger, encrypted account fields now carry a key-version marker so a future key rotation is safely resumable, statement-derived text is sanitised at import time and AI prompts now explicitly treat statement/household data as untrusted input rather than instructions, sign-in requests are throttled per source, and there\'s a new "Sign out everywhere" option in Settings → Security to end every session at once.',
+    ],
+  },
   {
     version: '1.24.0',
     date: '2026-09-04',
