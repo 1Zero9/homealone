@@ -2,6 +2,7 @@ import React from 'react';
 import type { TransferItem } from '../types/expense';
 import { formatCurrency } from '../utils/formatters';
 import { Edit2, Trash2, Plus, ArrowRight, ArrowLeftRight } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface TransfersSectionProps {
   transfers: TransferItem[];
@@ -43,7 +44,7 @@ export const TransfersSection: React.FC<TransfersSectionProps> = ({
         </div>
       </div>
 
-      <div className="ha-card" style={{ overflow: 'hidden' }}>
+      <CollapsibleSection id="transfers-ledger" title={`Transfers (${transfers.length})`}>
         {transfers.length === 0 ? (
           <div style={{ padding: '3.5rem 2rem', textAlign: 'center', color: 'var(--ha-muted)' }}>
             <div style={{
@@ -126,7 +127,7 @@ export const TransfersSection: React.FC<TransfersSectionProps> = ({
             })}
           </div>
         )}
-      </div>
+      </CollapsibleSection>
     </div>
   );
 };

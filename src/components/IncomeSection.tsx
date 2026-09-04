@@ -3,6 +3,7 @@ import type { IncomeItem, CurrencyCode } from '../types/expense';
 import { convertCurrency, getMonthlyEquivalent, getDaysUntilRenewal } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle, formatDate } from '../utils/formatters';
 import { Edit2, Trash2, Plus, Wallet, User } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
 
 const CATEGORY_LABELS: Record<string, string> = {
   salary: 'Salary / wages',
@@ -70,7 +71,7 @@ export const IncomeSection: React.FC<IncomeSectionProps> = ({
         </div>
       </div>
 
-      <div className="ha-card" style={{ overflow: 'hidden' }}>
+      <CollapsibleSection id="income-ledger" title={`Income sources (${incomes.length})`}>
         {incomes.length === 0 ? (
           <div style={{ padding: '3.5rem 2rem', textAlign: 'center', color: 'var(--ha-muted)' }}>
             <div style={{
@@ -200,7 +201,7 @@ export const IncomeSection: React.FC<IncomeSectionProps> = ({
             })}
           </div>
         )}
-      </div>
+      </CollapsibleSection>
     </div>
   );
 };

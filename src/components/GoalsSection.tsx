@@ -2,6 +2,7 @@ import React from 'react';
 import type { GoalItem } from '../types/expense';
 import { formatCurrency } from '../utils/formatters';
 import { Edit2, Trash2, Plus, Target } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface GoalsSectionProps {
   goals: GoalItem[];
@@ -44,7 +45,7 @@ export const GoalsSection: React.FC<GoalsSectionProps> = ({
         </div>
       </div>
 
-      <div className="ha-card" style={{ overflow: 'hidden' }}>
+      <CollapsibleSection id="goals-ledger" title={`Goals (${goals.length})`}>
         {goals.length === 0 ? (
           <div style={{ padding: '3.5rem 2rem', textAlign: 'center', color: 'var(--ha-muted)' }}>
             <div style={{
@@ -149,7 +150,7 @@ export const GoalsSection: React.FC<GoalsSectionProps> = ({
             })}
           </div>
         )}
-      </div>
+      </CollapsibleSection>
     </div>
   );
 };

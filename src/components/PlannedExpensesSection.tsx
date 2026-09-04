@@ -4,6 +4,7 @@ import { getCategoryMeta } from '../data/categories';
 import { getDaysUntilRenewal } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle, formatDate } from '../utils/formatters';
 import { Plus, Edit2, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface PlannedExpensesSectionProps {
   expenses: ExpenseItem[];
@@ -51,13 +52,7 @@ export const PlannedExpensesSection: React.FC<PlannedExpensesSectionProps> = ({
       </div>
 
       {/* Planned Ledger */}
-      <div className="ha-card" style={{ overflow: 'hidden' }}>
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--ha-line)' }}>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
-            Planned ({plannedItems.length})
-          </h3>
-        </div>
-
+      <CollapsibleSection id="planned-ledger" title={`Planned (${plannedItems.length})`}>
         {plannedItems.length === 0 ? (
           <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--ha-muted)' }}>
             <Clock size={28} color="var(--ha-muted)" style={{ marginBottom: '0.5rem' }} />
@@ -163,7 +158,7 @@ export const PlannedExpensesSection: React.FC<PlannedExpensesSectionProps> = ({
             })}
           </div>
         )}
-      </div>
+      </CollapsibleSection>
     </div>
   );
 };

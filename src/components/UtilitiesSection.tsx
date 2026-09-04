@@ -3,6 +3,7 @@ import type { ExpenseItem, CurrencyCode } from '../types/expense';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle, formatDate } from '../utils/formatters';
 import { Plus, Edit2, Calendar } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface UtilitiesSectionProps {
   expenses: ExpenseItem[];
@@ -108,13 +109,7 @@ export const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
       )}
 
       {/* Utilities Ledger */}
-      <div className="ha-card" style={{ overflow: 'hidden' }}>
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--ha-line)' }}>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
-            Household direct debits ({activeUtilities.length})
-          </h3>
-        </div>
-
+      <CollapsibleSection id="utilities-ledger" title={`Household direct debits (${activeUtilities.length})`}>
         <div>
           {activeUtilities.map((item) => (
             <div key={item.id} className="ha-ledger-row">
@@ -152,17 +147,16 @@ export const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
             </div>
           ))}
         </div>
-      </div>
+      </CollapsibleSection>
 
       {/* Quick Add Utility Preset Pills */}
-      <div className="ha-card" style={{ padding: '1.5rem' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)', marginBottom: '0.25rem' }}>
-          Standard utility presets
-        </h3>
-        <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginBottom: '1rem' }}>
-          Select common bills to prefill standard rates
-        </p>
-
+      <CollapsibleSection
+        id="utilities-presets"
+        title="Standard utility presets"
+        subtitle="Select common bills to prefill standard rates"
+        defaultOpen={false}
+        bodyStyle={{ padding: '1.25rem 1.5rem' }}
+      >
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
           {[
             { id: 'electricity-gas', name: 'Dual Fuel Power & Gas (€155)' },
@@ -181,7 +175,7 @@ export const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
             </button>
           ))}
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   );
 };

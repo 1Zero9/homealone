@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { AccountItem } from '../types/expense';
 import { Edit2, Trash2, Plus, Landmark, Eye, EyeOff, Copy, Check, ShieldAlert, Link as LinkIcon } from 'lucide-react';
 import { hasTextSelection } from '../utils/dom';
+import { CollapsibleSection } from './CollapsibleSection';
 
 const TYPE_LABELS: Record<string, string> = {
   CHECKING: 'Current',
@@ -128,7 +129,7 @@ export const AccountsSection: React.FC<AccountsSectionProps> = ({
         )}
       </div>
 
-      <div className="ha-card" style={{ overflow: 'hidden' }}>
+      <CollapsibleSection id="accounts-ledger" title={`Accounts (${accounts.length})`}>
         {accounts.length === 0 ? (
           <div style={{ padding: '3.5rem 2rem', textAlign: 'center', color: 'var(--ha-muted)' }}>
             <div style={{
@@ -275,7 +276,7 @@ export const AccountsSection: React.FC<AccountsSectionProps> = ({
             })}
           </div>
         )}
-      </div>
+      </CollapsibleSection>
     </div>
   );
 };

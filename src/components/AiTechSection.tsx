@@ -3,6 +3,7 @@ import type { ExpenseItem, CurrencyCode } from '../types/expense';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle } from '../utils/formatters';
 import { Plus, AlertCircle, Edit2 } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface AiTechSectionProps {
   expenses: ExpenseItem[];
@@ -111,13 +112,7 @@ export const AiTechSection: React.FC<AiTechSectionProps> = ({
       )}
 
       {/* Active AI Ledger */}
-      <div className="ha-card" style={{ overflow: 'hidden' }}>
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--ha-line)' }}>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
-            Active subscriptions ({activeAi.length})
-          </h3>
-        </div>
-
+      <CollapsibleSection id="aitech-active" title={`Active subscriptions (${activeAi.length})`}>
         {activeAi.length === 0 ? (
           <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--ha-muted)' }}>
             <p style={{ fontSize: '0.9rem' }}>No active AI tools recorded.</p>
@@ -170,16 +165,11 @@ export const AiTechSection: React.FC<AiTechSectionProps> = ({
             ))}
           </div>
         )}
-      </div>
+      </CollapsibleSection>
 
       {/* Paused AI Subscriptions */}
       {pausedAi.length > 0 && (
-        <div className="ha-card" style={{ overflow: 'hidden' }}>
-          <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--ha-line)', backgroundColor: '#fafaf7' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--ha-muted)' }}>
-              Paused subscriptions ({pausedAi.length})
-            </h3>
-          </div>
+        <CollapsibleSection id="aitech-paused" title={`Paused subscriptions (${pausedAi.length})`} defaultOpen={false}>
           <div>
             {pausedAi.map((item) => (
               <div key={item.id} className="ha-ledger-row" style={{ opacity: 0.6 }}>
@@ -208,18 +198,11 @@ export const AiTechSection: React.FC<AiTechSectionProps> = ({
               </div>
             ))}
           </div>
-        </div>
+        </CollapsibleSection>
       )}
 
       {/* Quick Add Presets */}
-      <div className="ha-card" style={{ padding: '1.5rem' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)', marginBottom: '0.25rem' }}>
-          Common AI presets
-        </h3>
-        <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginBottom: '1rem' }}>
-          Add standard subscriptions with prefilled figures
-        </p>
-
+      <CollapsibleSection id="aitech-presets" title="Common AI presets" subtitle="Add standard subscriptions with prefilled figures" defaultOpen={false} bodyStyle={{ padding: '1.25rem 1.5rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem' }}>
           {popularAiPresets.map((preset) => (
             <div
@@ -245,7 +228,7 @@ export const AiTechSection: React.FC<AiTechSectionProps> = ({
             </div>
           ))}
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   );
 };

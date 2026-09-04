@@ -9,6 +9,21 @@ const SEVERITY_OPTIONS: { id: BugSeverity; label: string }[] = [
   { id: 'CRITICAL', label: 'Critical' },
 ];
 
+const AREA_OPTIONS: string[] = [
+  'Overview',
+  'Spending',
+  'Bills',
+  'Income',
+  'Accounts',
+  'Insights',
+  'Flow',
+  'Goals',
+  'Planned',
+  'Money Map',
+  'Admin',
+  'Other',
+];
+
 const SEVERITY_BADGE_CLASS: Record<BugSeverity, string> = {
   LOW: 'ha-badge-neutral',
   MEDIUM: 'ha-badge-blue',
@@ -251,13 +266,16 @@ export const BugLogModal: React.FC<BugLogModalProps> = ({
                 <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.3rem' }}>
                   Area / page (optional)
                 </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Accounts, Income modal"
+                <select
                   value={area}
                   onChange={(e) => setArea(e.target.value)}
                   className="ha-input"
-                />
+                >
+                  <option value="">Select area…</option>
+                  {AREA_OPTIONS.map((a) => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.3rem' }}>

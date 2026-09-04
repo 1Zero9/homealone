@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { ExpenseItem, CurrencyCode } from '../types/expense';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency } from '../utils/formatters';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface OptimizationInsightsProps {
   expenses: ExpenseItem[];
@@ -104,6 +105,7 @@ export const OptimizationInsights: React.FC<OptimizationInsightsProps> = ({
       </div>
 
       {/* Opportunity Grid */}
+      <CollapsibleSection id="optimization-opportunities" title="Opportunities" bodyStyle={{ padding: '1.5rem' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
         {/* 1. Annual Billing Conversion */}
         <div className="ha-card" style={{ padding: '1.5rem' }}>
@@ -180,6 +182,7 @@ export const OptimizationInsights: React.FC<OptimizationInsightsProps> = ({
           </div>
         </div>
       </div>
+      </CollapsibleSection>
     </div>
   );
 };

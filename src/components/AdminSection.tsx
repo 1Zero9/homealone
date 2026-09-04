@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import type { UserProfile, DatabaseBackupRecord, UserRole } from '../types/expense';
 import { getErrorMessage } from '../lib/errors';
-import { UserPlus, Edit2, Trash2, Check, X, Database, History, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
+import { UserPlus, Edit2, Trash2, Check, X, Database, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface AdminSectionProps {
   users: UserProfile[];
@@ -659,7 +660,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       {adminTab === 'database' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div className="ha-card" style={{ padding: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ha-ink)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Database size={18} color="var(--ha-blue)" />
@@ -680,14 +681,14 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 <span>Create Cloud Snapshot</span>
               </button>
             </div>
+          </div>
 
             {/* Backups List */}
-            <div>
-              <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--ha-ink)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <History size={16} color="var(--ha-muted)" />
-                <span>Available Cloud Snapshots ({backups.length})</span>
-              </h4>
-
+            <CollapsibleSection
+              id="admin-backups-list"
+              title={`Available Cloud Snapshots (${backups.length})`}
+              bodyStyle={{ padding: '1rem 1.25rem' }}
+            >
               {backups.length === 0 ? (
                 <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--ha-muted)', backgroundColor: '#fafaf7', borderRadius: 'var(--ha-radius-sm)', border: '1px solid var(--ha-line)' }}>
                   <p style={{ fontSize: '0.85rem' }}>No snapshots recorded yet.</p>
@@ -728,8 +729,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   ))}
                 </div>
               )}
-            </div>
-          </div>
+            </CollapsibleSection>
         </div>
       )}
     </div>

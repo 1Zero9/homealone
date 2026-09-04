@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.33.0';
+export const APP_VERSION = '1.34.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.34.0',
+    date: '2026-09-04',
+    changes: [
+      'Made most secondary panels collapsible across the app (ledgers, presets, paused items, insight results, admin backups) — click a section header to expand/collapse it, and your preference is remembered next time. Cuts down on scrolling and clutter while keeping every list a click away.',
+      'Bug log: "Area / page" is now a dropdown of actual app sections (Overview, Spending, Bills, Income, Accounts, Insights, Flow, Goals, Planned, Money Map, Admin, Other) instead of free text, so reports are easier to scan and act on.',
+    ],
+  },
   {
     version: '1.33.0',
     date: '2026-09-04',

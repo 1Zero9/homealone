@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { FileSpreadsheet, Upload, Trash2, ChevronRight, Edit2, Loader2 } from 'lucide-react';
 import type { ExpenseItem, StatementImportSummary, CurrencyCode, AccountItem, CustomCategoryItem } from '../types/expense';
 import { StatementImportModal } from './StatementImportModal';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface StatementsSectionProps {
   expenses: ExpenseItem[];
@@ -63,32 +64,35 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
   };
 
   return (
-    <div className="ha-card" style={{ padding: '1.5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: imports.length > 0 ? '1.1rem' : 0 }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-            <span className="ha-badge ha-badge-blue">Reconcile</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <div className="ha-card" style={{ padding: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+              <span className="ha-badge ha-badge-blue">Reconcile</span>
+            </div>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
+              Statement imports
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--ha-muted)', maxWidth: '560px', marginTop: '0.25rem' }}>
+              Cross-check a bank or credit-card statement against your bills — catch missed payments, forgotten subscriptions, and ad-hoc spending Tally doesn&apos;t know about yet.
+            </p>
           </div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
-            Statement imports
-          </h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--ha-muted)', maxWidth: '560px', marginTop: '0.25rem' }}>
-            Cross-check a bank or credit-card statement against your bills — catch missed payments, forgotten subscriptions, and ad-hoc spending Tally doesn&apos;t know about yet.
-          </p>
+          <button onClick={() => setIsModalOpen(true)} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>
+            <Upload size={15} />
+            <span>Import statement</span>
+          </button>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>
-          <Upload size={15} />
-          <span>Import statement</span>
-        </button>
+
+        {!isLoading && imports.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '1.5rem 1rem', color: 'var(--ha-muted)', fontSize: '0.85rem' }}>
+            No statements imported yet.
+          </div>
+        )}
       </div>
 
-      {!isLoading && imports.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '1.5rem 1rem', color: 'var(--ha-muted)', fontSize: '0.85rem' }}>
-          No statements imported yet.
-        </div>
-      )}
-
       {imports.length > 0 && (
+        <CollapsibleSection id="statements-imports" title={`Imported statements (${imports.length})`} bodyStyle={{ padding: '1.25rem 1.5rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {imports.map((imp) => (
             <div
@@ -166,6 +170,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
             </div>
           ))}
         </div>
+        </CollapsibleSection>
       )}
 
       <StatementImportModal

@@ -3,6 +3,7 @@ import type { ExpenseItem, CurrencyCode } from '../types/expense';
 import { getDaysUntilRenewal, convertCurrency } from '../utils/calculations';
 import { formatCurrency, formatRenewalCountdown } from '../utils/formatters';
 import { Edit2 } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface UpcomingRenewalsProps {
   expenses: ExpenseItem[];
@@ -100,12 +101,7 @@ export const UpcomingRenewals: React.FC<UpcomingRenewalsProps> = ({
 
       {/* Due in next 7 days list */}
       {dueNext7Days.length > 0 && (
-        <div className="ha-card" style={{ overflow: 'hidden' }}>
-          <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--ha-line)', backgroundColor: '#fafaf7' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
-              Due in next 7 days ({dueNext7Days.length})
-            </h3>
-          </div>
+        <CollapsibleSection id="renewals-due-soon" title={`Due in next 7 days (${dueNext7Days.length})`}>
           <div>
             {dueNext7Days.map((item) => (
               <div key={item.id} className="ha-ledger-row">
@@ -133,17 +129,11 @@ export const UpcomingRenewals: React.FC<UpcomingRenewalsProps> = ({
               </div>
             ))}
           </div>
-        </div>
+        </CollapsibleSection>
       )}
 
       {/* Full Chronological Ledger */}
-      <div className="ha-card" style={{ overflow: 'hidden' }}>
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--ha-line)' }}>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
-            Chronological schedule (Day 1 to 31)
-          </h3>
-        </div>
-
+      <CollapsibleSection id="renewals-full-schedule" title="Chronological schedule (Day 1 to 31)">
         <div>
           {sortedRenewals.map((item) => (
             <div key={item.id} className="ha-ledger-row">
@@ -211,7 +201,7 @@ export const UpcomingRenewals: React.FC<UpcomingRenewalsProps> = ({
             </div>
           ))}
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   );
 };

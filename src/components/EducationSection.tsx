@@ -3,6 +3,7 @@ import type { ExpenseItem, CurrencyCode } from '../types/expense';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle } from '../utils/formatters';
 import { Plus, Edit2, GraduationCap, Trophy, User } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface EducationSectionProps {
   expenses: ExpenseItem[];
@@ -73,13 +74,7 @@ export const EducationSection: React.FC<EducationSectionProps> = ({
       </div>
 
       {/* Ledger Table */}
-      <div className="ha-card" style={{ overflow: 'hidden' }}>
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--ha-line)' }}>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
-            Education & Sports Commitments ({activeItems.length})
-          </h3>
-        </div>
-
+      <CollapsibleSection id="education-active" title={`Education & Sports Commitments (${activeItems.length})`}>
         {activeItems.length === 0 ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--ha-muted)' }}>
             <p style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
@@ -150,17 +145,10 @@ export const EducationSection: React.FC<EducationSectionProps> = ({
             ))}
           </div>
         )}
-      </div>
+      </CollapsibleSection>
 
       {/* Quick Add Presets */}
-      <div className="ha-card" style={{ padding: '1.5rem' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)', marginBottom: '0.25rem' }}>
-          Standard Education & Sports Presets
-        </h3>
-        <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginBottom: '1rem' }}>
-          Select common items to prefill figures
-        </p>
-
+      <CollapsibleSection id="education-presets" title="Standard Education & Sports Presets" subtitle="Select common items to prefill figures" defaultOpen={false} bodyStyle={{ padding: '1.25rem 1.5rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.75rem' }}>
           {[
             { id: 'college-tuition', name: 'University / College Tuition', price: 250.00, icon: GraduationCap },
@@ -190,7 +178,7 @@ export const EducationSection: React.FC<EducationSectionProps> = ({
             </div>
           ))}
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   );
 };

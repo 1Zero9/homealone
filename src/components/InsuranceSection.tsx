@@ -3,6 +3,7 @@ import type { ExpenseItem, CurrencyCode } from '../types/expense';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle } from '../utils/formatters';
 import { Plus, Edit2, ShieldCheck } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface InsuranceSectionProps {
   expenses: ExpenseItem[];
@@ -75,13 +76,7 @@ export const InsuranceSection: React.FC<InsuranceSectionProps> = ({
       </div>
 
       {/* Active Ledger */}
-      <div className="ha-card" style={{ overflow: 'hidden' }}>
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--ha-line)' }}>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
-            Active policies & renewals ({activeItems.length})
-          </h3>
-        </div>
-
+      <CollapsibleSection id="insurance-active" title={`Active policies & renewals (${activeItems.length})`}>
         {activeItems.length === 0 ? (
           <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--ha-muted)' }}>
             <ShieldCheck size={28} color="var(--ha-muted)" style={{ marginBottom: '0.5rem' }} />
@@ -129,16 +124,11 @@ export const InsuranceSection: React.FC<InsuranceSectionProps> = ({
             ))}
           </div>
         )}
-      </div>
+      </CollapsibleSection>
 
       {/* Paused Items */}
       {pausedItems.length > 0 && (
-        <div className="ha-card" style={{ overflow: 'hidden' }}>
-          <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--ha-line)', backgroundColor: '#fafaf7' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--ha-muted)' }}>
-              Paused / lapsed ({pausedItems.length})
-            </h3>
-          </div>
+        <CollapsibleSection id="insurance-paused" title={`Paused / lapsed (${pausedItems.length})`} defaultOpen={false}>
           <div>
             {pausedItems.map((item) => (
               <div key={item.id} className="ha-ledger-row" style={{ opacity: 0.6 }}>
@@ -165,7 +155,7 @@ export const InsuranceSection: React.FC<InsuranceSectionProps> = ({
               </div>
             ))}
           </div>
-        </div>
+        </CollapsibleSection>
       )}
 
       {linkedToAccount.length > 0 && (
@@ -175,14 +165,7 @@ export const InsuranceSection: React.FC<InsuranceSectionProps> = ({
       )}
 
       {/* Quick Add Presets */}
-      <div className="ha-card" style={{ padding: '1.5rem' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)', marginBottom: '0.25rem' }}>
-          Common insurance & motor presets
-        </h3>
-        <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginBottom: '1rem' }}>
-          Add standard policies and renewals with prefilled figures
-        </p>
-
+      <CollapsibleSection id="insurance-presets" title="Common insurance & motor presets" subtitle="Add standard policies and renewals with prefilled figures" defaultOpen={false} bodyStyle={{ padding: '1.25rem 1.5rem' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
           {[
             { id: 'car-insurance', name: 'Car Insurance' },
@@ -201,7 +184,7 @@ export const InsuranceSection: React.FC<InsuranceSectionProps> = ({
             </button>
           ))}
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   );
 };

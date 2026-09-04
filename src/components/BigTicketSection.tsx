@@ -3,6 +3,7 @@ import type { ExpenseItem, CurrencyCode } from '../types/expense';
 import { convertCurrency, getMonthlyEquivalent } from '../utils/calculations';
 import { formatCurrency, formatBillingCycle } from '../utils/formatters';
 import { Plus, Edit2, Landmark } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface BigTicketSectionProps {
   expenses: ExpenseItem[];
@@ -75,13 +76,7 @@ export const BigTicketSection: React.FC<BigTicketSectionProps> = ({
       </div>
 
       {/* Active Ledger */}
-      <div className="ha-card" style={{ overflow: 'hidden' }}>
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--ha-line)' }}>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)' }}>
-            Active repayments & commitments ({activeItems.length})
-          </h3>
-        </div>
-
+      <CollapsibleSection id="bigticket-active" title={`Active repayments & commitments (${activeItems.length})`}>
         {activeItems.length === 0 ? (
           <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--ha-muted)' }}>
             <Landmark size={28} color="var(--ha-muted)" style={{ marginBottom: '0.5rem' }} />
@@ -129,16 +124,11 @@ export const BigTicketSection: React.FC<BigTicketSectionProps> = ({
             ))}
           </div>
         )}
-      </div>
+      </CollapsibleSection>
 
       {/* Paused Items */}
       {pausedItems.length > 0 && (
-        <div className="ha-card" style={{ overflow: 'hidden' }}>
-          <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--ha-line)', backgroundColor: '#fafaf7' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--ha-muted)' }}>
-              Paused / paid off ({pausedItems.length})
-            </h3>
-          </div>
+        <CollapsibleSection id="bigticket-paused" title={`Paused / paid off (${pausedItems.length})`} defaultOpen={false}>
           <div>
             {pausedItems.map((item) => (
               <div key={item.id} className="ha-ledger-row" style={{ opacity: 0.6 }}>
@@ -165,7 +155,7 @@ export const BigTicketSection: React.FC<BigTicketSectionProps> = ({
               </div>
             ))}
           </div>
-        </div>
+        </CollapsibleSection>
       )}
 
       {linkedToAccount.length > 0 && (
@@ -175,14 +165,7 @@ export const BigTicketSection: React.FC<BigTicketSectionProps> = ({
       )}
 
       {/* Quick Add Presets */}
-      <div className="ha-card" style={{ padding: '1.5rem' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--ha-ink)', marginBottom: '0.25rem' }}>
-          Common big-ticket presets
-        </h3>
-        <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)', marginBottom: '1rem' }}>
-          Add standard repayments with prefilled figures
-        </p>
-
+      <CollapsibleSection id="bigticket-presets" title="Common big-ticket presets" subtitle="Add standard repayments with prefilled figures" defaultOpen={false} bodyStyle={{ padding: '1.25rem 1.5rem' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
           {[
             { id: 'mortgage-repayment', name: 'Mortgage Repayment' },
@@ -200,7 +183,7 @@ export const BigTicketSection: React.FC<BigTicketSectionProps> = ({
             </button>
           ))}
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   );
 };

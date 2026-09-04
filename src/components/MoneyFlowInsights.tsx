@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { MoneyFlowAnalysis, MoneyFlowInsight, MoneyFlowInsightType, MoneyFlowSeverity } from '../lib/ai';
 import { Sparkles, Wallet, AlertTriangle, Layers, PiggyBank, Info, Loader2 } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
 
 const TYPE_META: Record<MoneyFlowInsightType, { label: string; icon: React.ReactNode }> = {
   idle_cash: { label: 'Idle cash', icon: <Wallet size={16} /> },
@@ -40,8 +41,9 @@ export const MoneyFlowInsights: React.FC = () => {
   };
 
   return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
     <div className="ha-card" style={{ padding: '1.5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: analysis || error ? '1.25rem' : 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: error ? '1.25rem' : 0 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
             <span className="ha-badge ha-badge-blue">AI powered</span>
@@ -71,8 +73,10 @@ export const MoneyFlowInsights: React.FC = () => {
           {error}
         </div>
       )}
+    </div>
 
       {analysis && (
+        <CollapsibleSection id="moneyflow-results" title="Analysis results" bodyStyle={{ padding: '1.5rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div style={{
             backgroundColor: 'var(--ha-blue-light)',
@@ -124,6 +128,7 @@ export const MoneyFlowInsights: React.FC = () => {
             </div>
           )}
         </div>
+        </CollapsibleSection>
       )}
     </div>
   );
