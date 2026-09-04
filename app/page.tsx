@@ -35,6 +35,7 @@ import { TallyLogo } from '@/src/components/TallyLogo';
 import { AccountsSection } from '@/src/components/AccountsSection';
 import { AccountModal } from '@/src/components/AccountModal';
 import { MoneyMap } from '@/src/components/MoneyMap';
+import { CustomMoneyMap } from '@/src/components/CustomMoneyMap';
 import { TransfersSection } from '@/src/components/TransfersSection';
 import { TransferModal } from '@/src/components/TransferModal';
 import { StatementsSection } from '@/src/components/StatementsSection';
@@ -59,6 +60,7 @@ export default function TallyPage() {
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [moneyMapView, setMoneyMapView] = useState<'auto' | 'custom'>('auto');
 
   const SPENDING_CHIPS: { id: TabId; label: string }[] = [
     { id: 'all', label: 'All spending' },
@@ -1119,14 +1121,39 @@ export default function TallyPage() {
         )}
 
         {activeTab === 'moneymap' && (
-          <MoneyMap
-            incomes={incomes}
-            expenses={liveExpenses}
-            accounts={accounts}
-            transfers={transfers}
-            currency={currency}
-            customCategories={customCategories}
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <div className="ha-segmented" style={{ display: 'flex', gap: '2px', backgroundColor: 'var(--ha-line)', padding: '2px', borderRadius: 'var(--ha-radius-sm)' }}>
+                <button
+                  onClick={() => setMoneyMapView('auto')}
+                  className={`ha-chip${moneyMapView === 'auto' ? ' active' : ''}`}
+                  style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
+                >
+                  Auto map
+                </button>
+                <button
+                  onClick={() => setMoneyMapView('custom')}
+                  className={`ha-chip${moneyMapView === 'custom' ? ' active' : ''}`}
+                  style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
+                >
+                  My map
+                </button>
+              </div>
+            </div>
+
+            {moneyMapView === 'auto' ? (
+              <MoneyMap
+                incomes={incomes}
+                expenses={liveExpenses}
+                accounts={accounts}
+                transfers={transfers}
+                currency={currency}
+                customCategories={customCategories}
+              />
+            ) : (
+              <CustomMoneyMap accounts={accounts} currency={currency} />
+            )}
+          </div>
         )}
 
         {activeTab === 'flow' && (

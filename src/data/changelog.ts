@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.26.0';
+export const APP_VERSION = '1.27.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.27.0',
+    date: '2026-09-04',
+    changes: [
+      'Added "My map" — a freeform, editable canvas inside Money Map alongside the existing auto-generated view. Add any object (an account or a custom item like "Car Loan — Credit Union"), connect objects with a directional arrow, and drag them around to sketch out exactly how your money moves.',
+    ],
+  },
   {
     version: '1.26.0',
     date: '2026-09-04',

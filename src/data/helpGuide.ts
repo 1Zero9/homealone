@@ -96,7 +96,8 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
     id: 'moneymap',
     title: 'Money Map & AI insights',
     body: [
-      'The "Money Map" tab visualizes the real journey your money takes, built from your logged Flow entries — or a projected monthly view if you haven\'t logged transfers yet.',
+      'The "Money Map" tab has two views: "Auto map" visualizes the real journey your money takes, built from your logged Flow entries — or a projected monthly view if you haven\'t logged transfers yet.',
+      '"My map" is your own freeform, editable canvas — add any object (an account, a loan, anything not yet tracked), connect objects with a directional arrow, and drag them around to sketch out exactly how your money moves.',
       'In "Insights", click "Analyze my money flow" for an on-demand AI review of idle cash, direct-debit timing risk, account consolidation, and savings opportunities.',
     ],
   },
