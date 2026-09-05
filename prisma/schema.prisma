@@ -462,6 +462,17 @@ model MerchantAlias {
 /// A household-defined spending category, in addition to the fixed built-in
 /// set (Streaming, Utilities, etc — see src/data/categories.ts). Created
 /// on the fly ("+ Create category") when nothing built-in fits (e.g. "Tolls").
+/// Cached daily reference rate (against EUR) for one non-EUR currency Tally
+/// supports. Global, not household-scoped — an exchange rate isn't private
+/// household data. Refreshed lazily by GET /api/exchange-rate-cache when a
+/// row is missing or older than 24h, so it self-heals without depending on
+/// a cron having run. See src/utils/currencies.ts's updateLiveRates().
+model ExchangeRate {
+  currency  String   @id
+  rateToEur Float
+  updatedAt DateTime @updatedAt
+}
+
 model Category {
   id          String   @id @default(cuid())
   name        String

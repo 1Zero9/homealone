@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { EyeOff } from 'lucide-react';
 import type { ExpenseItem, IncomeItem, CurrencyCode, PresetItem, UserProfile, AccountItem, TransferItem, GoalItem, CustomCategoryItem, BudgetItem } from '@/src/types/expense';
 import { loadCurrency, saveCurrency } from '@/src/services/storage';
+import { updateLiveRates } from '@/src/utils/currencies';
 import { calculateSpendingSummary, calculateIncomeSummary } from '@/src/utils/calculations';
 import { Navbar, SPENDING_TABS } from '@/src/components/Navbar';
 import type { TabId } from '@/src/components/Navbar';
@@ -168,6 +169,14 @@ export default function TallyPage() {
       const budgetData = await budgetRes.json();
       if (budgetData.status === 'ok' && Array.isArray(budgetData.budgets)) {
         setBudgets(budgetData.budgets);
+      }
+
+      // 9. Refresh live currency rates (self-healing cache, falls back to
+      // the hardcoded defaults in currencies.ts on any failure below).
+      const rateRes = await fetch('/api/exchange-rate-cache');
+      const rateData = await rateRes.json();
+      if (rateData.status === 'ok' && rateData.rates) {
+        updateLiveRates(rateData.rates);
       }
     } catch (err) {
       console.error('Failed to load from database:', err);

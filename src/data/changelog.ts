@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.47.0';
+export const APP_VERSION = '1.48.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.48.0',
+    date: '2026-09-05',
+    changes: [
+      'Foreign-currency figures across Overview, Spending, and Budgets now use a genuinely live, self-refreshing exchange rate instead of a fixed number that never updated — so converted totals stay accurate as real rates move.',
+    ],
+  },
   {
     version: '1.47.0',
     date: '2026-09-05',
