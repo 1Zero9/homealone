@@ -4,6 +4,7 @@ import { getErrorMessage } from '@/src/lib/errors';
 import { requireHouseholdUser } from '@/src/lib/auth';
 import { rolloverIfDue } from '@/src/lib/billing';
 import { logAudit } from '@/src/lib/audit';
+import { findPossibleDuplicate } from '@/src/lib/duplicateGuard';
 import type { BillingCycle } from '@/src/types/expense';
 
 export async function GET() {
@@ -79,6 +80,20 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    // Only checked for one-off entries — a recurring bill's amount is
+    // *supposed* to recur, so checking those against existing records would
+    // just be noisy false positives on every ordinary new subscription.
+    const possibleDuplicate =
+      body.billingCycle === 'once'
+        ? await findPossibleDuplicate({
+            householdId: auth.user.householdId as string,
+            amount: Number(body.amount),
+            currency: body.currency || 'EUR',
+            date: body.nextRenewalDate || new Date().toISOString().split('T')[0],
+            accountId: body.paymentAccountId || null,
+          })
+        : null;
+
     const newExpense = await prisma.expense.create({
       data: {
         name: body.name,
@@ -143,6 +158,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       status: 'ok',
       expense: newExpense,
+      possibleDuplicate,
     });
   } catch (error: unknown) {
     console.error('Failed to create expense:', error);

@@ -5,6 +5,7 @@ import { requireHouseholdUser } from '@/src/lib/auth';
 import { logAudit } from '@/src/lib/audit';
 import { formatCurrency } from '@/src/utils/formatters';
 import type { CurrencyCode } from '@/src/types/expense';
+import { findPossibleDuplicate } from '@/src/lib/duplicateGuard';
 
 const ACCOUNT_SELECT = { id: true, name: true, type: true, institution: true } as const;
 
@@ -55,6 +56,21 @@ export async function POST(request: Request) {
       );
     }
 
+    // Only checked for standalone transfers — one tied to a recurring
+    // Expense/Income (a "mark as paid" reconciliation transfer) is expected
+    // to legitimately repeat the same amount every cycle, so checking those
+    // against themselves month to month would just be noisy false positives.
+    const possibleDuplicate =
+      !body.linkedExpenseId && !body.linkedIncomeId
+        ? await findPossibleDuplicate({
+            householdId: auth.user.householdId as string,
+            amount: Number(body.amount),
+            currency: body.currency || 'EUR',
+            date: body.date,
+            accountId: body.fromAccountId || body.toAccountId || null,
+          })
+        : null;
+
     const newTransfer = await prisma.transfer.create({
       data: {
         amount: Number(body.amount),
@@ -78,7 +94,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ status: 'ok', transfer: newTransfer });
+    return NextResponse.json({ status: 'ok', transfer: newTransfer, possibleDuplicate });
   } catch (error: unknown) {
     console.error('Failed to create transfer:', error);
     return NextResponse.json(

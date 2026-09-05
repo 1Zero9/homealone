@@ -94,6 +94,7 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
     body: [
       'Use "Flow" to log real transfers: income landing in an account, money moving between accounts, or payments going out.',
       'One-off spending (a car repair, a doctor\'s visit) works here too — set "From" to the account that paid, leave "To" as External, and add a note.',
+      'Logging a one-off transfer or expense that looks like something already on record (same account, same amount, within a couple of days) shows a dismissible heads-up — it never blocks the entry. Recurring bills and their "marked paid" transfers are never checked this way, since they\'re expected to repeat the same amount every cycle.',
     ],
   },
   {

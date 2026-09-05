@@ -55,6 +55,7 @@ import { ScanReceiptModal } from '@/src/components/ScanReceiptModal';
 export default function TallyPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = checking
   const [idleLogoutNotice, setIdleLogoutNotice] = useState<string | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [incomes, setIncomes] = useState<IncomeItem[]>([]);
   const [accounts, setAccounts] = useState<AccountItem[]>([]);
@@ -479,6 +480,12 @@ export default function TallyPage() {
           setExpenses((prev) =>
             prev.map((e) => (e.id === tempId ? data.expense : e))
           );
+          if (data.possibleDuplicate) {
+            const d = data.possibleDuplicate;
+            setDuplicateWarning(
+              `This looks similar to an existing ${d.type} — "${d.label}" on ${d.date}. Both have been kept in case they're genuinely separate.`
+            );
+          }
         }
       } catch (err) {
         console.error('Failed to create expense in DB:', err);
@@ -787,6 +794,12 @@ export default function TallyPage() {
             ? prev.map((t) => (t.id === existingId ? resData.transfer : t))
             : [resData.transfer, ...prev]
         );
+        if (resData.possibleDuplicate) {
+          const d = resData.possibleDuplicate;
+          setDuplicateWarning(
+            `This looks similar to an existing ${d.type} — "${d.label}" on ${d.date}. Both have been kept in case they're genuinely separate.`
+          );
+        }
         fetchDatabaseData();
       }
     } catch (err) {
@@ -921,6 +934,27 @@ export default function TallyPage() {
         padding: '1.75rem 1.5rem',
         flex: 1,
       }}>
+        {duplicateWarning && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.75rem',
+            padding: '0.75rem 1rem',
+            marginBottom: '1rem',
+            borderRadius: 'var(--ha-radius-sm)',
+            backgroundColor: '#fdf2e3',
+            border: '1px solid #f6dfb8',
+            color: '#7C4A0B',
+            fontSize: '0.85rem',
+          }}>
+            <span>{duplicateWarning}</span>
+            <button onClick={() => setDuplicateWarning(null)} className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem', color: '#7C4A0B', flexShrink: 0 }}>
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {/* Ask Bar — the "Google box" for this household's spending */}
         <div className={`ha-ask-wrap${hasData ? '' : ' is-empty'}`} style={{ padding: hasData ? '0.5rem 0 2rem' : '3rem 0 2.5rem' }}>
           <h2 className="ha-greeting" style={{

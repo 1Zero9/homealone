@@ -103,6 +103,8 @@ Supported account types: **Checking, Savings, Credit Union, Credit Card, Debit C
 
 You can optionally link a transfer to an existing recurring Expense or Income record, or just use a free-text label for anything ad hoc. Every transfer is dated, so Flow becomes a real, searchable history of where your money actually went — not just a projection.
 
+**Possible-duplicate check**: logging a one-off transfer or expense that looks like something already on record (same account, same amount, within a couple of days) shows a dismissible heads-up — it never blocks the entry, since a genuine repeat payment does happen. Recurring bills and their "marked paid" transfers are never checked this way, since those are expected to repeat the same amount every cycle.
+
 ### Statement imports
 
 Under Flow, **Statement imports** lets you cross-check a real bank or credit-card statement against what you've already logged.

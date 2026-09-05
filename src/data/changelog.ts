@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.51.0';
+export const APP_VERSION = '1.52.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.52.0',
+    date: '2026-09-05',
+    changes: [
+      'Logging a one-off expense or a standalone transfer now shows a dismissible heads-up if it looks like something already on record (same account, same amount, within a couple of days) — never blocks the entry, just flags it in case it\'s a genuine duplicate.',
+    ],
+  },
   {
     version: '1.51.0',
     date: '2026-09-05',
