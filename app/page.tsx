@@ -116,6 +116,21 @@ export default function TallyPage() {
     try {
       // 1. Fetch Users
       const userRes = await fetch('/api/users');
+      if (userRes.status === 401) {
+        // The Edge middleware can't validate sessions (no Prisma access
+        // there), so it keeps refreshing a cookie that may already be dead
+        // server-side (e.g. removed from the household, or "sign out
+        // everywhere" from another device). Once a real API route confirms
+        // 401, drop the client's stale signed-in state immediately instead
+        // of leaving it to bounce confusingly on some later action.
+        try {
+          localStorage.removeItem('tally_user');
+        } catch {}
+        fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+        return;
+      }
       const userData = await userRes.json();
       if (userData.status === 'ok' && Array.isArray(userData.users)) {
         setUsers(userData.users);

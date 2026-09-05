@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.49.0';
+export const APP_VERSION = '1.50.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.50.0',
+    date: '2026-09-05',
+    changes: [
+      'If your session ever becomes invalid on another device or after being removed from a household, Tally now signs you out cleanly the next time it checks, instead of leaving the app looking signed-in until something confusing happens.',
+      'Clarified in the help guide and docs: "Backup Admin" has identical permissions to "Admin" today.',
+    ],
+  },
   {
     version: '1.49.0',
     date: '2026-09-05',

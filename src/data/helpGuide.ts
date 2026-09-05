@@ -181,7 +181,7 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
     adminOnly: true,
     body: [
       'As an admin, the "Admin & users" tab lets you manage household member accounts, change roles, and remove accounts that no longer belong.',
-      'There must always be at least one Admin in a household — the app won\'t let you remove the last one.',
+      'There must always be at least one Admin in a household — the app won\'t let you remove the last one. "Backup Admin" has identical permissions to "Admin" today — it\'s a separate role only so it\'s clear who the usual admin is, not a lesser one.',
       '"Database Snapshots" takes a full point-in-time backup of the household\'s accounts, goals, bills, income and transfers, stored in the cloud. "Restore" replaces all of the household\'s current data with what\'s in that snapshot — a real undo, not a preview — so the confirmation shows the snapshot\'s age and record count before you commit to it.',
       'One snapshot happens automatically every day, tagged "Automatic" in the list, with the most recent 14 kept. A manual snapshot is only worth creating right before doing something risky, like a restore.',
     ],

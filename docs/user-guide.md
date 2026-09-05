@@ -186,7 +186,7 @@ Available to **Admin** and **Backup Admin** roles via the avatar menu. Manage ho
 Roles:
 - **Admin** — full control: users, workspace sharing, backups.
 - **Member** — day-to-day use: log, categorize, and edit household expenses, income, accounts, transfers, and goals.
-- **Backup Admin** — a disaster-recovery role for emergency failover if the primary Admin is unavailable.
+- **Backup Admin** — a disaster-recovery role for emergency failover if the primary Admin is unavailable. Carries identical permissions to Admin today (same access to users, sharing, and backups) — it's a separate role only so it's clear who the "usual" admin is, not a restricted tier.
 
 ## 16. Data export & backup
 
