@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { CurrencyCode } from '../types/expense';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { getErrorMessage } from '../lib/errors';
-import { Sparkles, Search, Loader2, HelpCircle, BookOpen } from 'lucide-react';
+import { Sparkles, Search, Loader2, HelpCircle, BookOpen, Info } from 'lucide-react';
 
 interface InsightsData {
   monthlyTotal: number;
@@ -45,6 +45,12 @@ const HELP_QUICK_ACTIONS: { id: string; label: string; question: string }[] = [
   { id: 'help-statement', label: 'How do I import a statement?', question: 'How do I import a bank or credit-card statement?' },
   { id: 'help-assign', label: 'How do I assign a bill to someone?', question: 'How do I assign a bill to a household member?' },
   { id: 'help-account', label: 'How do I add an account?', question: 'How do I add an account?' },
+];
+
+const FAQ_QUICK_ACTIONS: { id: string; label: string; question: string }[] = [
+  { id: 'faq-delete-statement', label: 'What happens if I delete a statement?', question: 'What happens if I delete a statement import?' },
+  { id: 'faq-delete-account', label: 'What happens if I delete an account?', question: 'What happens if I delete an account?' },
+  { id: 'faq-remove-member', label: 'What happens if I remove a household member?', question: 'What happens if I remove a household member?' },
 ];
 
 export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = true }) => {
@@ -234,6 +240,26 @@ export const AssistantBox: React.FC<AssistantBoxProps> = ({ currency, hasData = 
             </div>
             <div className="ha-assistant-shortcuts ha-assistant-shortcuts-help">
               {HELP_QUICK_ACTIONS.map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  onClick={() => runHelpAction(action.question)}
+                  disabled={isLoading}
+                  className="ha-assistant-shortcut"
+                >
+                  <span>{action.label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="ha-assistant-group" aria-labelledby="assistant-faq-label">
+            <div id="assistant-faq-label" className="ha-assistant-group-label">
+              <Info size={14} />
+              <span>Frequently asked</span>
+            </div>
+            <div className="ha-assistant-shortcuts ha-assistant-shortcuts-help">
+              {FAQ_QUICK_ACTIONS.map((action) => (
                 <button
                   key={action.id}
                   type="button"

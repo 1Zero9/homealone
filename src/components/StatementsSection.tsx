@@ -36,7 +36,20 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
   }, [fetchImports]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this statement import? Any bills or one-off payments you already logged from it will stay.')) return;
+    const imp = imports.find((i) => i.id === id);
+    // Only rows already turned into a real Expense/Transfer survive deletion —
+    // everything else (Needs review, Ignored, Duplicate) is gone for good, so
+    // spell that out with real counts rather than a generic warning.
+    const atRisk = imp ? imp.unmatched + imp.ignored + imp.duplicate : 0;
+    const warning = imp
+      ? `Delete "${imp.label}"?\n\n` +
+        `${imp.matched} bill${imp.matched === 1 ? '' : 's'}/payment${imp.matched === 1 ? '' : 's'} you've already logged from it will stay in your ledger.\n\n` +
+        (atRisk > 0
+          ? `But ${atRisk} row${atRisk === 1 ? '' : 's'} you haven't resolved (needs review, ignored, or flagged duplicate) will be permanently deleted — this can't be undone.`
+          : `Every row from it has already been resolved, so nothing else is affected.`)
+      : 'Delete this statement import? Any bills or one-off payments you already logged from it will stay.';
+
+    if (!confirm(warning)) return;
     const res = await fetch(`/api/statements/${id}`, { method: 'DELETE' });
     const data = await res.json();
     if (data.status === 'ok') {

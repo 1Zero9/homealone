@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.38.1';
+export const APP_VERSION = '1.38.2';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.38.2',
+    date: '2026-09-05',
+    changes: [
+      'Deleting a statement import now warns you with real counts before confirming — how many bills/payments you\'ve already logged (which stay) versus how many unresolved rows would be permanently lost.',
+      'Added a "Frequently asked" section to Ask Tally and the in-app Help guide, covering what actually happens when you delete a statement import, an account, a category, an expense, or remove a household member.',
+    ],
+  },
   {
     version: '1.38.1',
     date: '2026-09-05',

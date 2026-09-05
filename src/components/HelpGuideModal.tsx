@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import type { UserProfile } from '../types/expense';
-import { X, Sparkles, Plus, UserPlus, Download, Bell, Mail, ShieldCheck, Landmark, ArrowLeftRight, Target, Activity, CalendarClock, UserCog, FileSpreadsheet, ScanLine, BookOpen } from 'lucide-react';
+import { X, Sparkles, Plus, UserPlus, Download, Bell, Mail, ShieldCheck, Landmark, ArrowLeftRight, Target, Activity, CalendarClock, UserCog, FileSpreadsheet, ScanLine, BookOpen, Lock, HelpCircle } from 'lucide-react';
 import { HELP_GUIDE_SECTIONS } from '../data/helpGuide';
 import { useOverlayClose } from '../hooks/useOverlayClose';
 
@@ -25,6 +25,8 @@ const SECTION_ICONS: Record<string, React.ReactNode> = {
   renewals: <Bell size={16} color="var(--ha-blue)" />,
   vendor: <Mail size={16} color="var(--ha-blue)" />,
   sharing: <UserPlus size={16} color="var(--ha-blue)" />,
+  privacy: <Lock size={16} color="var(--ha-blue)" />,
+  faq: <HelpCircle size={16} color="var(--ha-blue)" />,
   export: <Download size={16} color="var(--ha-blue)" />,
   admin: <ShieldCheck size={16} color="var(--ha-red)" />,
 };

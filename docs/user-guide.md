@@ -36,6 +36,7 @@ Most budgeting apps show you category totals and ask you to trust them. Tally is
 15. [Admin & users](#15-admin--users)
 16. [Data export & backup](#16-data-export--backup)
 17. [Privacy & security](#17-privacy--security)
+18. [Frequently asked questions](#18-frequently-asked-questions)
 
 ---
 
@@ -119,6 +120,7 @@ Under Flow, **Statement imports** lets you cross-check a real bank or credit-car
 - **Add all as expense**: for a merchant with several rows in the same statement, pick a category once on that group and log them all in one go — this is the fastest way to clear routine repeat spending (coffee, groceries) without touching each row individually.
 - **Rename an import**: click the pencil next to a statement's name in the list, or inside the review screen, to give it a friendlier label than the uploaded filename.
 - Clicking outside the dialog never discards anything — only the visible buttons (Back, Import, Done, the X) close or navigate it.
+- **Deleting an import**: any bill or one-off payment you already logged from it stays in your ledger. But every row still sitting in Needs review, Ignored, or flagged Duplicate is permanently deleted along with the import — the delete confirmation tells you exactly how many rows are at risk before you confirm, since there's no undo.
 
 ## 8. Goals
 
@@ -193,6 +195,16 @@ Click **Export** at any time to download your records as a CSV spreadsheet or a 
 - Sensitive account fields (account numbers, online banking logins, security notes) are encrypted at rest and only decrypted on an explicit "reveal" action — or, for statement imports, an on-the-fly admin-only comparison that returns a match/mismatch signal but never the decrypted value itself.
 - AI features (the Ask box and Money flow analysis) only ever send your own household's data, and only when you actively trigger them — nothing runs automatically in the background.
 - Full details: see the in-app **Privacy** page (footer link) and the **AI transparency** page.
+
+## 18. Frequently asked questions
+
+The same questions are also answerable directly from the **Ask Tally** box (see [§12](#12-asking-tally-a-question)) — click one under "Frequently asked," or type your own.
+
+- **What happens if you delete a statement import?** Any bill or one-off payment you already logged from it stays in your ledger untouched. But every row still sitting in Needs review, Ignored, or flagged as a Duplicate is permanently deleted along with the import — there's no undo, so resolve or double-check those first.
+- **What happens if you delete an account?** Expenses, income, transfers and savings goals linked to it are not deleted — they just lose that account link (e.g. "paid from" becomes unset). The one exception is a custom Money Map: any node you placed for that account is removed along with it.
+- **What happens if you delete a custom category?** Expenses already using it are not deleted or reassigned — they just show a generic fallback label until you edit them with a different category.
+- **What happens if you delete an expense that a statement row was matched to?** That statement row keeps showing "Matched" but with no name — click "Undo" on it to send it back to Needs review, where you can resolve it again.
+- **What happens if you remove a household member?** Nothing they created — bills, income, transfers, goals — is deleted. Those records stay exactly as they are, they just lose the "added by" attribution.
 
 ---
 
