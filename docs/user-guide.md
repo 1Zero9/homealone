@@ -111,6 +111,7 @@ Under Flow, **Statement imports** lets you cross-check a real bank or credit-car
 - Upload a CSV, PDF, or photo/screenshot — CSV works best, but Tally reads PDFs and photos with AI, so there's no need to convert a bank PDF to CSV first.
 - For CSV, tell Tally which column is the date, description, and amount. Either way, pick which **Account** the statement is from — this keeps matching accurate once you have more than one account.
 - From a PDF or photo, Tally also extracts account details printed on it — bank name, account holder, account number, sort code/IBAN, statement period, opening/closing balance — and checks them against what's saved for the account you picked. A mismatch is flagged; if nothing's saved yet, save the extracted value in one click.
+- **Balance reconciliation**: when both the opening and closing balance were found on a PDF or photo statement, the review screen shows whether the rows Tally logged actually add up to that balance change — a quick check that nothing from the statement was missed. CSV imports don't show this (a CSV export has no such header to read).
 - **No account for this statement yet?** Click **Add a new account** (or **Add your first account**) right on the import screen. Any account number/sort code Tally found is carried over and encrypted automatically — this works for CSV too, even without extracted details.
 
 **Reviewing matches**

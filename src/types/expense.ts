@@ -304,6 +304,9 @@ export interface StatementImportSummary {
   unmatched: number;
   ignored: number;
   duplicate: number;
+  openingBalance?: number | null;
+  closingBalance?: number | null;
+  statementPeriod?: string | null;
 }
 
 export interface IncomeSummary {

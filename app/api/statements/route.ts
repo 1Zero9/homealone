@@ -135,6 +135,10 @@ export async function POST(request: Request) {
 
     const seenKeys = new Set(priorTransactions.map((t) => duplicateKey(t)));
 
+    const openingBalance = typeof body.openingBalance === 'number' && Number.isFinite(body.openingBalance) ? body.openingBalance : null;
+    const closingBalance = typeof body.closingBalance === 'number' && Number.isFinite(body.closingBalance) ? body.closingBalance : null;
+    const statementPeriod = typeof body.statementPeriod === 'string' && body.statementPeriod.trim() ? body.statementPeriod.trim() : null;
+
     const statementImport = await prisma.statementImport.create({
       data: {
         label,
@@ -142,6 +146,9 @@ export async function POST(request: Request) {
         accountId,
         createdById: auth.user.id,
         householdId: auth.user.householdId,
+        openingBalance,
+        closingBalance,
+        statementPeriod,
       },
     });
 

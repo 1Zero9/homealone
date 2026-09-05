@@ -382,6 +382,16 @@ model StatementImport {
 
   transactions StatementTransaction[]
 
+  // Extracted from PDF/photo statements only (analyzeStatementDocument) —
+  // CSV imports leave these null, since a CSV export has no such header.
+  // The only available proof an import captured every row: if both
+  // balances are present, closingBalance - openingBalance should equal the
+  // sum of logged (non-ignored, non-duplicate) transaction amounts for
+  // this import, surfaced as a reconciliation line in the UI.
+  openingBalance  Float?
+  closingBalance  Float?
+  statementPeriod String?
+
   createdAt DateTime @default(now())
 
   @@index([householdId])

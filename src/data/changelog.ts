@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.48.0';
+export const APP_VERSION = '1.49.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.49.0',
+    date: '2026-09-05',
+    changes: [
+      'Importing a PDF or photo statement now shows whether the rows Tally logged actually add up to the statement\'s own opening/closing balance — a quick check that nothing was missed, right on the review screen.',
+    ],
+  },
   {
     version: '1.48.0',
     date: '2026-09-05',

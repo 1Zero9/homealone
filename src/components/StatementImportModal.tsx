@@ -151,6 +151,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const [submitError, setSubmitError] = useState('');
   const [importId, setImportId] = useState<string | null>(null);
   const [importLabel, setImportLabel] = useState('');
+  const [importBalances, setImportBalances] = useState<{ openingBalance: number | null; closingBalance: number | null } | null>(null);
   const [isRenamingImport, setIsRenamingImport] = useState(false);
   const [renameLabelInput, setRenameLabelInput] = useState('');
   const [isSavingRename, setIsSavingRename] = useState(false);
@@ -210,6 +211,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     setSubmitError('');
     setImportId(null);
     setImportLabel('');
+    setImportBalances(null);
     setIsRenamingImport(false);
     setRenameLabelInput('');
     setIsSavingRename(false);
@@ -283,6 +285,10 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
             setImportId(initialImportId);
             setImportLabel(data.import?.label || 'Statement import');
             setImportAccount(data.import?.account || null);
+            setImportBalances({
+              openingBalance: data.import?.openingBalance ?? null,
+              closingBalance: data.import?.closingBalance ?? null,
+            });
             applyLoadedTransactions(data.transactions || []);
             setStep('review');
           }
@@ -538,6 +544,9 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
           fileName,
           accountId: accountId || null,
           transactions: preparedRows.map((r) => ({ ...r, currency: householdCurrency })),
+          openingBalance: accountInfo?.openingBalance ?? null,
+          closingBalance: accountInfo?.closingBalance ?? null,
+          statementPeriod: accountInfo?.statementPeriod ?? null,
         }),
       });
       const data = await res.json();
@@ -548,6 +557,10 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
       setImportId(data.import.id);
       setImportLabel(data.import.label);
       setImportAccount(accounts.find((a) => a.id === accountId) || null);
+      setImportBalances({
+        openingBalance: data.import.openingBalance ?? null,
+        closingBalance: data.import.closingBalance ?? null,
+      });
       applyLoadedTransactions(data.transactions);
       setStep('review');
       onImported();
@@ -721,6 +734,20 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const matchedCount = transactions.filter((t) => t.status === 'MATCHED').length;
   const ignoredCount = transactions.filter((t) => t.status === 'IGNORED').length;
   const duplicateCount = transactions.filter((t) => t.status === 'DUPLICATE').length;
+
+  // Reconciliation: closingBalance - openingBalance should equal the sum of
+  // every logged row's signed amount, regardless of status — a row still
+  // counts even if IGNORED or flagged DUPLICATE, since it was genuinely
+  // present in the source document either way. Only computable when the
+  // statement itself stated both balances (PDF/photo imports via AI
+  // extraction) — a CSV export has no such header, so this stays null.
+  const reconciliation = (() => {
+    if (!importBalances || importBalances.openingBalance == null || importBalances.closingBalance == null) return null;
+    const loggedTotal = transactions.reduce((sum, t) => sum + (t.direction === 'CREDIT' ? t.amount : -t.amount), 0);
+    const expectedTotal = importBalances.closingBalance - importBalances.openingBalance;
+    const difference = expectedTotal - loggedTotal;
+    return { loggedTotal, expectedTotal, difference, reconciled: Math.abs(difference) < 0.01 };
+  })();
 
   // Sorting is applied to the flat list before grouping, so both which
   // group appears first (its first-encountered item under this sort) and
@@ -1249,6 +1276,27 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                 </div>
               ) : (
                 <>
+                  {reconciliation && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.6rem 0.85rem',
+                      borderRadius: 'var(--ha-radius-sm)',
+                      backgroundColor: reconciliation.reconciled ? 'var(--ha-lime-tint)' : '#fdf2e3',
+                      border: `1px solid ${reconciliation.reconciled ? 'var(--ha-lime)' : '#f6dfb8'}`,
+                      fontSize: '0.8rem',
+                      color: reconciliation.reconciled ? 'var(--ha-ink)' : '#7C4A0B',
+                    }}>
+                      {reconciliation.reconciled ? <CheckCircle2 size={15} color="var(--ha-lime)" style={{ flexShrink: 0 }} /> : <AlertTriangle size={15} color="#B45309" style={{ flexShrink: 0 }} />}
+                      <span>
+                        {reconciliation.reconciled
+                          ? `${transactions.length} rows imported, balance reconciles.`
+                          : `${transactions.length} rows imported, ${formatCurrency(Math.abs(reconciliation.difference), householdCurrency)} unaccounted for against the statement's stated balance.`}
+                      </span>
+                    </div>
+                  )}
+
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                       {FILTERS.map((f) => {
