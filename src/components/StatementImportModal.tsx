@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import type { ExpenseItem, StatementTransactionItem, CurrencyCode, AccountItem, AccountType, ExpenseCategory, CustomCategoryItem } from '../types/expense';
 import { formatCurrency } from '../utils/formatters';
-import { parseCsv, guessColumns, parseAmount, parseDateFlexible, type ColumnGuess } from '../lib/statementMatching';
+import { parseCsv, guessColumns, parseAmount, parseDateFlexible, detectRecurringCycle, type ColumnGuess, type DetectedBillingCycle } from '../lib/statementMatching';
 import type { StatementAccountInfo } from '../lib/ai';
 import { CategorySelect } from './CategorySelect';
 
@@ -41,6 +41,7 @@ interface StatementImportModalProps {
 
 type Step = 'upload' | 'map' | 'review';
 type ReviewFilter = 'needs_review' | 'matched' | 'ignored' | 'duplicate' | 'all';
+type ReviewSort = 'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc' | 'merchant-asc' | 'status';
 
 interface PreparedRow {
   date: string;
@@ -53,6 +54,10 @@ interface TxGroup {
   key: string;
   label: string;
   items: StatementTransactionItem[];
+  // Set only when every UNMATCHED item in the group shares an identical
+  // amount and the dates between them are regularly spaced — a real
+  // candidate for "one recurring bill" instead of N one-off expenses.
+  detectedCycle: DetectedBillingCycle | null;
 }
 
 const FILTERS: { id: ReviewFilter; label: string }[] = [
@@ -62,6 +67,29 @@ const FILTERS: { id: ReviewFilter; label: string }[] = [
   { id: 'duplicate', label: 'Duplicates' },
   { id: 'all', label: 'All' },
 ];
+
+const SORTS: { id: ReviewSort; label: string }[] = [
+  { id: 'date-desc', label: 'Newest first' },
+  { id: 'date-asc', label: 'Oldest first' },
+  { id: 'amount-desc', label: 'Amount: highest first' },
+  { id: 'amount-asc', label: 'Amount: lowest first' },
+  { id: 'merchant-asc', label: 'Merchant A–Z' },
+  { id: 'status', label: 'Needs review first' },
+];
+
+const STATUS_SORT_ORDER: Record<StatementTransactionItem['status'], number> = {
+  UNMATCHED: 0,
+  DUPLICATE: 1,
+  MATCHED: 2,
+  IGNORED: 3,
+};
+
+const CYCLE_LABELS: Record<DetectedBillingCycle, string> = {
+  weekly: 'weekly',
+  monthly: 'monthly',
+  quarterly: 'quarterly',
+  annual: 'annual',
+};
 
 const ACCOUNT_TYPES: { id: AccountType; label: string }[] = [
   { id: 'CHECKING', label: 'Current' },
@@ -111,6 +139,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const [isSavingRename, setIsSavingRename] = useState(false);
   const [transactions, setTransactions] = useState<StatementTransactionItem[]>([]);
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('needs_review');
+  const [reviewSort, setReviewSort] = useState<ReviewSort>('date-desc');
+  const [treatGroupAsRecurring, setTreatGroupAsRecurring] = useState<Record<string, boolean>>({});
   const [busyTxId, setBusyTxId] = useState<string | null>(null);
   const [linkingTxId, setLinkingTxId] = useState<string | null>(null);
   const [selectedExpenseId, setSelectedExpenseId] = useState<Record<string, string>>({});
@@ -166,6 +196,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     setIsSavingRename(false);
     setTransactions([]);
     setReviewFilter('needs_review');
+    setReviewSort('date-desc');
+    setTreatGroupAsRecurring({});
     setBusyTxId(null);
     setLinkingTxId(null);
     setSelectedExpenseId({});
@@ -581,6 +613,36 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     }
   };
 
+  const resolveGroupAsRecurring = async (group: TxGroup, category: ExpenseCategory) => {
+    if (!importId) return;
+    setBusyGroupKey(group.key);
+    try {
+      const unmatched = group.items.filter((t) => t.status === 'UNMATCHED');
+      const res = await fetch(`/api/statements/${importId}/transactions/group-resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          txIds: unmatched.map((t) => t.id),
+          category,
+          vendorName: group.items.find((t) => t.vendorName)?.vendorName || group.label,
+        }),
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        const updatedById = new Map<string, StatementTransactionItem>(
+          data.transactions.map((t: StatementTransactionItem) => [t.id, t])
+        );
+        setTransactions((prev) => prev.map((t) => updatedById.get(t.id) || t));
+        setCategorizingGroupKey(null);
+        onExpensesChanged?.();
+      } else {
+        alert(data.message || 'Failed to create recurring bill');
+      }
+    } finally {
+      setBusyGroupKey(null);
+    }
+  };
+
   if (!isOpen) return null;
 
   const handleDrop = (e: React.DragEvent) => {
@@ -603,14 +665,35 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const ignoredCount = transactions.filter((t) => t.status === 'IGNORED').length;
   const duplicateCount = transactions.filter((t) => t.status === 'DUPLICATE').length;
 
+  // Sorting is applied to the flat list before grouping, so both which
+  // group appears first (its first-encountered item under this sort) and
+  // the order of items within a group follow the chosen sort.
+  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
+    switch (reviewSort) {
+      case 'date-asc': return a.date.localeCompare(b.date);
+      case 'amount-desc': return b.amount - a.amount;
+      case 'amount-asc': return a.amount - b.amount;
+      case 'merchant-asc': return (a.vendorName || a.normalizedDescription || a.rawDescription).localeCompare(b.vendorName || b.normalizedDescription || b.rawDescription);
+      case 'status': return STATUS_SORT_ORDER[a.status] - STATUS_SORT_ORDER[b.status];
+      case 'date-desc':
+      default:
+        return b.date.localeCompare(a.date);
+    }
+  });
+
   const groupedTransactions: TxGroup[] = (() => {
     const map = new Map<string, StatementTransactionItem[]>();
-    for (const tx of filteredTransactions) {
+    for (const tx of sortedTransactions) {
       const key = tx.normalizedDescription || tx.rawDescription;
       const arr = map.get(key);
       if (arr) arr.push(tx); else map.set(key, [tx]);
     }
-    return Array.from(map.entries()).map(([key, items]) => ({ key, label: items[0].vendorName || key, items }));
+    return Array.from(map.entries()).map(([key, items]) => {
+      const unmatched = items.filter((t) => t.status === 'UNMATCHED');
+      const sameAmount = unmatched.length >= 3 && unmatched.every((t) => t.amount === unmatched[0].amount && t.direction === 'DEBIT');
+      const detectedCycle = sameAmount ? detectRecurringCycle(unmatched.map((t) => t.date)) : null;
+      return { key, label: items[0].vendorName || key, items, detectedCycle };
+    });
   })();
 
   return (
@@ -1106,27 +1189,40 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                 </div>
               ) : (
                 <>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    {FILTERS.map((f) => {
-                      const count = f.id === 'needs_review' ? needsReviewCount : f.id === 'matched' ? matchedCount : f.id === 'ignored' ? ignoredCount : f.id === 'duplicate' ? duplicateCount : transactions.length;
-                      const active = reviewFilter === f.id;
-                      return (
-                        <button
-                          key={f.id}
-                          onClick={() => setReviewFilter(f.id)}
-                          className="ha-chip"
-                          style={{
-                            fontSize: '0.78rem',
-                            backgroundColor: active ? 'var(--ha-blue)' : 'var(--ha-white)',
-                            color: active ? 'var(--ha-white)' : 'var(--ha-ink)',
-                            border: '1px solid var(--ha-line)',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {f.label} <span style={{ opacity: 0.75 }}>({count})</span>
-                        </button>
-                      );
-                    })}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {FILTERS.map((f) => {
+                        const count = f.id === 'needs_review' ? needsReviewCount : f.id === 'matched' ? matchedCount : f.id === 'ignored' ? ignoredCount : f.id === 'duplicate' ? duplicateCount : transactions.length;
+                        const active = reviewFilter === f.id;
+                        return (
+                          <button
+                            key={f.id}
+                            onClick={() => setReviewFilter(f.id)}
+                            className="ha-chip"
+                            style={{
+                              fontSize: '0.78rem',
+                              backgroundColor: active ? 'var(--ha-blue)' : 'var(--ha-white)',
+                              color: active ? 'var(--ha-white)' : 'var(--ha-ink)',
+                              border: '1px solid var(--ha-line)',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {f.label} <span style={{ opacity: 0.75 }}>({count})</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <select
+                      value={reviewSort}
+                      onChange={(e) => setReviewSort(e.target.value as ReviewSort)}
+                      className="ha-input"
+                      style={{ fontSize: '0.78rem', padding: '0.35rem 0.55rem', flexShrink: 0 }}
+                      title="Sort order"
+                    >
+                      {SORTS.map((s) => (
+                        <option key={s.id} value={s.id}>Sort: {s.label}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', maxHeight: '440px', overflowY: 'auto' }}>
@@ -1225,37 +1321,59 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                             <div
                               style={{
                                 display: 'flex',
-                                gap: '0.4rem',
-                                flexWrap: 'wrap',
-                                alignItems: 'center',
+                                flexDirection: 'column',
+                                gap: '0.5rem',
                                 padding: '0.5rem 0.75rem',
                                 borderRadius: 'var(--ha-radius-sm)',
                                 backgroundColor: '#f0f0ec',
                               }}
                             >
-                              <span style={{ fontSize: '0.72rem', color: 'var(--ha-muted)' }}>
-                                Category for all {group.items.filter((t) => t.status === 'UNMATCHED').length} unmatched:
-                              </span>
-                              <CategorySelect
-                                className="ha-input"
-                                style={{ fontSize: '0.78rem', padding: '0.4rem 0.6rem' }}
-                                value={selectedGroupCategory[group.key] ?? group.items[0].suggestedCategory ?? ''}
-                                onChange={(id) => setSelectedGroupCategory((prev) => ({ ...prev, [group.key]: id as ExpenseCategory }))}
-                                customCategories={customCategories}
-                                onCategoryCreated={(cat) => onCategoryCreated?.(cat)}
-                                placeholderOption="— Choose a category —"
-                              />
-                              <button
-                                disabled={!(selectedGroupCategory[group.key] || group.items[0].suggestedCategory) || isGroupBusy}
-                                onClick={() => resolveGroupCategorize(group, (selectedGroupCategory[group.key] || group.items[0].suggestedCategory) as ExpenseCategory)}
-                                className="btn btn-primary"
-                                style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
-                              >
-                                {isGroupBusy ? <Loader2 size={12} className="spin" /> : <Tag size={12} />} Add all
-                              </button>
-                              <button onClick={() => setCategorizingGroupKey(null)} className="btn btn-ghost" style={{ fontSize: '0.75rem', padding: '0.4rem 0.5rem' }}>
-                                Cancel
-                              </button>
+                              {group.detectedCycle && (
+                                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem', fontSize: '0.75rem', color: 'var(--ha-ink)', cursor: 'pointer' }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={!!treatGroupAsRecurring[group.key]}
+                                    onChange={(e) => setTreatGroupAsRecurring((prev) => ({ ...prev, [group.key]: e.target.checked }))}
+                                    style={{ marginTop: '2px', flexShrink: 0 }}
+                                  />
+                                  <span>
+                                    These {group.items.filter((t) => t.status === 'UNMATCHED').length} rows are the same amount, spaced about {CYCLE_LABELS[group.detectedCycle]} apart — treat as <strong>one recurring bill</strong> instead of separate one-offs
+                                  </span>
+                                </label>
+                              )}
+                              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.72rem', color: 'var(--ha-muted)' }}>
+                                  Category for all {group.items.filter((t) => t.status === 'UNMATCHED').length} unmatched:
+                                </span>
+                                <CategorySelect
+                                  className="ha-input"
+                                  style={{ fontSize: '0.78rem', padding: '0.4rem 0.6rem' }}
+                                  value={selectedGroupCategory[group.key] ?? group.items[0].suggestedCategory ?? ''}
+                                  onChange={(id) => setSelectedGroupCategory((prev) => ({ ...prev, [group.key]: id as ExpenseCategory }))}
+                                  customCategories={customCategories}
+                                  onCategoryCreated={(cat) => onCategoryCreated?.(cat)}
+                                  placeholderOption="— Choose a category —"
+                                />
+                                <button
+                                  disabled={!(selectedGroupCategory[group.key] || group.items[0].suggestedCategory) || isGroupBusy}
+                                  onClick={() => {
+                                    const category = (selectedGroupCategory[group.key] || group.items[0].suggestedCategory) as ExpenseCategory;
+                                    if (treatGroupAsRecurring[group.key] && group.detectedCycle) {
+                                      resolveGroupAsRecurring(group, category);
+                                    } else {
+                                      resolveGroupCategorize(group, category);
+                                    }
+                                  }}
+                                  className="btn btn-primary"
+                                  style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
+                                >
+                                  {isGroupBusy ? <Loader2 size={12} className="spin" /> : <Tag size={12} />}
+                                  {treatGroupAsRecurring[group.key] && group.detectedCycle ? ' Add as recurring bill' : ' Add all'}
+                                </button>
+                                <button onClick={() => setCategorizingGroupKey(null)} className="btn btn-ghost" style={{ fontSize: '0.75rem', padding: '0.4rem 0.5rem' }}>
+                                  Cancel
+                                </button>
+                              </div>
                             </div>
                           )}
 

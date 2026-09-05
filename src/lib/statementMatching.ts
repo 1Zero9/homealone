@@ -6,6 +6,7 @@
  */
 
 export type StatementTxDirection = 'DEBIT' | 'CREDIT';
+export type DetectedBillingCycle = 'weekly' | 'monthly' | 'quarterly' | 'annual';
 
 /**
  * Strips control/zero-width characters and caps length on free text pulled
@@ -241,6 +242,41 @@ export function stringSimilarity(a: string, b: string): number {
  */
 export function duplicateKey(row: { date: string; amount: number; currency: string; direction: StatementTxDirection; normalizedDescription: string }): string {
   return [row.date, row.amount.toFixed(2), row.currency, row.direction, row.normalizedDescription].join('|');
+}
+
+/**
+ * Looks at a set of dates (all sharing the same merchant and amount — that's
+ * the caller's job to establish) and decides whether the spacing between
+ * them is regular enough to be a genuine recurring bill, rather than
+ * coincidentally-identical one-off spending (e.g. two same-price coffees).
+ * Returns null when there aren't enough points or the gaps are too
+ * irregular to trust — callers should fall back to treating each row as a
+ * separate one-off in that case. Requires at least 3 occurrences — with
+ * only 2, a single gap can't be checked for regularity, so anything from
+ * two same-priced coffees a week apart would otherwise look "recurring."
+ */
+export function detectRecurringCycle(dates: string[]): DetectedBillingCycle | null {
+  if (dates.length < 3) return null;
+  const sorted = [...dates].sort();
+
+  const gaps: number[] = [];
+  for (let i = 1; i < sorted.length; i++) {
+    const days = (new Date(sorted[i]).getTime() - new Date(sorted[i - 1]).getTime()) / (1000 * 60 * 60 * 24);
+    gaps.push(days);
+  }
+  if (gaps.some((g) => g <= 0)) return null;
+
+  const avgGap = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+  const maxDeviation = Math.max(...gaps.map((g) => Math.abs(g - avgGap)));
+
+  const withinTolerance = (targetDays: number, toleranceDays: number) =>
+    Math.abs(avgGap - targetDays) <= toleranceDays && maxDeviation <= toleranceDays * 1.5;
+
+  if (withinTolerance(7, 3)) return 'weekly';
+  if (withinTolerance(30.44, 6)) return 'monthly';
+  if (withinTolerance(91.3, 12)) return 'quarterly';
+  if (withinTolerance(365, 20)) return 'annual';
+  return null;
 }
 
 // ---------------------------------------------------------------------------

@@ -411,3 +411,19 @@ Neither was on a path an attacker could reach through the running application �
 ### 9.5 Bottom line
 
 No finding here needs a paid penetration test to have caught — they're the kind of thing a focused internal review turns up. Both actionable items (9.2 and 9.4) were fixed the same day, in v1.35.0. Everything else is either already resolved, a pre-existing item on the Section 7 build order, or low severity and non-urgent.
+
+## 10. Developer follow-up — 5 September 2026
+
+### 10.1 New finding: recurring-bill rollover silently drifted the renewal date by a day — Medium — FIXED (v1.39.0)
+
+Found incidentally while building and testing the new "recognize a repeat statement charge as one recurring bill" feature (§8) — not part of a security audit, but a real, previously-undiscovered data-integrity bug in `src/lib/billing.ts`, the module every recurring `Expense`'s due-date rollover goes through (`rolloverIfDue`, called from `GET /api/expenses` and `GET /api/insights/summary` on every read).
+
+`parseDateOnly` builds a `Date` from a `YYYY-MM-DD` string's **local** year/month/day components. Its inverse, `formatDateOnly`, did the opposite conversion via `date.toISOString().split('T')[0]` — `toISOString()` always converts to **UTC** first. In any timezone with a positive UTC offset (confirmed against this deployment's actual `Europe/Dublin` server timezone, which is UTC+1 for most of the year), a local midnight timestamp becomes 23:00 the *previous* day in UTC, so every call to `advanceByCycle` silently returned a date one day earlier than intended. A bill that was several cycles overdue compounded this further, since each rollover iteration re-derives the day-of-month from the previous (already-wrong) result — a monthly bill last paid on the 2nd, several months overdue, could drift onto the 27th or later rather than staying pinned to the 2nd.
+
+Confirmed and reproduced directly: `advanceByCycle('2026-06-02', 'monthly')` returned `'2026-07-01'` (should be `'2026-07-02'`), and a 3-cycle rollover from there landed on `'2026-09-27'` instead of the correct `'2026-09-02'`.
+
+**Real-world impact**: this affects `nextRenewalDate` on any recurring `Expense` that has actually rolled over at least once since being created or last edited — i.e. it wouldn't show up on a bill you keep up to date, only ones left unattended across a renewal. Downstream effects would include a wrong due date shown in Bills/Upcoming Renewals, and the 30/14/7-day contract-reminder emails (§3.3) firing on the wrong day for an affected bill.
+
+**Fix shipped in v1.39.0**: `formatDateOnly` now builds the `YYYY-MM-DD` string from the `Date`'s local components directly (matching `parseDateOnly`'s approach), the same way `duplicateKey`/`statementMatching.ts` already handle dates elsewhere in the codebase. Verified with a standalone repro of the exact rollover chain above, now correctly staying pinned to the 2nd of each month.
+
+**Not done**: no attempt was made to retroactively correct already-drifted `nextRenewalDate` values on existing bills — there's no reliable way to reconstruct what a given bill's date *should* be after an unknown number of silent one-day shifts, and guessing at a fix on real financial data without a verifiable anchor point is worse than leaving it visible. Worth an eyeball on any recurring bill whose renewal date looks off by a few days; re-saving it (which recomputes from the edited value) puts it right.

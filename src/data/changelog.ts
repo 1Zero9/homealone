@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.38.2';
+export const APP_VERSION = '1.39.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.39.0',
+    date: '2026-09-05',
+    changes: [
+      'Statement review can now be sorted (newest/oldest, highest/lowest amount, merchant A–Z, or needs-review-first) — handy once one statement covers several months.',
+      'A group of statement rows that share an identical amount and are evenly spaced (a subscription, a loan repayment, a standing order picked up more than once in a long statement) can now be resolved as ONE recurring bill instead of separate one-off expenses — each real occurrence still gets logged at its actual historical date, so trend charts and Insights see the real spending history.',
+      'Fixed a bug in the recurring-bill renewal date calculation that could silently drift a bill\'s next due date by a day or more (in this deployment\'s timezone) every time it rolled over unattended across a renewal — affects Bills, Upcoming Renewals, and the 30/14/7-day contract reminder emails for any bill that had actually rolled over at least once. Newly created or edited bills are unaffected; found and fixed while building the recurring-bill detection above. See the technical review doc for details.',
+    ],
+  },
   {
     version: '1.38.2',
     date: '2026-09-05',

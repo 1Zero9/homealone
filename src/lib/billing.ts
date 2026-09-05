@@ -5,8 +5,19 @@ function parseDateOnly(dateStr: string): Date {
   return new Date(year, (month || 1) - 1, day || 1);
 }
 
+/**
+ * Formats using local date components, not toISOString() (which converts
+ * to UTC first) — parseDateOnly above builds the Date from local
+ * components, so this must invert it the same way. Mismatching the two
+ * silently shifts the result back a day in any positive-UTC-offset
+ * timezone (e.g. Europe/Dublin in summer), and that shift compounds on
+ * every subsequent rollover for a bill that's several cycles overdue.
+ */
 function formatDateOnly(date: Date): string {
-  return date.toISOString().split('T')[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function today(): Date {
