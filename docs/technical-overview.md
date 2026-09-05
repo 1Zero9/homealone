@@ -181,15 +181,17 @@ A structured inventory of user-facing functionality (see [`user-guide.md`](./use
 
 ```bash
 npm install
-npm run db:push && npx prisma generate
+npm run db:push && npx prisma generate   # first-time setup against a fresh database only
 npm run db:seed        # seeds an initial workspace + admin account
 npm run dev -- -p 5174
 ```
 
 ```bash
-npm run build           # prisma generate && next build
+npm run build           # prisma migrate deploy && prisma generate && next build
 npm start                # production server
 npm run lint             # eslint
 ```
+
+**Schema changes** go through Prisma Migrate, tracked under `prisma/migrations/` (committed to git): run `npm run db:migrate` (`prisma migrate dev --name <description>`) to generate and apply a new migration locally, then commit the generated file alongside the schema change. `npm run build`'s `prisma migrate deploy` step applies any pending migrations automatically on every deploy. `db:push` (schema-diff against the live database, no history, can drop columns silently) is reserved for first-time setup against a fresh database only — not for changes to an existing one.
 
 Deployable to Vercel, Netlify, or any Node.js/Docker host — see the root [`README.md`](../README.md) for the quick-start version of these steps.

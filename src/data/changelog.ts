@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.44.0';
+export const APP_VERSION = '1.45.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.45.0',
+    date: '2026-09-05',
+    changes: [
+      'Behind the scenes: schema changes now go through proper tracked migrations instead of a live schema diff, so every database change has real history and a safer, more predictable deploy path. No visible change to the app itself.',
+    ],
+  },
   {
     version: '1.44.0',
     date: '2026-09-05',

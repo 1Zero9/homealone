@@ -271,12 +271,13 @@ export default function TechnicalOverviewPage() {
 
       <h2>10. Local development &amp; deployment</h2>
       <pre><code>{`npm install
-npm run db:push && npx prisma generate
+npm run db:push && npx prisma generate   # first-time setup against a fresh database only
 npm run db:seed        # seeds an initial workspace + admin account
 npm run dev -- -p 5174`}</code></pre>
-      <pre><code>{`npm run build           # prisma generate && next build
+      <pre><code>{`npm run build           # prisma migrate deploy && prisma generate && next build
 npm start                # production server
 npm run lint             # eslint`}</code></pre>
+      <p><strong>Schema changes</strong> go through Prisma Migrate, tracked under <code>prisma/migrations/</code> (committed to git): run <code>npm run db:migrate</code> (<code>prisma migrate dev --name &lt;description&gt;</code>) to generate and apply a new migration locally, then commit the generated file alongside the schema change. <code>npm run build</code>&apos;s <code>prisma migrate deploy</code> step applies any pending migrations automatically on every deploy. <code>db:push</code> (schema-diff against the live database, no history, can drop columns silently) is reserved for first-time setup against a fresh database only — not for changes to an existing one.</p>
       <p>Deployable to Vercel, Netlify, or any Node.js/Docker host.</p>
     </LegalPageLayout>
   );
