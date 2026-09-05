@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.52.0';
+export const APP_VERSION = '1.53.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.53.0',
+    date: '2026-09-05',
+    changes: [
+      'Added "Undo this import" for statement imports — a stronger reset than Delete that removes everything the import produced, including bills and transfers you already logged from it, in one action.',
+    ],
+  },
   {
     version: '1.52.0',
     date: '2026-09-05',

@@ -150,6 +150,7 @@ export async function POST(
           externalLabel: vendorName,
           createdById: auth.user.id,
           householdId: auth.user.householdId,
+          statementImportId: id,
         },
       });
 
@@ -207,6 +208,7 @@ export async function POST(
           notes: customNote ? `${customNote} (logged from statement import)` : 'Logged from statement import',
           createdById: auth.user.id,
           householdId: auth.user.householdId,
+          statementImportId: id,
         },
       });
 

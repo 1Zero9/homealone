@@ -99,6 +99,7 @@ export async function POST(
           notes: customNote ? `${customNote} (logged from statement import)` : `Recognized as a recurring bill from ${sortedRows.length} statement rows`,
           createdById: auth.user.id,
           householdId: auth.user.householdId,
+          statementImportId: id,
         },
       });
 
@@ -115,6 +116,7 @@ export async function POST(
             linkedExpenseId: expense.id,
             createdById: auth.user.id,
             householdId: auth.user.householdId,
+            statementImportId: id,
           },
         });
 

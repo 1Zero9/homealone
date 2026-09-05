@@ -183,6 +183,14 @@ model Expense {
   linkedGoalId String?
   linkedGoal   Goal?   @relation("ExpenseLinkedGoal", fields: [linkedGoalId], references: [id], onDelete: SetNull)
 
+  // Set only when this Expense was created via statement-import resolution
+  // ("Add as expense" / "recognize as recurring bill") — lets "Undo this
+  // import" remove it as a unit. SetNull (not Cascade) so the ordinary
+  // "delete import" action, which intentionally keeps already-logged
+  // records, doesn't touch this.
+  statementImportId String?
+  statementImport   StatementImport? @relation("StatementImportExpenses", fields: [statementImportId], references: [id], onDelete: SetNull)
+
   transfers Transfer[]
 
   statementTransactions StatementTransaction[]
@@ -193,6 +201,7 @@ model Expense {
 
   @@index([householdId])
   @@index([paymentAccountId])
+  @@index([statementImportId])
 }
 
 model Income {
@@ -325,6 +334,12 @@ model Transfer {
 
   statementTransactions StatementTransaction[]
 
+  // Same purpose as Expense.statementImportId above — lets "Undo this
+  // import" remove every Transfer it created as a unit, without touching
+  // ones created any other way.
+  statementImportId String?
+  statementImport   StatementImport? @relation("StatementImportTransfers", fields: [statementImportId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -332,6 +347,7 @@ model Transfer {
   @@index([fromAccountId])
   @@index([toAccountId])
   @@index([date])
+  @@index([statementImportId])
 }
 
 /// A savings/financial goal — optionally tied to an Account (e.g. a savings
@@ -383,6 +399,9 @@ model StatementImport {
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   transactions StatementTransaction[]
+
+  expensesCreated  Expense[]  @relation("StatementImportExpenses")
+  transfersCreated Transfer[] @relation("StatementImportTransfers")
 
   // Extracted from PDF/photo statements only (analyzeStatementDocument) —
   // CSV imports leave these null, since a CSV export has no such header.

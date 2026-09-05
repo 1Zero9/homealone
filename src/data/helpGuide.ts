@@ -160,7 +160,8 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
     id: 'faq',
     title: 'Frequently asked questions',
     body: [
-      'What happens if you delete a statement import? Any bill or one-off payment you already logged from it stays in your ledger untouched. But every row still sitting in Needs review, Ignored, or flagged as a Duplicate is permanently deleted along with the import — there\'s no undo, so resolve or double-check those first.',
+      'What happens if you delete a statement import? Any bill or one-off payment you already logged from it stays in your ledger untouched. But every row still sitting in Needs review, Ignored, or flagged as a Duplicate is permanently deleted along with the import — so resolve or double-check those first.',
+      'For a stronger reset, "Undo this import" (next to Delete) removes everything the import produced, including bills and transfers you already logged from it — not just the unresolved rows. The confirmation states exactly how many of each will be removed. Neither action can be undone once confirmed.',
       'What happens if you delete an account? Expenses, income, transfers and savings goals linked to it are not deleted — they just lose that account link (e.g. "paid from" becomes unset). The one exception is a custom Money Map: any node you placed for that account is removed along with it.',
       'What happens if you delete a custom category? Expenses already using it are not deleted or reassigned — they just show a generic fallback label until you edit them with a different category.',
       'What happens if you delete an expense that a statement row was matched to? That statement row keeps showing "Matched" but with no name — click "Undo" on it to send it back to Needs review, where you can resolve it again.',

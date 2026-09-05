@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { FileSpreadsheet, Upload, Trash2, ChevronRight, Edit2, Loader2 } from 'lucide-react';
+import { FileSpreadsheet, Upload, Trash2, ChevronRight, Edit2, Loader2, Undo2 } from 'lucide-react';
 import type { ExpenseItem, StatementImportSummary, CurrencyCode, AccountItem, CustomCategoryItem } from '../types/expense';
 import { StatementImportModal } from './StatementImportModal';
 import { CollapsibleSection } from './CollapsibleSection';
@@ -54,6 +54,27 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
     const data = await res.json();
     if (data.status === 'ok') {
       setImports((prev) => prev.filter((i) => i.id !== id));
+    }
+  };
+
+  // "Undo this import" is deliberately separate from plain delete above —
+  // delete keeps whatever's already been turned into a real Expense/
+  // Transfer; undo removes those too, reversing the whole import as a unit.
+  const handleUndo = async (id: string) => {
+    const preview = await fetch(`/api/statements/${id}/undo`).then((r) => r.json());
+    if (preview.status !== 'ok') return;
+
+    const warning =
+      `Undo "${preview.label}"?\n\n` +
+      `This will permanently delete ${preview.expenseCount} expense(s) and ${preview.transferCount} transfer(s) it created, ` +
+      `plus all ${preview.transactionCount} row(s) from the import itself. This can't be undone.`;
+
+    if (!confirm(warning)) return;
+    const res = await fetch(`/api/statements/${id}/undo`, { method: 'POST' });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      setImports((prev) => prev.filter((i) => i.id !== id));
+      onExpensesChanged?.();
     }
   };
 
@@ -169,6 +190,14 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
                     title="Rename import"
                   >
                     <Edit2 size={13} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleUndo(imp.id); }}
+                    className="btn btn-ghost"
+                    style={{ padding: '0.3rem 0.4rem' }}
+                    title="Undo this import — also removes bills/transfers it created"
+                  >
+                    <Undo2 size={13} />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDelete(imp.id); }}

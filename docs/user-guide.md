@@ -131,7 +131,8 @@ Under Flow, **Statement imports** lets you cross-check a real bank or credit-car
 - **Recognize a recurring bill picked up across months**: if a statement covers a long enough period that a real recurring bill (a subscription, a loan repayment, a standing order) shows up several times — same amount, evenly spaced — Tally offers to treat the whole group as **one recurring bill** instead of several one-off expenses. Tick the checkbox that appears, pick a category, and it creates a single recurring Expense while still logging each real occurrence at its actual historical date (so trend charts and Insights see the real spending history, not just today).
 - **Rename an import**: click the pencil next to a statement's name in the list, or inside the review screen, to give it a friendlier label than the uploaded filename.
 - Clicking outside the dialog never discards anything — only the visible buttons (Back, Import, Done, the X) close or navigate it.
-- **Deleting an import**: any bill or one-off payment you already logged from it stays in your ledger. But every row still sitting in Needs review, Ignored, or flagged Duplicate is permanently deleted along with the import — the delete confirmation tells you exactly how many rows are at risk before you confirm, since there's no undo.
+- **Deleting an import**: any bill or one-off payment you already logged from it stays in your ledger. But every row still sitting in Needs review, Ignored, or flagged Duplicate is permanently deleted along with the import — the delete confirmation tells you exactly how many rows are at risk before you confirm.
+- **Undo this import**: a separate, stronger action next to Delete — this removes everything the import produced, including bills and transfers you already logged from it, not just the unresolved rows. The confirmation states exactly how many of each will be removed before you commit, since this can't be undone either.
 
 ## 8. Goals
 
