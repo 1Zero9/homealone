@@ -325,6 +325,16 @@ export interface BudgetItem {
   updatedAt?: string;
 }
 
+export interface AuditLogItem {
+  id: string;
+  action: string;
+  entityType: string;
+  entityLabel?: string | null;
+  actorId?: string | null;
+  actorName: string;
+  createdAt: string;
+}
+
 export interface DatabaseBackupRecord {
   id: string;
   createdById?: string;

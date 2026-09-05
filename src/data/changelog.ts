@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.50.0';
+export const APP_VERSION = '1.51.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.51.0',
+    date: '2026-09-05',
+    changes: [
+      'Added "Recent activity" under Admin — a plain log of deletions, backup restores, member removal, and role changes, with who did it and when. Not a full edit history, just the actions worth being able to look back on.',
+    ],
+  },
   {
     version: '1.50.0',
     date: '2026-09-05',

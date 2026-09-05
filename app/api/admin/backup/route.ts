@@ -4,6 +4,7 @@ import { getErrorMessage } from '@/src/lib/errors';
 import { requireAdmin } from '@/src/lib/auth';
 import { Prisma } from '@prisma/client';
 import { createHouseholdSnapshot, type BackupPayload } from '@/src/lib/backup';
+import { logAudit } from '@/src/lib/audit';
 
 // Older backups (pre-expansion) have payloadJson as a bare array of Expense
 // rows — the legacy branch in PUT below handles those so they stay
@@ -129,6 +130,15 @@ export async function PUT(request: Request) {
           });
         }
         return records.length;
+      });
+
+      logAudit({
+        householdId,
+        actorId: auth.user.id,
+        actorName: auth.user.name,
+        action: 'BACKUP_RESTORE',
+        entityType: 'DatabaseBackup',
+        entityLabel: `${backup.notes || 'Legacy snapshot'} — ${restoredCount} expenses restored`,
       });
 
       return NextResponse.json({ status: 'ok', restoredCount });
@@ -296,6 +306,15 @@ export async function PUT(request: Request) {
     });
 
     const restoredCount = result.accounts + result.goals + result.expenses + result.incomes + result.transfers;
+
+    logAudit({
+      householdId,
+      actorId: auth.user.id,
+      actorName: auth.user.name,
+      action: 'BACKUP_RESTORE',
+      entityType: 'DatabaseBackup',
+      entityLabel: `${backup.notes || 'Snapshot'} — ${restoredCount} records restored`,
+    });
 
     return NextResponse.json({
       status: 'ok',

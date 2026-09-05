@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import type { UserProfile, DatabaseBackupRecord, UserRole } from '../types/expense';
+import type { UserProfile, DatabaseBackupRecord, UserRole, AuditLogItem } from '../types/expense';
 import { getErrorMessage } from '../lib/errors';
-import { UserPlus, Edit2, Trash2, Check, X, Database, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
+import { UserPlus, Edit2, Trash2, Check, X, Database, RefreshCw, CheckCircle2, AlertCircle, History } from 'lucide-react';
 import { CollapsibleSection } from './CollapsibleSection';
 
 interface AdminSectionProps {
@@ -35,8 +35,11 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Activity log state
+  const [auditEntries, setAuditEntries] = useState<AuditLogItem[]>([]);
+
   // Sub-tabs in Admin
-  const [adminTab, setAdminTab] = useState<'users' | 'family-costs' | 'database'>('users');
+  const [adminTab, setAdminTab] = useState<'users' | 'family-costs' | 'database' | 'activity'>('users');
 
   // Fetch Backups
   const fetchBackups = async () => {
@@ -51,8 +54,21 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     }
   };
 
+  const fetchAuditLog = async () => {
+    try {
+      const res = await fetch('/api/admin/audit-log');
+      const data = await res.json();
+      if (data.status === 'ok') {
+        setAuditEntries(data.entries || []);
+      }
+    } catch (err) {
+      console.error('Failed to load activity log:', err);
+    }
+  };
+
   React.useEffect(() => {
     fetchBackups();
+    fetchAuditLog();
   }, []);
 
   // Handle Add User
@@ -255,6 +271,14 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               style={{ fontSize: '0.82rem' }}
             >
               Database Snapshots
+            </button>
+
+            <button
+              onClick={() => setAdminTab('activity')}
+              className={adminTab === 'activity' ? 'btn btn-primary' : 'btn btn-secondary'}
+              style={{ fontSize: '0.82rem' }}
+            >
+              Recent activity
             </button>
           </div>
         </div>
@@ -754,6 +778,58 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 </div>
               )}
             </CollapsibleSection>
+        </div>
+      )}
+
+      {adminTab === 'activity' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="ha-card" style={{ padding: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ha-ink)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <History size={18} color="var(--ha-blue)" />
+              <span>Recent activity</span>
+            </h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)' }}>
+              Deletions, backup restores, member removal, and role changes — the actions worth being able to look back on. Not a full edit history.
+            </p>
+          </div>
+
+          <CollapsibleSection id="admin-activity-list" title={`Activity (${auditEntries.length})`} bodyStyle={{ padding: '1rem 1.25rem' }}>
+            {auditEntries.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--ha-muted)', backgroundColor: '#fafaf7', borderRadius: 'var(--ha-radius-sm)', border: '1px solid var(--ha-line)' }}>
+                <p style={{ fontSize: '0.85rem' }}>Nothing logged yet.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {auditEntries.map((entry) => {
+                  const actionLabel: Record<string, string> = {
+                    DELETE: `Deleted ${entry.entityType.toLowerCase()}`,
+                    ROLE_CHANGE: 'Changed role',
+                    MEMBER_REMOVED: 'Removed member',
+                    BACKUP_RESTORE: 'Restored backup',
+                  };
+                  return (
+                    <div
+                      key={entry.id}
+                      style={{
+                        padding: '0.85rem 1rem',
+                        borderRadius: 'var(--ha-radius-sm)',
+                        backgroundColor: '#fafaf7',
+                        border: '1px solid var(--ha-line)',
+                      }}
+                    >
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                        {actionLabel[entry.action] || entry.action}
+                        {entry.entityLabel ? `: ${entry.entityLabel}` : ''}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--ha-muted)' }}>
+                        {new Date(entry.createdAt).toLocaleString()} · {entry.actorName}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CollapsibleSection>
         </div>
       )}
     </div>

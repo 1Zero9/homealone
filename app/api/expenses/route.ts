@@ -3,6 +3,7 @@ import { prisma } from '@/src/lib/prisma';
 import { getErrorMessage } from '@/src/lib/errors';
 import { requireHouseholdUser } from '@/src/lib/auth';
 import { rolloverIfDue } from '@/src/lib/billing';
+import { logAudit } from '@/src/lib/audit';
 import type { BillingCycle } from '@/src/types/expense';
 
 export async function GET() {
@@ -277,6 +278,15 @@ export async function DELETE(request: Request) {
 
     await prisma.expense.delete({
       where: { id },
+    });
+
+    logAudit({
+      householdId: auth.user.householdId as string,
+      actorId: auth.user.id,
+      actorName: auth.user.name,
+      action: 'DELETE',
+      entityType: 'Expense',
+      entityLabel: existing.name,
     });
 
     return NextResponse.json({

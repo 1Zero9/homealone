@@ -80,6 +80,8 @@ model Household {
   bugReports BugReport[]
 
   budgets Budget[]
+
+  auditLogs AuditLog[]
 }
 
 model User {
@@ -526,6 +528,31 @@ model Budget {
 
   @@unique([householdId, category])
   @@index([householdId])
+}
+
+/// A plain, append-only activity trail for destructive and
+/// identity-affecting actions — deliberately NOT full field-level diffing
+/// on every edit (too much for a two/few-person household to need). Covers
+/// deletions, backup restores, member removal, and role changes: the
+/// things worth being able to answer "did that really happen, and who did
+/// it" about. entityLabel is a short human-readable snapshot taken at the
+/// time of the action (e.g. an expense's name right before it's deleted),
+/// not a full before/after record.
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String
+  entityType String
+  entityLabel String?
+
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  actorId   String?
+  actorName String
+
+  createdAt DateTime @default(now())
+
+  @@index([householdId, createdAt])
 }
 
 /// Records a contract-reminder email already sent for a given expense +

@@ -3,6 +3,7 @@ import { prisma } from '@/src/lib/prisma';
 import { getErrorMessage } from '@/src/lib/errors';
 import { Role } from '@prisma/client';
 import { requireAdmin, requireHouseholdUser } from '@/src/lib/auth';
+import { logAudit } from '@/src/lib/audit';
 
 export async function GET() {
   const auth = await requireHouseholdUser();
@@ -86,6 +87,17 @@ export async function PUT(request: Request) {
       },
     });
 
+    if (body.role && body.role !== target.role) {
+      logAudit({
+        householdId: auth.user.householdId as string,
+        actorId: auth.user.id,
+        actorName: auth.user.name,
+        action: 'ROLE_CHANGE',
+        entityType: 'User',
+        entityLabel: `${target.name}: ${target.role} → ${body.role}`,
+      });
+    }
+
     return NextResponse.json({
       status: 'ok',
       user: updatedUser,
@@ -144,6 +156,15 @@ export async function DELETE(request: Request) {
 
     await prisma.user.delete({
       where: { id },
+    });
+
+    logAudit({
+      householdId: auth.user.householdId as string,
+      actorId: auth.user.id,
+      actorName: auth.user.name,
+      action: 'MEMBER_REMOVED',
+      entityType: 'User',
+      entityLabel: `${target.name} (${target.email})`,
     });
 
     return NextResponse.json({

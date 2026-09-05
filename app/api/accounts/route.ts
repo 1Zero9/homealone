@@ -3,6 +3,7 @@ import { prisma } from '@/src/lib/prisma';
 import { getErrorMessage } from '@/src/lib/errors';
 import { requireHouseholdUser } from '@/src/lib/auth';
 import { encryptOptional, isEncryptionConfigured } from '@/src/lib/crypto';
+import { logAudit } from '@/src/lib/audit';
 
 const SENSITIVE_FIELDS = [
   'accountNumber',
@@ -242,6 +243,15 @@ export async function DELETE(request: Request) {
     }
 
     await prisma.account.delete({ where: { id } });
+
+    logAudit({
+      householdId: auth.user.householdId as string,
+      actorId: auth.user.id,
+      actorName: auth.user.name,
+      action: 'DELETE',
+      entityType: 'Account',
+      entityLabel: existing.name,
+    });
 
     return NextResponse.json({ status: 'ok', deletedId: id });
   } catch (error: unknown) {

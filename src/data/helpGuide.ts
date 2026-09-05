@@ -184,6 +184,7 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
       'There must always be at least one Admin in a household — the app won\'t let you remove the last one. "Backup Admin" has identical permissions to "Admin" today — it\'s a separate role only so it\'s clear who the usual admin is, not a lesser one.',
       '"Database Snapshots" takes a full point-in-time backup of the household\'s accounts, goals, bills, income and transfers, stored in the cloud. "Restore" replaces all of the household\'s current data with what\'s in that snapshot — a real undo, not a preview — so the confirmation shows the snapshot\'s age and record count before you commit to it.',
       'One snapshot happens automatically every day, tagged "Automatic" in the list, with the most recent 14 kept. A manual snapshot is only worth creating right before doing something risky, like a restore.',
+      '"Recent activity" is a plain log of deletions, backup restores, member removal, and role changes — who did it and when. It\'s not a full edit history, just the actions worth being able to look back on.',
     ],
   },
 ];

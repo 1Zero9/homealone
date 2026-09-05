@@ -183,6 +183,8 @@ Everyone in the same household sees the same shared ledger — accounts, expense
 
 Available to **Admin** and **Backup Admin** roles via the avatar menu. Manage household member accounts, change roles, and remove accounts that no longer belong. A household must always keep at least one Admin — Tally won't let you remove the last one. Admins can also trigger a full database backup export.
 
+**Recent activity** shows a plain, reverse-chronological log of the actions worth being able to look back on — deletions, backup restores, member removal, and role changes — with who did it and when. It's not a full edit history (routine edits aren't logged), just the destructive and access-affecting ones.
+
 Roles:
 - **Admin** — full control: users, workspace sharing, backups.
 - **Member** — day-to-day use: log, categorize, and edit household expenses, income, accounts, transfers, and goals.

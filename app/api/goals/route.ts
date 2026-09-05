@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getErrorMessage } from '@/src/lib/errors';
 import { requireHouseholdUser } from '@/src/lib/auth';
+import { logAudit } from '@/src/lib/audit';
 
 const ACCOUNT_SELECT = { id: true, name: true, type: true, institution: true } as const;
 
@@ -133,6 +134,15 @@ export async function DELETE(request: Request) {
     }
 
     await prisma.goal.delete({ where: { id } });
+
+    logAudit({
+      householdId: auth.user.householdId as string,
+      actorId: auth.user.id,
+      actorName: auth.user.name,
+      action: 'DELETE',
+      entityType: 'Goal',
+      entityLabel: existing.name,
+    });
 
     return NextResponse.json({ status: 'ok', deletedId: id });
   } catch (error: unknown) {

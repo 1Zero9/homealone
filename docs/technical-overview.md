@@ -58,6 +58,7 @@ Defined in `prisma/schema.prisma`. Every domain model is scoped to a `Household`
 - **Category** — household-defined custom spending categories (in addition to the fixed built-in set in `src/data/categories.ts`), each with its own icon/colour, unique per household by name.
 - **ExchangeRate** — global (not household-scoped) cache of the current EUR-base rate for each non-EUR currency Tally supports, one row per currency, refreshed lazily whenever a row is missing or older than 24h — see §8's multi-currency note.
 - **Budget** — one static monthly limit per category (built-in or custom, matched by the same id used everywhere else), `@@unique([householdId, category])` so each household has at most one budget per category. Deliberately an MVP: no rollover, no history, no per-member split — see §8.
+- **AuditLog** — a plain, append-only trail for destructive and identity-affecting actions only (deletions of Expense/Account/Goal/Transfer/Income, backup restores, member removal, role changes) — deliberately not full field-level diffing on every edit. `entityLabel` is a short human-readable snapshot taken at the time of the action, written via a single `logAudit()` helper (`src/lib/audit.ts`) called from each affected route.
 - **DatabaseBackup** — a stored full-household JSON snapshot, created by admins or by the daily `cron/backup` job (`isAutomatic` distinguishes the two; automatic snapshots are pruned to the most recent 14 per household, manual ones never auto-pruned). `payloadJson` holds `{ accounts, goals, expenses, incomes, transfers }` (each a plain array of that table's rows, Account rows including their `*Enc` ciphertext as-is). Restore deletes the household's rows across all five tables, then recreates them in dependency order (Account → Goal → Expense → Income → Transfer), building an old-id → new-id map at each step so cross-references (an Expense's `paymentAccountId`, a Transfer's `linkedExpenseId`, etc.) resolve to the newly-created rows rather than the snapshot's now-gone ids. Older backups predating this shape have `payloadJson` as a bare array of Expense rows and still restore correctly via a legacy branch.
 
 Nearly every model index's `householdId`, since virtually every query is household-scoped.
@@ -134,6 +135,7 @@ All routes live under `app/api/`, are household-scoped via the guard helpers in 
 | `exchange-rate` | Live currency conversion for the one-off receipt-scan flow (ECB daily rates) |
 | `exchange-rate-cache` | Returns the cached EUR-base rate for every supported currency, refreshing from the same ECB-backed source first if stale (>24h) — powers every ongoing conversion app-wide |
 | `admin/backup` | Full household snapshot/restore (admin) — Account, Goal, Expense, Income and Transfer rows, with cross-reference remapping on restore (see §2 data model note) |
+| `admin/audit-log` | Lists the household's 50 most recent audit-log entries (admin) — deletions, backup restores, member removal, role changes |
 | `cron/reminders` | Scheduled job: emails the household at 30/14/7 days before a contract end date |
 | `cron/backup` | Scheduled job: creates an automatic snapshot for every household daily and prunes each household's automatic snapshots to the most recent 14 |
 
@@ -152,7 +154,8 @@ All routes live under `app/api/`, are household-scoped via the guard helpers in 
 A structured inventory of user-facing functionality (see [`user-guide.md`](./user-guide.md) for the narrative walkthrough):
 
 - **Passwordless authentication** — 6-digit email codes, 30-day sliding-expiration sessions, 30-minute idle auto-sign-out.
-- **Household workspaces** — shared ledger per household; invite-only via a specific email (no self-service join/shareable link — see the Household model note in §2); `Admin` / `Member` / `Backup Admin` roles; a household can never be left without at least one Admin.
+- **Household workspaces** — shared ledger per household; invite-only via a specific email (no self-service join/shareable link — see the Household model note in §2); `Admin` / `Member` / `Backup Admin` roles (`Backup Admin` carries identical permissions to `Admin` today — see the User model note in §2); a household can never be left without at least one Admin.
+- **Activity log** — a plain, reverse-chronological trail of destructive/identity-affecting actions (deletions, backup restores, member removal, role changes), visible to admins under Admin → Recent activity. Not a full edit history.
 - **Spending ledger** — recurring and one-off bills across built-in categories (streaming, AI/tech tools, utilities, education, insurance/motor tax, mortgage/loans/big purchases) plus household-defined **custom categories**; one-click **Catalog** presets; usage-rating-based cancellation candidates; pause/resume; contract-renewal badges and automated 30/14/7-day reminder emails; AI-drafted vendor emails (negotiate/cancel/ask), always human-reviewed before sending.
 - **Income tracking** — recurring/one-off income with a `nextPayDate` that auto-rolls forward, linked to a deposit account.
 - **Bills calendar** — a 31-day renewal view with 7-day urgency indicators.
