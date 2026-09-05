@@ -308,6 +308,16 @@ export interface IncomeSummary {
   activeCount: number;
 }
 
+export interface BudgetItem {
+  id: string;
+  category: string;
+  monthlyLimit: number;
+  currency: CurrencyCode;
+  createdById?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface DatabaseBackupRecord {
   id: string;
   createdById?: string;

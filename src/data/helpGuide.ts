@@ -28,6 +28,16 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
     ],
   },
   {
+    id: 'budgets',
+    title: 'Setting a category budget',
+    body: [
+      'On the Spending tab\'s "All spending" view, click "Set a budget" to give any category (built-in or custom) a monthly limit.',
+      'Each budgeted category shows a progress bar comparing its current monthly-equivalent spend — the same run-rate figure used everywhere else in Tally — against your limit, turning amber near the limit and red once it\'s exceeded.',
+      'Edit or remove a limit any time from its row. Categories with no limit set just don\'t show a bar — nothing forces you to budget every category.',
+      'This is a simple monthly check, not a full budgeting system: there\'s no rollover of unused amounts, no spending history over time, and no per-person split.',
+    ],
+  },
+  {
     id: 'assign',
     title: 'Assigning a bill to a household member',
     body: [

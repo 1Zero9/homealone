@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { EyeOff } from 'lucide-react';
-import type { ExpenseItem, IncomeItem, CurrencyCode, PresetItem, UserProfile, AccountItem, TransferItem, GoalItem, CustomCategoryItem } from '@/src/types/expense';
+import type { ExpenseItem, IncomeItem, CurrencyCode, PresetItem, UserProfile, AccountItem, TransferItem, GoalItem, CustomCategoryItem, BudgetItem } from '@/src/types/expense';
 import { loadCurrency, saveCurrency } from '@/src/services/storage';
 import { calculateSpendingSummary, calculateIncomeSummary } from '@/src/utils/calculations';
 import { Navbar, SPENDING_TABS } from '@/src/components/Navbar';
@@ -32,6 +32,7 @@ import { HelpGuideModal } from '@/src/components/HelpGuideModal';
 import { BugLogModal } from '@/src/components/BugLogModal';
 import { SettingsModal } from '@/src/components/SettingsModal';
 import { OverviewDashboard } from '@/src/components/OverviewDashboard';
+import { BudgetsSection } from '@/src/components/BudgetsSection';
 import { AssistantBox } from '@/src/components/AssistantBox';
 import { TallyLogo } from '@/src/components/TallyLogo';
 import { AccountsSection } from '@/src/components/AccountsSection';
@@ -60,6 +61,7 @@ export default function TallyPage() {
   const [transfers, setTransfers] = useState<TransferItem[]>([]);
   const [goals, setGoals] = useState<GoalItem[]>([]);
   const [customCategories, setCustomCategories] = useState<CustomCategoryItem[]>([]);
+  const [budgets, setBudgets] = useState<BudgetItem[]>([]);
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -159,6 +161,13 @@ export default function TallyPage() {
       const catData = await catRes.json();
       if (catData.status === 'ok' && Array.isArray(catData.categories)) {
         setCustomCategories(catData.categories);
+      }
+
+      // 8. Fetch per-category budgets
+      const budgetRes = await fetch('/api/budgets');
+      const budgetData = await budgetRes.json();
+      if (budgetData.status === 'ok' && Array.isArray(budgetData.budgets)) {
+        setBudgets(budgetData.budgets);
       }
     } catch (err) {
       console.error('Failed to load from database:', err);
@@ -497,6 +506,38 @@ export default function TallyPage() {
 
   const handleCategoryCreated = (category: CustomCategoryItem) => {
     setCustomCategories((prev) => (prev.some((c) => c.id === category.id) ? prev : [...prev, category]));
+  };
+
+  const handleSaveBudget = async (category: string, monthlyLimit: number) => {
+    try {
+      const res = await fetch('/api/budgets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category, monthlyLimit, currency }),
+      });
+      const data = await res.json();
+      if (data.status === 'ok' && data.budget) {
+        setBudgets((prev) => {
+          const existingIndex = prev.findIndex((b) => b.category === category);
+          if (existingIndex === -1) return [...prev, data.budget];
+          const next = [...prev];
+          next[existingIndex] = data.budget;
+          return next;
+        });
+      }
+    } catch (err) {
+      console.error('Failed to save budget:', err);
+    }
+  };
+
+  const handleDeleteBudget = async (id: string) => {
+    setBudgets((prev) => prev.filter((b) => b.id !== id));
+    try {
+      await fetch(`/api/budgets?id=${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete budget from DB:', err);
+      fetchDatabaseData();
+    }
   };
 
   // Add from catalog preset
@@ -953,6 +994,16 @@ export default function TallyPage() {
                 subtitle="Built from bills marked paid and logged transfers — grows as you go"
               />
             )}
+
+            <BudgetsSection
+              expenses={liveExpenses}
+              customCategories={customCategories}
+              currency={currency}
+              budgets={budgets}
+              onSaveBudget={handleSaveBudget}
+              onDeleteBudget={handleDeleteBudget}
+              onCategoryCreated={handleCategoryCreated}
+            />
 
             {/* Complete Household Ledger */}
             <ExpenseList

@@ -70,6 +70,7 @@ The **Spending** tab (and its sub-views: **All**, **AI & Tech**, **Utilities**, 
 - **Row controls**: **Paid/Unpaid** tracks the current payment cycle; the separately labelled **Active/Paused** switch controls whether the expense is ongoing. **Edit** stays visible, while less common actions—including update amount, contact vendor, duplicate, and delete—are under **More** (•••).
 - **Contract renewal reminders**: once an expense's contract end date is within 60 days, a badge appears on it, and the household is emailed automatically at 30, 14 and 7 days before it ends.
 - **Contact a vendor**: if an expense has a vendor email saved, open **More** (•••) and choose **Contact vendor** to have Tally draft a polite email (negotiate a better rate, cancel, or ask about renewal terms). You always review and send it yourself — nothing is emailed automatically.
+- **Budgets**: on the **All spending** view, set a monthly limit for any category (built-in or custom) under **Set a budget**. Each budgeted category shows a progress bar comparing its current monthly-equivalent spend (the same run-rate figure used everywhere else in Tally) against your limit — turning amber near the limit and red once it's exceeded. Edit or remove a limit any time; categories with no limit set just don't show a bar. This is a simple monthly check, not a full budgeting system — there's no rollover of unused amounts, no spending history, and no per-person split.
 
 ## 4. Bills (calendar)
 

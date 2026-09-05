@@ -78,6 +78,8 @@ model Household {
   mapEdges MapEdge[]
 
   bugReports BugReport[]
+
+  budgets Budget[]
 }
 
 model User {
@@ -106,6 +108,8 @@ model User {
   mapNodesCreated MapNode[]
 
   bugReportsCreated BugReport[]
+
+  budgetsCreated Budget[]
 }
 
 model Session {
@@ -464,6 +468,31 @@ model Category {
   createdAt DateTime @default(now())
 
   @@unique([householdId, name])
+  @@index([householdId])
+}
+
+/// A household-set monthly spending limit for one category (built-in or
+/// custom, matched by the same id/string used everywhere else — see
+/// src/data/categories.ts). Deliberately simple: one static limit per
+/// category, compared against that category's current monthly-equivalent
+/// spend (the same figure Overview/Spending already show) — no rollover,
+/// no history, no per-member budgets.
+model Budget {
+  id           String @id @default(cuid())
+  category     String
+  monthlyLimit Float
+  currency     String @default("EUR")
+
+  householdId String?
+  household   Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([householdId, category])
   @@index([householdId])
 }
 

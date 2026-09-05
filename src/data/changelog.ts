@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.43.0';
+export const APP_VERSION = '1.44.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.44.0',
+    date: '2026-09-05',
+    changes: [
+      'Added Budgets: set a monthly spending limit on any category from Spending → All spending, and see a progress bar against your current spend for that category — turns amber near the limit, red once you\'re over.',
+      'Budgets are deliberately simple: one limit per category, no rollover of what you didn\'t spend, no history over time, and nothing forces you to set one for every category.',
+    ],
+  },
   {
     version: '1.43.0',
     date: '2026-09-05',
