@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.46.0';
+export const APP_VERSION = '1.47.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.47.0',
+    date: '2026-09-05',
+    changes: [
+      'Scanning a foreign-currency bill and using the live conversion now keeps the original amount, currency, and the exact rate and date used — shown as a small "Originally..." note wherever the bill appears, so you can always see what was actually paid.',
+    ],
+  },
   {
     version: '1.46.0',
     date: '2026-09-05',

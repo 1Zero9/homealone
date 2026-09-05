@@ -88,6 +88,10 @@ export interface ExpenseItem {
   isVariable?: boolean;
   isPreset?: boolean;
   isBill?: boolean;
+  originalAmount?: number | null;
+  originalCurrency?: CurrencyCode | null;
+  exchangeRate?: number | null;
+  rateDate?: string | null;
   paymentAccountId?: string | null;
   paymentAccount?: AccountSummary | null;
   linkedGoalId?: string | null;

@@ -52,6 +52,7 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
       'Click the scan icon in the top bar, then paste, drag-and-drop, or upload a screenshot or photo of a bill or receipt.',
       'Tally reads the vendor, amount, date and currency and either pre-fills a new bill for you to review, or matches it to an existing one.',
       'If the bill is in a foreign currency, Tally offers a one-click live conversion to your household currency.',
+      'If you use that conversion, the original amount, currency, and the exact rate and date used are kept alongside the converted figure — shown as a small "Originally..." note wherever the bill appears, so you can always see what was actually paid.',
     ],
   },
   {

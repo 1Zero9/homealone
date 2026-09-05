@@ -186,6 +186,10 @@ export const ScanReceiptModal: React.FC<ScanReceiptModalProps> = ({
         : matchedExpense.currency,
       nextRenewalDate: extracted.date || matchedExpense.nextRenewalDate,
       isPaidThisCycle: extracted.isPaid || matchedExpense.isPaidThisCycle,
+      originalAmount: applyConversion ? extracted.amount ?? null : matchedExpense.originalAmount ?? null,
+      originalCurrency: applyConversion ? conversion.from : matchedExpense.originalCurrency ?? null,
+      exchangeRate: applyConversion ? conversion.rate : matchedExpense.exchangeRate ?? null,
+      rateDate: applyConversion ? conversion.date : matchedExpense.rateDate ?? null,
     });
     handleClose();
   };
@@ -205,6 +209,10 @@ export const ScanReceiptModal: React.FC<ScanReceiptModalProps> = ({
       nextRenewalDate: extracted.date || undefined,
       isPaidThisCycle: extracted.isPaid,
       notes: extracted.notes || undefined,
+      originalAmount: applyConversion ? extracted.amount ?? null : null,
+      originalCurrency: applyConversion ? conversion.from : null,
+      exchangeRate: applyConversion ? conversion.rate : null,
+      rateDate: applyConversion ? conversion.date : null,
     });
     handleClose();
   };

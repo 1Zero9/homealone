@@ -4,7 +4,8 @@ import { getCategoryMeta } from '../data/categories';
 import { CategorySelect } from './CategorySelect';
 import { PRESETS } from '../data/presets';
 import { CURRENCIES } from '../utils/currencies';
-import { X } from 'lucide-react';
+import { formatCurrency } from '../utils/formatters';
+import { X, ArrowRightLeft } from 'lucide-react';
 
 const PAYMENT_METHODS = [
   'SEPA Direct Debit',
@@ -70,6 +71,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   const [isPending, setIsPending] = useState(false);
   const [linkedGoalId, setLinkedGoalId] = useState<string>('');
   const [isBill, setIsBill] = useState(true);
+  // Only ever set from an existing record or a receipt-scan draft that
+  // applied a live currency conversion — no form control edits these, they
+  // just carry through unchanged so the original-currency caption survives
+  // a later edit instead of being wiped.
+  const [originalAmount, setOriginalAmount] = useState<number | null>(null);
+  const [originalCurrency, setOriginalCurrency] = useState<CurrencyCode | null>(null);
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
+  const [rateDate, setRateDate] = useState<string | null>(null);
 
   useEffect(() => {
     if (editingExpense) {
@@ -92,6 +101,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setIsPending(!!editingExpense.isPending);
       setLinkedGoalId(editingExpense.linkedGoalId || '');
       setIsBill(typeof editingExpense.isBill === 'boolean' ? editingExpense.isBill : editingExpense.billingCycle !== 'once');
+      setOriginalAmount(editingExpense.originalAmount ?? null);
+      setOriginalCurrency(editingExpense.originalCurrency ?? null);
+      setExchangeRate(editingExpense.exchangeRate ?? null);
+      setRateDate(editingExpense.rateDate ?? null);
     } else if (initialPresetId) {
       const preset = PRESETS.find((p) => p.id === initialPresetId);
       if (preset) {
@@ -111,6 +124,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         setIsPending(false);
         setLinkedGoalId('');
         setIsBill(preset.defaultCycle !== 'once');
+        setOriginalAmount(null);
+        setOriginalCurrency(null);
+        setExchangeRate(null);
+        setRateDate(null);
       }
     } else if (draftExpense) {
       setName(draftExpense.name || '');
@@ -132,6 +149,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setIsPending(false);
       setLinkedGoalId('');
       setIsBill((draftExpense.billingCycle || 'monthly') !== 'once');
+      setOriginalAmount(draftExpense.originalAmount ?? null);
+      setOriginalCurrency(draftExpense.originalCurrency ?? null);
+      setExchangeRate(draftExpense.exchangeRate ?? null);
+      setRateDate(draftExpense.rateDate ?? null);
     } else {
       setName('');
       setVendor('');
@@ -152,6 +173,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setIsPending(!!initialIsPending);
       setLinkedGoalId('');
       setIsBill(true);
+      setOriginalAmount(null);
+      setOriginalCurrency(null);
+      setExchangeRate(null);
+      setRateDate(null);
     }
   }, [editingExpense, initialPresetId, initialCategory, initialIsPending, draftExpense, currentUserId, isOpen]);
 
@@ -192,6 +217,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         linkedGoalId: linkedGoalId || null,
         createdById: assignedUserId || null,
         isBill,
+        originalAmount,
+        originalCurrency,
+        exchangeRate,
+        rateDate,
       },
       editingExpense?.id
     );
@@ -263,6 +292,15 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 autoFocus
               />
             </div>
+            {originalAmount != null && originalCurrency && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.4rem', fontSize: '0.78rem', color: 'var(--ha-muted)' }}>
+                <ArrowRightLeft size={12} style={{ flexShrink: 0 }} />
+                <span>
+                  Originally {formatCurrency(originalAmount, originalCurrency)}
+                  {exchangeRate != null && rateDate ? `, converted at ${exchangeRate.toFixed(4)} on ${rateDate}` : ''}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Expense Name & Billing Cycle */}

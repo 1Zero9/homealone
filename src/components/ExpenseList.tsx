@@ -535,6 +535,12 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                     {item.createdBy && (
                       <span>Added by: <strong style={{ color: 'var(--ha-ink)' }}>{item.createdBy.name}</strong></span>
                     )}
+                    {item.originalAmount != null && item.originalCurrency && (
+                      <span>
+                        Originally: <strong style={{ color: 'var(--ha-ink)' }}>{formatCurrency(item.originalAmount, item.originalCurrency)}</strong>
+                        {item.exchangeRate != null && item.rateDate ? ` (converted at ${item.exchangeRate.toFixed(4)} on ${item.rateDate})` : ''}
+                      </span>
+                    )}
                   </div>
 
                   {goal && goalPct !== null && (

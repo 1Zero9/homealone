@@ -158,6 +158,17 @@ model Expense {
   // with existing recurring records.
   isBill          Boolean  @default(true)
 
+  // Set only when this expense was created (or later edited) from a
+  // receipt/bill scan where a live ECB rate was applied to convert a
+  // foreign-currency amount into the household's currency — preserves what
+  // was actually paid, since `amount`/`currency` above hold only the
+  // converted figure. Purely informational (a caption on the expense), not
+  // used in any total/aggregation.
+  originalAmount   Float?
+  originalCurrency String?
+  exchangeRate     Float?
+  rateDate         String?
+
   householdId     String?
   household       Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
 

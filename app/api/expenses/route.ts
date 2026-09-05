@@ -105,6 +105,10 @@ export async function POST(request: Request) {
         linkedGoalId: body.linkedGoalId || null,
         createdById: body.createdById !== undefined ? (body.createdById || null) : auth.user.id,
         householdId: auth.user.householdId,
+        originalAmount: body.originalAmount != null ? Number(body.originalAmount) : null,
+        originalCurrency: body.originalCurrency || null,
+        exchangeRate: body.exchangeRate != null ? Number(body.exchangeRate) : null,
+        rateDate: body.rateDate || null,
       },
       include: {
         createdBy: {
@@ -201,6 +205,10 @@ export async function PUT(request: Request) {
         ...(typeof body.isPaidThisCycle === 'boolean' ? { isPaidThisCycle: body.isPaidThisCycle } : {}),
         ...(markingPaid ? { lastPaidAt: new Date() } : {}),
         ...(markingUnpaid ? { lastPaidAt: null } : {}),
+        originalAmount: body.originalAmount != null ? Number(body.originalAmount) : null,
+        originalCurrency: body.originalCurrency || null,
+        exchangeRate: body.exchangeRate != null ? Number(body.exchangeRate) : null,
+        rateDate: body.rateDate || null,
       },
       include: {
         createdBy: {
