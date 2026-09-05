@@ -56,7 +56,7 @@ Defined in `prisma/schema.prisma`. Every domain model is scoped to a `Household`
 - **StatementTransaction** — one normalized row from an import: `status` (`UNMATCHED | MATCHED | IGNORED | DUPLICATE`), `matchConfidence`, optional links to a matched `Expense`/`Transfer`, a learned `suggestedCategory`, and a `vendorName` nickname. `DUPLICATE` is assigned at import time, not by the matching pipeline — see §8.
 - **MerchantAlias** — a learned `(householdId, pattern)` → `vendorName`/`category` mapping, built up as the household confirms statement matches, so cryptic bank descriptions ("IEPROS") get recognized and auto-categorized automatically next time. `matchCount` tracks how many times it's been reinforced.
 - **Category** — household-defined custom spending categories (in addition to the fixed built-in set in `src/data/categories.ts`), each with its own icon/colour, unique per household by name.
-- **DatabaseBackup** — a stored full-household JSON export snapshot, created by admins.
+- **DatabaseBackup** — a stored full-household JSON snapshot, created by admins. `payloadJson` holds `{ accounts, goals, expenses, incomes, transfers }` (each a plain array of that table's rows, Account rows including their `*Enc` ciphertext as-is). Restore deletes the household's rows across all five tables, then recreates them in dependency order (Account → Goal → Expense → Income → Transfer), building an old-id → new-id map at each step so cross-references (an Expense's `paymentAccountId`, a Transfer's `linkedExpenseId`, etc.) resolve to the newly-created rows rather than the snapshot's now-gone ids. Older backups predating this shape have `payloadJson` as a bare array of Expense rows and still restore correctly via a legacy branch.
 
 Nearly every model index's `householdId`, since virtually every query is household-scoped.
 
@@ -129,7 +129,7 @@ All routes live under `app/api/`, are household-scoped via the guard helpers in 
 | `insights/summary`, `insights/money-flow` | Rule-based savings-opportunity summary, and on-demand AI money-flow analysis |
 | `assistant/ask`, `assistant/scan-receipt` | AI Q&A and AI receipt/bill scanning |
 | `exchange-rate` | Live currency conversion (ECB daily rates) |
-| `admin/backup` | Full household database export (admin) |
+| `admin/backup` | Full household snapshot/restore (admin) — Account, Goal, Expense, Income and Transfer rows, with cross-reference remapping on restore (see §2 data model note) |
 | `cron/reminders` | Scheduled job: emails the household at 30/14/7 days before a contract end date |
 
 ## 7. Frontend structure
@@ -139,7 +139,7 @@ All routes live under `app/api/`, are household-scoped via the guard helpers in 
 - **`src/hooks/`** — shared client-side hooks.
 - **`src/lib/`** — server-only logic: `auth.ts`, `crypto.ts`, `prisma.ts`, `ai.ts`, `billing.ts` (billing-cycle math), `statementMatching.ts` (statement-to-bill matching/scoring, duplicate detection, recurring-cycle detection), `mail.ts` (Resend integration), `errors.ts`.
 - **`src/services/storage.ts`** — client-side persistence helpers (e.g. cached profile for instant greeting on return visits).
-- **`src/data/`** — static/shared reference data: `categories.ts` (built-in category definitions), `presets.ts` (one-click bill catalog), `helpGuide.ts` (structured content powering both the in-app Help guide and the AI's "how do I…" answers), `changelog.ts` (in-app version history), `sampleExpenses.ts`.
+- **`src/data/`** — static/shared reference data: `categories.ts` (built-in category definitions), `presets.ts` (one-click bill catalog), `helpGuide.ts` (structured content powering both the in-app Help guide and the AI's "how do I…" answers), `changelog.ts` (in-app version history).
 - **`src/types/`** and **`src/utils/`** — shared TypeScript types and utility functions.
 
 ## 8. Feature reference
@@ -160,7 +160,7 @@ A structured inventory of user-facing functionality (see [`user-guide.md`](./use
 - **Insights** — an on-demand AI money-flow analysis (idle cash, timing risk, consolidation, savings) and a separate rule-based "what could we save" breakdown (annual-billing switches, low-usage subscription flags, running "already saving" total) across 1/12/36/60-month horizons.
 - **AI assistant** — plain-English Q&A over the household's own data or the app's own feature set, plus AI bill/receipt scanning with duplicate-bill matching and one-click foreign-currency conversion.
 - **Multi-currency** — EUR-standardized ledger with live conversion for GBP/USD/CAD/AUD/JPY.
-- **Data export & backup** — CSV and full JSON export for any user; full database backup snapshots for admins.
+- **Data export & backup** — CSV/JSON bill export for any user (a portable copy, not a restore point); full household snapshot/restore (accounts, goals, bills, income, transfers) for admins, with cross-reference remapping on restore.
 - **Privacy controls** — auto-blur after inactivity/tab blur with a manual toggle, a second independent per-figure blur on the highest-sensitivity amounts (Overview's "Left after bills", every Income figure) that stays blurred regardless of the screen-wide toggle and unblurs one figure at a time (client-side only, resets on reload — see §7's `useSensitiveReveal`), and the encryption/AI-isolation model described in §4–§5.
 
 ## 9. Environment variables

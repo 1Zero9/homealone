@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.40.1';
+export const APP_VERSION = '1.41.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,15 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.41.0',
+    date: '2026-09-05',
+    changes: [
+      'Fixed a real data-integrity bug: "Restore from JSON" and "Reset all expense records" in Settings looked like they worked but never actually reached the database — both have been removed.',
+      'Admin → Database Snapshots now covers your whole household (accounts, goals, bills, income and transfers, not just bills) with a real, verified restore — the confirmation now shows the snapshot\'s age and exact record count before you commit.',
+      'Settings\' Export/Import is now Export-only (CSV/JSON download of your bills) — for a full, restorable backup, use Admin → Database Snapshots.',
+    ],
+  },
   {
     version: '1.40.1',
     date: '2026-09-05',

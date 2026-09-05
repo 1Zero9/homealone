@@ -188,7 +188,9 @@ Roles:
 
 ## 16. Data export & backup
 
-Click **Export** at any time to download your records as a CSV spreadsheet or a full JSON backup. Admins can also trigger a full database backup from the Admin tab.
+Click **Export** at any time to download your bills as a CSV spreadsheet or a JSON file — a portable copy to keep or move elsewhere.
+
+For a real, restorable backup, admins use **Admin → Database Snapshots**: it captures every account, goal, bill, income record and transfer in one snapshot, stored directly in the cloud, and **Restore** replaces the household's current data with what's in that snapshot — a genuine point-in-time undo, not just a file download. The restore confirmation shows exactly how old the snapshot is and how many records it holds before you confirm, since it can't be undone once you do.
 
 ## 17. Privacy & security
 

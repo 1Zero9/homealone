@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { EyeOff } from 'lucide-react';
 import type { ExpenseItem, IncomeItem, CurrencyCode, PresetItem, UserProfile, AccountItem, TransferItem, GoalItem, CustomCategoryItem } from '@/src/types/expense';
-import { loadCurrency, saveCurrency, resetToDefaults } from '@/src/services/storage';
+import { loadCurrency, saveCurrency } from '@/src/services/storage';
 import { calculateSpendingSummary, calculateIncomeSummary } from '@/src/utils/calculations';
 import { Navbar, SPENDING_TABS } from '@/src/components/Navbar';
 import type { TabId } from '@/src/components/Navbar';
@@ -789,16 +789,6 @@ export default function TallyPage() {
     }
   };
 
-  // Reset sample data
-  const handleResetData = async () => {
-    if (window.confirm('Reset all expense records?')) {
-      const sample = resetToDefaults();
-      setExpenses(sample);
-      setSelectedCategory(null);
-      fetchDatabaseData();
-    }
-  };
-
   // Show loading spinner while checking auth
   if (isAuthenticated === null) {
     return (
@@ -1468,9 +1458,7 @@ export default function TallyPage() {
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         expenses={expenses}
-        currency={currency}
         customCategories={customCategories}
-        onDataUpdated={setExpenses}
       />
 
       {/* Share Workspace Modal */}
@@ -1509,7 +1497,6 @@ export default function TallyPage() {
         onOpenPresetsModal={() => setIsPresetsModalOpen(true)}
         onOpenExportModal={() => setIsExportModalOpen(true)}
         onOpenShareModal={() => setIsShareModalOpen(true)}
-        onResetData={handleResetData}
         onSignOutEverywhere={handleSignOutEverywhere}
       />
     </div>

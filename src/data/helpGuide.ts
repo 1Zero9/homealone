@@ -157,7 +157,8 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
     id: 'export',
     title: 'Export & backup',
     body: [
-      'Click "Export" to download your records as a CSV spreadsheet or a JSON backup file at any time.',
+      'Click "Export" to download your bills as a CSV spreadsheet or a JSON file at any time — a portable copy, not a restorable backup.',
+      'For a real, restorable backup, ask an admin to use "Admin → Database Snapshots" — it covers every account, goal, bill, income record and transfer, and can genuinely restore your household back to that point in time.',
     ],
   },
   {
@@ -167,6 +168,7 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
     body: [
       'As an admin, the "Admin & users" tab lets you manage household member accounts, change roles, and remove accounts that no longer belong.',
       'There must always be at least one Admin in a household — the app won\'t let you remove the last one.',
+      '"Database Snapshots" takes a full point-in-time backup of the household\'s accounts, goals, bills, income and transfers, stored in the cloud. "Restore" replaces all of the household\'s current data with what\'s in that snapshot — a real undo, not a preview — so the confirmation shows the snapshot\'s age and record count before you commit to it.',
     ],
   },
 ];

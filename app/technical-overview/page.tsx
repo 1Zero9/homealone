@@ -71,7 +71,7 @@ export default function TechnicalOverviewPage() {
         <li><strong>StatementTransaction</strong> — one normalized row from an import: <code>status</code> (UNMATCHED / MATCHED / IGNORED / DUPLICATE), <code>matchConfidence</code>, optional links to a matched Expense/Transfer, a learned <code>suggestedCategory</code>, and a <code>vendorName</code> nickname. <code>DUPLICATE</code> is assigned at import time, not by the matching pipeline — see §8.</li>
         <li><strong>MerchantAlias</strong> — a learned <code>(householdId, pattern)</code> → <code>vendorName</code>/<code>category</code> mapping, built up as the household confirms statement matches, so cryptic bank descriptions (&quot;IEPROS&quot;) get recognized and auto-categorized automatically next time. <code>matchCount</code> tracks how many times it&apos;s been reinforced.</li>
         <li><strong>Category</strong> — household-defined custom spending categories (in addition to the fixed built-in set in <code>src/data/categories.ts</code>), each with its own icon/colour, unique per household by name.</li>
-        <li><strong>DatabaseBackup</strong> — a stored full-household JSON export snapshot, created by admins.</li>
+        <li><strong>DatabaseBackup</strong> — a stored full-household JSON snapshot, created by admins. <code>payloadJson</code> holds <code>{'{ accounts, goals, expenses, incomes, transfers }'}</code> (each a plain array of that table&apos;s rows, Account rows including their <code>*Enc</code> ciphertext as-is). Restore deletes the household&apos;s rows across all five tables, then recreates them in dependency order (Account → Goal → Expense → Income → Transfer), building an old-id → new-id map at each step so cross-references (an Expense&apos;s <code>paymentAccountId</code>, a Transfer&apos;s <code>linkedExpenseId</code>, etc.) resolve to the newly-created rows rather than the snapshot&apos;s now-gone ids. Older backups predating this shape have <code>payloadJson</code> as a bare array of Expense rows and still restore correctly via a legacy branch.</li>
       </ul>
       <p>Nearly every model indexes <code>householdId</code>, since virtually every query is household-scoped.</p>
 
@@ -214,7 +214,7 @@ export default function TechnicalOverviewPage() {
           <tr><td><code>insights/summary</code>, <code>insights/money-flow</code></td><td>Rule-based savings-opportunity summary, and on-demand AI money-flow analysis</td></tr>
           <tr><td><code>assistant/ask</code>, <code>assistant/scan-receipt</code></td><td>AI Q&amp;A and AI receipt/bill scanning</td></tr>
           <tr><td><code>exchange-rate</code></td><td>Live currency conversion (ECB daily rates)</td></tr>
-          <tr><td><code>admin/backup</code></td><td>Full household database export (admin)</td></tr>
+          <tr><td><code>admin/backup</code></td><td>Full household snapshot/restore (admin) — Account, Goal, Expense, Income and Transfer rows, with cross-reference remapping on restore (see §2 data model note)</td></tr>
           <tr><td><code>cron/reminders</code></td><td>Scheduled job: emails the household at 30/14/7 days before a contract end date</td></tr>
         </tbody>
       </table>
@@ -226,7 +226,7 @@ export default function TechnicalOverviewPage() {
         <li><strong><code>src/hooks/</code></strong> — shared client-side hooks.</li>
         <li><strong><code>src/lib/</code></strong> — server-only logic: <code>auth.ts</code>, <code>crypto.ts</code>, <code>prisma.ts</code>, <code>ai.ts</code>, <code>billing.ts</code> (billing-cycle math), <code>statementMatching.ts</code> (statement-to-bill matching/scoring, duplicate detection, recurring-cycle detection), <code>mail.ts</code> (Resend integration), <code>errors.ts</code>.</li>
         <li><strong><code>src/services/storage.ts</code></strong> — client-side persistence helpers.</li>
-        <li><strong><code>src/data/</code></strong> — static/shared reference data: <code>categories.ts</code>, <code>presets.ts</code>, <code>helpGuide.ts</code> (structured content powering both the in-app Help guide and the AI&apos;s &quot;how do I…&quot; answers), <code>changelog.ts</code>, <code>sampleExpenses.ts</code>.</li>
+        <li><strong><code>src/data/</code></strong> — static/shared reference data: <code>categories.ts</code>, <code>presets.ts</code>, <code>helpGuide.ts</code> (structured content powering both the in-app Help guide and the AI&apos;s &quot;how do I…&quot; answers), <code>changelog.ts</code>.</li>
         <li><strong><code>src/types/</code></strong> and <strong><code>src/utils/</code></strong> — shared TypeScript types and utility functions.</li>
       </ul>
 
@@ -247,7 +247,7 @@ export default function TechnicalOverviewPage() {
         <li><strong>Insights</strong> — an on-demand AI money-flow analysis and a separate rule-based &quot;what could we save&quot; breakdown across 1/12/36/60-month horizons.</li>
         <li><strong>AI assistant</strong> — plain-English Q&amp;A over the household&apos;s own data or the app&apos;s own feature set, plus AI bill/receipt scanning with duplicate-bill matching and one-click foreign-currency conversion.</li>
         <li><strong>Multi-currency</strong> — EUR-standardized ledger with live conversion for GBP/USD/CAD/AUD/JPY.</li>
-        <li><strong>Data export &amp; backup</strong> — CSV and full JSON export for any user; full database backup snapshots for admins.</li>
+        <li><strong>Data export &amp; backup</strong> — CSV/JSON bill export for any user (a portable copy, not a restore point); full household snapshot/restore (accounts, goals, bills, income, transfers) for admins, with cross-reference remapping on restore.</li>
         <li><strong>Privacy controls</strong> — auto-blur after inactivity/tab blur with a manual toggle, a second independent per-figure blur on the highest-sensitivity amounts (Overview&apos;s &quot;Left after bills&quot;, every Income figure) that stays blurred regardless of the screen-wide toggle and unblurs one figure at a time (client-side only, resets on reload — see §7&apos;s <code>useSensitiveReveal</code>), and the encryption/AI-isolation model described in §4–§5.</li>
       </ul>
 

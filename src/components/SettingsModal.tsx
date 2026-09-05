@@ -1,7 +1,7 @@
 import React from 'react';
 import type { CurrencyCode } from '../types/expense';
 import { CURRENCY_LIST } from '../utils/currencies';
-import { X, Coins, LayoutGrid, UserPlus, Download, RotateCcw, ChevronRight, ShieldOff } from 'lucide-react';
+import { X, Coins, LayoutGrid, UserPlus, Download, ChevronRight, ShieldOff } from 'lucide-react';
 import { useOverlayClose } from '../hooks/useOverlayClose';
 
 interface SettingsModalProps {
@@ -12,7 +12,6 @@ interface SettingsModalProps {
   onOpenPresetsModal: () => void;
   onOpenExportModal: () => void;
   onOpenShareModal: () => void;
-  onResetData: () => void;
   onSignOutEverywhere: () => void;
 }
 
@@ -24,7 +23,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onOpenPresetsModal,
   onOpenExportModal,
   onOpenShareModal,
-  onResetData,
   onSignOutEverywhere,
 }) => {
   const overlayHandlers = useOverlayClose(onClose);
@@ -152,21 +150,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </div>
               <ChevronRight size={16} color="var(--ha-muted)" />
-            </button>
-          </div>
-
-          {/* Danger zone */}
-          <div style={{ borderTop: '1px solid var(--ha-line)', paddingTop: '1.1rem' }}>
-            <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--ha-muted)', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: '0.6rem' }}>
-              Danger zone
-            </h4>
-            <button
-              onClick={() => openThenClose(onResetData)}
-              className="btn btn-destructive"
-              style={{ width: '100%', fontSize: '0.85rem' }}
-            >
-              <RotateCcw size={15} />
-              <span>Reset all expense records</span>
             </button>
           </div>
         </div>

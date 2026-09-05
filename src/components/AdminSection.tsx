@@ -175,8 +175,11 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   };
 
   // Restore Backup Snapshot
-  const handleRestoreSnapshot = async (backupId: string) => {
-    if (!window.confirm('Restore database from this snapshot? All current expense records will be replaced.')) {
+  const handleRestoreSnapshot = async (backup: DatabaseBackupRecord) => {
+    const warning =
+      `Restore the snapshot from ${new Date(backup.createdAt).toLocaleString()} (${backup.recordCount} records)?\n\n` +
+      `This replaces every current account, goal, bill, income record and transfer with what’s in that snapshot — anything added or changed since then is permanently lost. This can’t be undone.`;
+    if (!window.confirm(warning)) {
       return;
     }
 
@@ -188,12 +191,17 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       const res = await fetch('/api/admin/backup', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ backupId }),
+        body: JSON.stringify({ backupId: backup.id }),
       });
 
       const data = await res.json();
       if (data.status === 'ok') {
-        setStatusMessage(`Restored ${data.restoredCount} database records.`);
+        const b = data.breakdown as { accounts: number; goals: number; expenses: number; incomes: number; transfers: number } | undefined;
+        setStatusMessage(
+          b
+            ? `Restored ${data.restoredCount} records — ${b.accounts} accounts, ${b.goals} goals, ${b.expenses} bills, ${b.incomes} income, ${b.transfers} transfers.`
+            : `Restored ${data.restoredCount} database records.`
+        );
         onRefreshUsers();
       } else {
         setErrorMessage(data.message || 'Restore failed');
@@ -667,7 +675,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   <span>Prisma PostgreSQL Cloud Snapshots</span>
                 </h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)' }}>
-                  Generate and restore point-in-time database backups stored directly in the cloud.
+                  Generate and restore point-in-time snapshots of your household&apos;s accounts, goals, bills, income and transfers — stored directly in the cloud.
                 </p>
               </div>
 
@@ -718,7 +726,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       </div>
 
                       <button
-                        onClick={() => handleRestoreSnapshot(b.id)}
+                        onClick={() => handleRestoreSnapshot(b)}
                         disabled={isBackupLoading}
                         className="btn btn-secondary"
                         style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
