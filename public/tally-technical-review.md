@@ -234,6 +234,8 @@ Section 10 documents `npm run lint` only. Two modules carry most of the silent-f
 
 **Action:** Add Vitest with unit coverage on those two modules first, then on the crypto round trip in `src/lib/crypto.ts`. Run in CI on every push.
 
+**FIXED (v1.54.0)** — see §11.10. No CI wiring yet (this repo doesn't currently run one) — `npm run test` is available and green locally.
+
 ### 5.2 Upload limits and timeout behaviour are unstated
 
 **Risk:** Medium. **Effort:** Low.
@@ -551,3 +553,14 @@ Verified against real data via a throwaway test account: confirmed a standalone 
 **Fix**: stamped every `Expense`/`Transfer` created via statement resolution (both the single-row resolve route's `categorize`/`log_transfer` actions and the group-resolve route's recurring-bill path) with the originating `statementImportId` (`onDelete: SetNull`, so it doesn't interact with the existing delete route). New `GET`/`POST /api/statements/[id]/undo`: `GET` previews exact record counts for the confirmation dialog, `POST` deletes every stamped `Expense`/`Transfer` then the import itself (cascading its `StatementTransaction` rows via the existing relation) inside one transaction. Surfaced in `StatementsSection.tsx` as a new "Undo this import" button, deliberately separate from the existing "Delete import" action so the two very different behaviors (keep logged records vs. remove everything) stay unambiguous.
 
 Verified against real data end to end: ran a real import through all three creation paths (a one-off "Add as expense", a standalone "Log as transfer", and a 3-row group recognized as one recurring bill via group-resolve), confirmed the preview correctly reported 2 expenses / 4 transfers / 5 source rows, executed the undo, and confirmed the import, both expenses, and all four transfers were completely gone — with a correctly-labeled audit-log entry recording it. Repeated via the actual UI button (scoped tightly to the test row so a real pre-existing import could never be accidentally clicked) with the same result. All test data and audit entries removed.
+
+### 11.10 Test suite for the two highest-risk pure-logic modules — SHIPPED (v1.54.0)
+
+**Problem**: no test suite existed at all (§5.1 above). `src/lib/billing.ts` and `src/lib/statementMatching.ts` are exactly the two modules that had already produced real, silent bugs earlier this session — the day-drift timezone bug (§10.1) and the un-stripped `POS` date-format bug (§10.2) — and both are pure functions, making them cheap to cover.
+
+**Fix**: added Vitest (v4.1.11 — deliberately *not* an older major: `npm audit` flags every Vitest release ≤3.2.5 for a moderate-severity dev-server esbuild/vite vulnerability chain, so newer here is the secure choice, not just the latest one). No separate `vitest.config.ts` — its zero-config defaults (Node environment, `**/*.test.ts` discovery) already cover this repo's needs, and a first attempt at a config file hit a real ESM/CommonJS loader incompatibility with this project's plain-CommonJS `package.json` that simply deleting the file resolved. 64 tests across three files:
+- `billing.test.ts` — cycle advancement for all six billing cycles, the 28-day month-overflow clamp (including across a leap-year February), `rolloverIfDue`'s due/overdue/multi-cycle-overdue/24-iteration-guard behavior via `vi.useFakeTimers()`, and a dedicated regression test run under `TZ=Europe/Dublin` (a positive UTC offset, matching the real bug's failure mode) guarding against the exact local/UTC mismatch that caused §10.1.
+- `statementMatching.test.ts` — normalization (including a direct regression test for the `POS13MAY`-style glued-date bug from §10.2), duplicate-key generation, recurring-cycle detection, and `matchTransaction`'s confidence thresholds at their boundaries (alias auto-confirm, the 0.75 suggest-a-match line, currency/amount mismatches correctly scoring zero), plus the smaller parsing/formatting helpers.
+- `crypto.test.ts` — encrypt/decrypt round trip, wrong-key and tampered-ciphertext rejection, and the legacy no-version-prefix compatibility path (manually constructed in the old format to confirm old rows stay decryptable).
+
+Verified: `npm run test` passes clean (64/64) locally; no CI wiring added, since this repo has none configured yet (`.github/workflows` doesn't exist) — that's a separate decision for the user to make, not assumed here.

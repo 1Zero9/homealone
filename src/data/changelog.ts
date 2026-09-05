@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.53.0';
+export const APP_VERSION = '1.54.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.54.0',
+    date: '2026-09-05',
+    changes: [
+      'Behind the scenes: added an automated test suite covering the billing-date and statement-matching logic — no visible change to the app itself.',
+    ],
+  },
   {
     version: '1.53.0',
     date: '2026-09-05',

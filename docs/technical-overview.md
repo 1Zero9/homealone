@@ -198,6 +198,7 @@ npm run dev -- -p 5174
 npm run build           # prisma migrate deploy && prisma generate && next build
 npm start                # production server
 npm run lint             # eslint
+npm run test             # vitest — unit coverage on billing.ts, statementMatching.ts, crypto.ts
 ```
 
 **Schema changes** go through Prisma Migrate, tracked under `prisma/migrations/` (committed to git): run `npm run db:migrate` (`prisma migrate dev --name <description>`) to generate and apply a new migration locally, then commit the generated file alongside the schema change. `npm run build`'s `prisma migrate deploy` step applies any pending migrations automatically on every deploy. `db:push` (schema-diff against the live database, no history, can drop columns silently) is reserved for first-time setup against a fresh database only — not for changes to an existing one.
