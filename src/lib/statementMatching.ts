@@ -168,6 +168,13 @@ export function parseDateFlexible(raw: string): string | null {
 
 const NOISE_PREFIXES: RegExp[] = [
   /^POS\s+PURCHASE\s*/i,
+  // "POS13MAY", "POS08MAR" — a day-of-month + 3-letter month glued directly
+  // to POS with no space (seen from at least one Irish bank's exports).
+  // Left unstripped, this date becomes part of the normalized description,
+  // so every occurrence of the same real merchant gets a different key and
+  // never groups, matches an alias, or picks up a "rename merchant" nickname
+  // applied to a different occurrence.
+  /^POS\d{1,2}[A-Z]{3}\s*/i,
   /^POS\s+/i,
   /^SQ\s*\*/i,
   /^SQU\s*\*/i,

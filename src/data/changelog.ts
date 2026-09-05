@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.39.0';
+export const APP_VERSION = '1.40.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.40.0',
+    date: '2026-09-05',
+    changes: [
+      'Fixed a bank statement format ("POS13MAY", day+month glued to POS with no space) that was silently breaking merchant grouping — renaming one occurrence of a repeat merchant like this didn\'t apply to the others, since each was being treated as a different merchant.',
+      'Added a "Recheck matches" button to statement review — re-runs matching on everything still unresolved, so a rename or a newly added bill catches up across rows that couldn\'t be recognized as the same merchant when the statement was first imported, instead of having to fix each one by hand.',
+    ],
+  },
   {
     version: '1.39.0',
     date: '2026-09-05',

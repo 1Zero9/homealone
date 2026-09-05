@@ -17,6 +17,7 @@ import {
   Edit2,
   Landmark,
   Copy,
+  RefreshCw,
 } from 'lucide-react';
 import type { ExpenseItem, StatementTransactionItem, CurrencyCode, AccountItem, AccountType, ExpenseCategory, CustomCategoryItem } from '../types/expense';
 import { formatCurrency } from '../utils/formatters';
@@ -140,6 +141,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const [transactions, setTransactions] = useState<StatementTransactionItem[]>([]);
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('needs_review');
   const [reviewSort, setReviewSort] = useState<ReviewSort>('date-desc');
+  const [isRechecking, setIsRechecking] = useState(false);
+  const [recheckResult, setRecheckResult] = useState<string | null>(null);
   const [treatGroupAsRecurring, setTreatGroupAsRecurring] = useState<Record<string, boolean>>({});
   const [busyTxId, setBusyTxId] = useState<string | null>(null);
   const [linkingTxId, setLinkingTxId] = useState<string | null>(null);
@@ -197,6 +200,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     setTransactions([]);
     setReviewFilter('needs_review');
     setReviewSort('date-desc');
+    setIsRechecking(false);
+    setRecheckResult(null);
     setTreatGroupAsRecurring({});
     setBusyTxId(null);
     setLinkingTxId(null);
@@ -640,6 +645,31 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
       }
     } finally {
       setBusyGroupKey(null);
+    }
+  };
+
+  const handleRecheck = async () => {
+    if (!importId) return;
+    setIsRechecking(true);
+    setRecheckResult(null);
+    try {
+      const res = await fetch(`/api/statements/${importId}/recheck`, { method: 'POST' });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        const updatedById = new Map<string, StatementTransactionItem>(
+          data.transactions.map((t: StatementTransactionItem) => [t.id, t])
+        );
+        setTransactions((prev) => prev.map((t) => updatedById.get(t.id) || t));
+        setRecheckResult(
+          data.changedCount > 0
+            ? `Updated ${data.changedCount} row${data.changedCount === 1 ? '' : 's'} — a rename or new bill probably matched something that couldn't be recognized before.`
+            : 'Nothing changed — everything still unresolved looks the same as before.'
+        );
+      } else {
+        setRecheckResult(data.message || 'Failed to recheck matches');
+      }
+    } finally {
+      setIsRechecking(false);
     }
   };
 
@@ -1212,18 +1242,35 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                         );
                       })}
                     </div>
-                    <select
-                      value={reviewSort}
-                      onChange={(e) => setReviewSort(e.target.value as ReviewSort)}
-                      className="ha-input"
-                      style={{ fontSize: '0.78rem', padding: '0.35rem 0.55rem', flexShrink: 0 }}
-                      title="Sort order"
-                    >
-                      {SORTS.map((s) => (
-                        <option key={s.id} value={s.id}>Sort: {s.label}</option>
-                      ))}
-                    </select>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                      <select
+                        value={reviewSort}
+                        onChange={(e) => setReviewSort(e.target.value as ReviewSort)}
+                        className="ha-input"
+                        style={{ fontSize: '0.78rem', padding: '0.35rem 0.55rem' }}
+                        title="Sort order"
+                      >
+                        {SORTS.map((s) => (
+                          <option key={s.id} value={s.id}>Sort: {s.label}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={handleRecheck}
+                        disabled={isRechecking || needsReviewCount === 0}
+                        className="btn btn-secondary"
+                        style={{ fontSize: '0.78rem', padding: '0.35rem 0.6rem', whiteSpace: 'nowrap' }}
+                        title="Re-run matching on everything still unresolved — picks up any rename or new bill added since these rows were imported"
+                      >
+                        {isRechecking ? <Loader2 size={13} className="spin" /> : <RefreshCw size={13} />} Recheck matches
+                      </button>
+                    </div>
                   </div>
+
+                  {recheckResult && (
+                    <div style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      {recheckResult}
+                    </div>
+                  )}
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', maxHeight: '440px', overflowY: 'auto' }}>
                     {filteredTransactions.length === 0 && (
