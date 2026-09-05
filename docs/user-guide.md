@@ -193,6 +193,8 @@ Click **Export** at any time to download your bills as a CSV spreadsheet or a JS
 
 For a real, restorable backup, admins use **Admin → Database Snapshots**: it captures every account, goal, bill, income record and transfer in one snapshot, stored directly in the cloud, and **Restore** replaces the household's current data with what's in that snapshot — a genuine point-in-time undo, not just a file download. The restore confirmation shows exactly how old the snapshot is and how many records it holds before you confirm, since it can't be undone once you do.
 
+A snapshot is also taken **automatically every day**, tagged "Automatic" in the list — the most recent 14 are always kept, so there's a real backup even if nobody remembers to click "Create Snapshot." Manual snapshots you create yourself are never automatically deleted.
+
 ## 17. Privacy & security
 
 - Passwordless sign-in via one-time 6-digit codes — no passwords stored anywhere.

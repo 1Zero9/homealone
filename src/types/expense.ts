@@ -323,6 +323,7 @@ export interface DatabaseBackupRecord {
   createdById?: string;
   recordCount: number;
   notes?: string;
+  isAutomatic: boolean;
   createdAt: string;
 }
 

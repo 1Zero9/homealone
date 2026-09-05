@@ -675,7 +675,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   <span>Prisma PostgreSQL Cloud Snapshots</span>
                 </h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--ha-muted)' }}>
-                  Generate and restore point-in-time snapshots of your household&apos;s accounts, goals, bills, income and transfers — stored directly in the cloud.
+                  Generate and restore point-in-time snapshots of your household&apos;s accounts, goals, bills, income and transfers — stored directly in the cloud. A snapshot is also taken automatically every day (kept for the most recent 14), so a manual one here is only needed before something risky, like a restore.
                 </p>
               </div>
 
@@ -717,8 +717,24 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       }}
                     >
                       <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--ha-ink)' }}>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                           {b.notes || 'Point-in-time Snapshot'}
+                          {b.isAutomatic && (
+                            <span
+                              style={{
+                                fontSize: '0.65rem',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.03em',
+                                color: 'var(--ha-blue)',
+                                backgroundColor: 'var(--ha-blue-light)',
+                                padding: '0.1rem 0.4rem',
+                                borderRadius: '999px',
+                              }}
+                            >
+                              Automatic
+                            </span>
+                          )}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--ha-muted)' }}>
                           {new Date(b.createdAt).toLocaleString()} • {b.recordCount} records

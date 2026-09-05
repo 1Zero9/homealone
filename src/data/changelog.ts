@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.45.0';
+export const APP_VERSION = '1.46.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.46.0',
+    date: '2026-09-05',
+    changes: [
+      'A snapshot of your household\'s data (accounts, goals, bills, income, transfers) is now taken automatically every day, tagged "Automatic" in Admin → Database Snapshots — a real backup that no longer depends on someone remembering to click "Create Snapshot." The most recent 14 automatic snapshots are kept; snapshots you create manually are never auto-deleted.',
+    ],
+  },
   {
     version: '1.45.0',
     date: '2026-09-05',

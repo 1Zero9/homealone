@@ -3,17 +3,11 @@ import { prisma } from '@/src/lib/prisma';
 import { getErrorMessage } from '@/src/lib/errors';
 import { requireAdmin } from '@/src/lib/auth';
 import { Prisma } from '@prisma/client';
+import { createHouseholdSnapshot, type BackupPayload } from '@/src/lib/backup';
 
-// A snapshot's payloadJson holds one plain array per table. Older backups
-// (pre-expansion) instead have payloadJson as a bare array of Expense rows —
-// restoreLegacyExpensesOnly() below handles those so they stay restorable.
-interface BackupPayload {
-  accounts?: Record<string, unknown>[];
-  goals?: Record<string, unknown>[];
-  expenses?: Record<string, unknown>[];
-  incomes?: Record<string, unknown>[];
-  transfers?: Record<string, unknown>[];
-}
+// Older backups (pre-expansion) have payloadJson as a bare array of Expense
+// rows — the legacy branch in PUT below handles those so they stay
+// restorable.
 
 export async function GET() {
   const auth = await requireAdmin();
@@ -23,7 +17,7 @@ export async function GET() {
     const backups = await prisma.databaseBackup.findMany({
       where: { householdId: auth.user.householdId },
       orderBy: { createdAt: 'desc' },
-      take: 20,
+      take: 30,
     });
 
     return NextResponse.json({
@@ -45,28 +39,10 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const householdId = auth.user.householdId;
+    const householdId = auth.user.householdId as string;
+    const notes = body.notes || `Snapshot created on ${new Date().toLocaleString()}`;
 
-    const [accounts, goals, expenses, incomes, transfers] = await Promise.all([
-      prisma.account.findMany({ where: { householdId } }),
-      prisma.goal.findMany({ where: { householdId } }),
-      prisma.expense.findMany({ where: { householdId } }),
-      prisma.income.findMany({ where: { householdId } }),
-      prisma.transfer.findMany({ where: { householdId } }),
-    ]);
-
-    const payload: BackupPayload = { accounts, goals, expenses, incomes, transfers };
-    const recordCount = accounts.length + goals.length + expenses.length + incomes.length + transfers.length;
-
-    const backup = await prisma.databaseBackup.create({
-      data: {
-        createdById: auth.user.id,
-        householdId,
-        payloadJson: payload as unknown as Prisma.InputJsonValue,
-        recordCount,
-        notes: body.notes || `Snapshot created on ${new Date().toLocaleString()}`,
-      },
-    });
+    const backup = await createHouseholdSnapshot(householdId, auth.user.id, notes, false);
 
     return NextResponse.json({
       status: 'ok',

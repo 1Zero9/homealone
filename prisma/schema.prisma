@@ -518,6 +518,12 @@ model DatabaseBackup {
   notes       String?
   createdAt   DateTime @default(now())
 
+  // True for snapshots created by the daily cron (see cron/backup route),
+  // false for ones an admin triggered manually from Admin > Database
+  // Snapshots. Automatic snapshots are pruned to the most recent 14 per
+  // household; manual ones are deliberate checkpoints and never auto-pruned.
+  isAutomatic Boolean @default(false)
+
   // Nullable so pre-existing rows created before this column was added
   // don't need a backfill — they simply stop being listed/restorable,
   // which is the safe (fail-closed) default for un-attributed backups.
