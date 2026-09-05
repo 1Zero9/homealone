@@ -3,6 +3,9 @@ import type { AccountItem } from '../types/expense';
 import { Edit2, Trash2, Plus, Landmark, Eye, EyeOff, Copy, Check, ShieldAlert, Link as LinkIcon } from 'lucide-react';
 import { hasTextSelection } from '../utils/dom';
 import { CollapsibleSection } from './CollapsibleSection';
+import { formatCurrency, formatDate } from '../utils/formatters';
+
+const LIABILITY_TYPES = new Set(['CREDIT_CARD', 'LOAN']);
 
 const TYPE_LABELS: Record<string, string> = {
   CHECKING: 'Current',
@@ -189,6 +192,11 @@ export const AccountsSection: React.FC<AccountsSectionProps> = ({
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '1rem' }}>
+                      {item.balance != null && (
+                        <div className="tabular-nums" style={{ fontSize: '0.9rem', fontWeight: 700, color: LIABILITY_TYPES.has(item.type) ? 'var(--ha-red)' : 'var(--ha-ink)' }}>
+                          {formatCurrency(item.balance, item.currency)}
+                        </div>
+                      )}
                       <button
                         onClick={(e) => { e.stopPropagation(); onEditAccount(item); }}
                         className="btn btn-ghost"
@@ -210,6 +218,12 @@ export const AccountsSection: React.FC<AccountsSectionProps> = ({
 
                   {isExpanded && (
                     <div style={{ padding: '0 1.25rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      {item.balance != null && item.balanceAsOf && (
+                        <p style={{ fontSize: '0.72rem', color: 'var(--ha-muted)' }}>
+                          Balance as of {formatDate(item.balanceAsOf)} — entered manually, not live-synced.
+                        </p>
+                      )}
+
                       {item.type === 'LOAN' && (item.originalAmount || item.interestRate || item.termMonths || item.payoffDate) && (
                         <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', fontSize: '0.78rem', color: 'var(--ha-muted)', padding: '0.6rem 0', borderTop: '1px solid var(--ha-line)' }}>
                           {item.originalAmount != null && <span>Original: <strong style={{ color: 'var(--ha-ink)' }}>{item.originalAmount}</strong></span>}

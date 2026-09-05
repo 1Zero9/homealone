@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.41.0';
+export const APP_VERSION = '1.42.0';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.42.0',
+    date: '2026-09-05',
+    changes: [
+      'Accounts can now have a current balance (and an "as of" date) — entered manually since there\'s no live bank sync, but shown on the account card so you can see it at a glance.',
+      'Added a "Net worth" figure to Overview once any account has a balance set — assets minus credit cards and loans, blurred by default the same way "Left after bills" is.',
+    ],
+  },
   {
     version: '1.41.0',
     date: '2026-09-05',

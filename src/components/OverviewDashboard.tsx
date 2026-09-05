@@ -1,17 +1,23 @@
 import React from 'react';
-import type { ExpenseItem, CurrencyCode, SpendingSummary, IncomeSummary, CustomCategoryItem } from '../types/expense';
+import type { ExpenseItem, CurrencyCode, SpendingSummary, IncomeSummary, CustomCategoryItem, AccountItem } from '../types/expense';
 import { CATEGORY_LIST, getCategoryMeta } from '../data/categories';
 import { convertCurrency, getMonthlyEquivalent, getDaysUntilRenewal } from '../utils/calculations';
 import { formatCurrency, formatRenewalCountdown, formatDate } from '../utils/formatters';
-import { TrendingUp, Clock, PiggyBank, ArrowRight, Edit2, CalendarClock } from 'lucide-react';
+import { TrendingUp, Clock, PiggyBank, ArrowRight, Edit2, CalendarClock, Landmark } from 'lucide-react';
 import { SensitiveValue } from './SensitiveValue';
 import { StatementReminderBanner } from './StatementReminderBanner';
+
+// Net worth is a simplification, not a full asset/liability taxonomy —
+// credit cards and loans are treated as money owed (subtracted), every
+// other account type as money held (added).
+const LIABILITY_TYPES = new Set(['CREDIT_CARD', 'LOAN']);
 
 interface OverviewDashboardProps {
   expenses: ExpenseItem[];
   summary: SpendingSummary;
   incomeSummary: IncomeSummary;
   currency: CurrencyCode;
+  accounts: AccountItem[];
   onEditExpense: (item: ExpenseItem) => void;
   onFilterCategory: (category: string) => void;
   onOpenAddIncome: () => void;
@@ -23,6 +29,7 @@ interface OverviewDashboardProps {
   isSensitiveRevealed: (id: string) => boolean;
   onRevealSensitive: (id: string) => void;
   onOpenStatements: () => void;
+  onViewAccounts: () => void;
 }
 
 type MobilePanel = 'recent' | 'spending' | 'bills';
@@ -32,6 +39,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   summary,
   incomeSummary,
   currency,
+  accounts,
   onEditExpense,
   onFilterCategory,
   onOpenAddIncome,
@@ -43,11 +51,20 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   isSensitiveRevealed,
   onRevealSensitive,
   onOpenStatements,
+  onViewAccounts,
 }) => {
   const [mobilePanel, setMobilePanel] = React.useState<MobilePanel>('recent');
   const activeExpenses = expenses.filter((e) => e.isActive);
   const hasIncome = incomeSummary.monthlyTotal > 0;
   const netAfterBills = incomeSummary.monthlyTotal - summary.monthlyTotal;
+
+  const activeAccounts = accounts.filter((a) => a.isActive);
+  const accountsWithBalance = activeAccounts.filter((a) => a.balance != null);
+  const hasNetWorth = accountsWithBalance.length > 0;
+  const netWorth = accountsWithBalance.reduce((sum, a) => {
+    const converted = convertCurrency(a.balance as number, a.currency, currency);
+    return sum + (LIABILITY_TYPES.has(a.type) ? -converted : converted);
+  }, 0);
 
   const renewals = activeExpenses.map((item) => {
     const daysLeft = getDaysUntilRenewal(item.nextRenewalDate || `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${item.renewalDay}`, item.billingCycle);
@@ -177,6 +194,34 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
           ) : (
             <button onClick={onOpenAddIncome} className="btn btn-secondary" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
               + Add income to see net
+            </button>
+          )}
+        </div>
+
+        <div className="ha-card" style={{ padding: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <Landmark size={16} color="var(--ha-blue)" />
+            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--ha-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Net worth
+            </span>
+          </div>
+          {hasNetWorth ? (
+            <>
+              <div className="tabular-nums ha-stat-amount" style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--ha-ink)', lineHeight: 1.1 }}>
+                <SensitiveValue
+                  revealed={isSensitiveRevealed('overview-net-worth')}
+                  onReveal={() => onRevealSensitive('overview-net-worth')}
+                >
+                  {netWorth >= 0 ? '' : '−'}{formatCurrency(Math.abs(netWorth), currency)}
+                </SensitiveValue>
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--ha-muted)', marginTop: '0.35rem' }}>
+                {accountsWithBalance.length} of {activeAccounts.length} account{activeAccounts.length === 1 ? '' : 's'} with a balance set — assets minus cards &amp; loans
+              </div>
+            </>
+          ) : (
+            <button onClick={onViewAccounts} className="btn btn-secondary" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
+              + Add account balances to see net worth
             </button>
           )}
         </div>

@@ -50,6 +50,7 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
     body: [
       'Add your bank accounts, cards and loans in the "Accounts" tab. Sensitive details like account numbers and logins are encrypted and only shown when you click "reveal".',
       'Link your expenses and income to the account they\'re paid from or deposited into — this powers Money Map, statement matching, and the AI money-flow analysis.',
+      'Set a "Current balance" (and an "as of" date) on any account — it\'s entered manually since there\'s no live bank sync, and it\'s what powers the "Net worth" figure on Overview (assets minus credit cards and loans).',
     ],
   },
   {

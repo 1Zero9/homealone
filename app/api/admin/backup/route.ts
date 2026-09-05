@@ -186,6 +186,8 @@ export async function PUT(request: Request) {
             currency: str(item.currency, 'EUR') as string,
             notes: str(item.notes),
             isActive: bool(item.isActive, true),
+            balance: numOrNull(item.balance),
+            balanceAsOf: str(item.balanceAsOf),
             accountNumberEnc: str(item.accountNumberEnc),
             routingNumberEnc: str(item.routingNumberEnc),
             ibanEnc: str(item.ibanEnc),

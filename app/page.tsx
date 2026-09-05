@@ -878,6 +878,7 @@ export default function TallyPage() {
             summary={summary}
             incomeSummary={incomeSummary}
             currency={currency}
+            accounts={accounts}
             customCategories={customCategories}
             onEditExpense={(item) => {
               setEditingExpense(item);
@@ -910,6 +911,7 @@ export default function TallyPage() {
             isSensitiveRevealed={isSensitiveRevealed}
             onRevealSensitive={revealSensitive}
             onOpenStatements={() => setActiveTab('flow')}
+            onViewAccounts={() => setActiveTab('accounts')}
           />
         )}
 

@@ -225,6 +225,12 @@ model Account {
   notes       String?
   isActive    Boolean     @default(true)
 
+  // Manually entered/updated — this app has no live bank sync, so there is
+  // no automatic way to know the real current balance. Null until the
+  // household sets one.
+  balance     Float?
+  balanceAsOf String?
+
   // Encrypted sensitive fields (format: iv:authTag:ciphertext, base64) —
   // null when not set. Never selected in list/summary API responses.
   accountNumberEnc String?

@@ -149,6 +149,9 @@ export interface AccountItem {
   notes?: string | null;
   isActive: boolean;
 
+  balance?: number | null;
+  balanceAsOf?: string | null;
+
   hasAccountNumber: boolean;
   hasRoutingNumber: boolean;
   hasIban: boolean;

@@ -107,6 +107,9 @@ export async function POST(request: Request) {
         notes: body.notes || null,
         isActive: typeof body.isActive === 'boolean' ? body.isActive : true,
 
+        balance: body.balance != null && body.balance !== '' ? Number(body.balance) : null,
+        balanceAsOf: body.balanceAsOf || null,
+
         accountNumberEnc: encryptOptional(body.accountNumber),
         routingNumberEnc: encryptOptional(body.routingNumber),
         ibanEnc: encryptOptional(body.iban),
@@ -194,6 +197,9 @@ export async function PUT(request: Request) {
         currency: body.currency ?? existing.currency,
         notes: body.notes !== undefined ? body.notes || null : existing.notes,
         isActive: typeof body.isActive === 'boolean' ? body.isActive : existing.isActive,
+
+        balance: body.balance !== undefined ? (body.balance != null && body.balance !== '' ? Number(body.balance) : null) : existing.balance,
+        balanceAsOf: body.balanceAsOf !== undefined ? (body.balanceAsOf || null) : existing.balanceAsOf,
 
         originalAmount: body.originalAmount !== undefined ? (body.originalAmount != null ? Number(body.originalAmount) : null) : existing.originalAmount,
         interestRate: body.interestRate !== undefined ? (body.interestRate != null ? Number(body.interestRate) : null) : existing.interestRate,

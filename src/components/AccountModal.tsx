@@ -46,6 +46,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [notes, setNotes] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [balance, setBalance] = useState<number | string>('');
+  const [balanceAsOf, setBalanceAsOf] = useState('');
 
   const [accountNumber, setAccountNumber] = useState<SensitiveFieldState>(emptyField());
   const [routingNumber, setRoutingNumber] = useState<SensitiveFieldState>(emptyField());
@@ -69,6 +71,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       setCurrency((editingAccount.currency as CurrencyCode) || 'EUR');
       setNotes(editingAccount.notes || '');
       setIsActive(editingAccount.isActive);
+      setBalance(editingAccount.balance ?? '');
+      setBalanceAsOf(editingAccount.balanceAsOf || '');
       setOriginalAmount(editingAccount.originalAmount ?? '');
       setInterestRate(editingAccount.interestRate ?? '');
       setTermMonths(editingAccount.termMonths ?? '');
@@ -80,6 +84,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       setCurrency('EUR');
       setNotes('');
       setIsActive(true);
+      setBalance('');
+      setBalanceAsOf('');
       setOriginalAmount('');
       setInterestRate('');
       setTermMonths('');
@@ -108,6 +114,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       currency,
       notes: notes.trim(),
       isActive,
+      balance: balance !== '' ? Number(balance) : null,
+      balanceAsOf: balance !== '' ? (balanceAsOf.trim() || new Date().toISOString().split('T')[0]) : null,
       originalAmount: type === 'LOAN' && originalAmount !== '' ? Number(originalAmount) : null,
       interestRate: type === 'LOAN' && interestRate !== '' ? Number(interestRate) : null,
       termMonths: type === 'LOAN' && termMonths !== '' ? Number(termMonths) : null,
@@ -224,6 +232,37 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                   <option key={c.code} value={c.code}>{c.code} ({c.symbol})</option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '1rem' }}>
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
+                Current balance
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Not set"
+                value={balance}
+                onChange={(e) => setBalance(e.target.value)}
+                className="ha-input"
+              />
+              <p style={{ fontSize: '0.72rem', color: 'var(--ha-muted)', marginTop: '0.3rem' }}>
+                Entered manually — there&apos;s no live bank sync, so update this whenever it changes.
+              </p>
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ha-ink)', display: 'block', marginBottom: '0.35rem' }}>
+                As of
+              </label>
+              <input
+                type="date"
+                value={balanceAsOf}
+                onChange={(e) => setBalanceAsOf(e.target.value)}
+                className="ha-input"
+                disabled={balance === ''}
+              />
             </div>
           </div>
 

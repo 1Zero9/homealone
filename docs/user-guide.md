@@ -54,6 +54,7 @@ Tally uses **passwordless sign-in**: enter your email address and you'll receive
 The landing dashboard once you sign in. It shows your household's current-period totals at a glance: money in, money out, and how your budget is tracking. Use this as your starting point before drilling into a specific area.
 
 - If it's been 30+ days since your last statement import (or you've never done one), a dismissible reminder appears here nudging you to import the latest one — dismissing it snoozes the reminder for two weeks rather than turning it off for good.
+- A **Net worth** figure appears once at least one [Account](#6-accounts) has a balance set — assets (checking, savings, PayPal, investments, etc.) minus credit cards and loans. It's blurred the same way as "Left after bills" until you click to reveal it.
 
 ## 3. Spending
 
@@ -83,6 +84,8 @@ Record salary, freelance, rental, or other recurring income with an amount, curr
 Your household's bank accounts, cards, and loans, stored with sensitive fields (account/routing numbers, online banking logins, security notes) **encrypted at rest** — never sent to the browser in plain text, only revealed on demand.
 
 Supported account types: **Checking, Savings, Credit Union, Credit Card, Debit Card, PayPal, Loan, Investment, Other**.
+
+- **Current balance**: optionally set a balance and an "as of" date on any account. This is entered manually — Tally has no live bank sync, so it's only as current as you keep it — but it's what powers the **Net worth** figure on Overview (assets minus credit cards and loans).
 
 - Link expenses to the account they're paid from, and income to the account it's deposited into — this powers Money Map and the Insights AI analysis.
 - For a **Loan**, you can track the original amount, interest rate, term, and payoff date.
