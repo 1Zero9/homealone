@@ -29,6 +29,12 @@ enum StatementTxStatus {
   UNMATCHED
   MATCHED
   IGNORED
+  // Auto-flagged at import time: matches a transaction already imported from
+  // an earlier statement (same date/amount/description) — most likely an
+  // overlapping statement period, not a new transaction. Kept out of "needs
+  // review" by default so it isn't accidentally logged twice; reversible via
+  // the same "reset" action as IGNORED.
+  DUPLICATE
 }
 
 enum StatementTxDirection {

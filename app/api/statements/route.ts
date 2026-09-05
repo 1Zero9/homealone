@@ -7,8 +7,15 @@ import {
   matchTransaction,
   findRecurringUnmatched,
   sanitizeImportedText,
+  duplicateKey,
   type StatementTxDirection,
+  type MatchResult,
 } from '@/src/lib/statementMatching';
+
+// Extends MatchResult's status with the import-time-only 'DUPLICATE' case
+// (never returned by matchTransaction itself — assigned directly when a row
+// matches something already imported from an earlier statement).
+type ImportMatchResult = Omit<MatchResult, 'status'> & { status: MatchResult['status'] | 'DUPLICATE' };
 
 export async function GET() {
   const auth = await requireHouseholdUser();
@@ -31,6 +38,7 @@ export async function GET() {
       matched: transactions.filter((t) => t.status === 'MATCHED').length,
       unmatched: transactions.filter((t) => t.status === 'UNMATCHED').length,
       ignored: transactions.filter((t) => t.status === 'IGNORED').length,
+      duplicate: transactions.filter((t) => t.status === 'DUPLICATE').length,
     }));
 
     return NextResponse.json({ status: 'ok', imports: results });
@@ -86,7 +94,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const [expenses, transfers, aliases] = await Promise.all([
+    const [expenses, transfers, aliases, priorTransactions] = await Promise.all([
       prisma.expense.findMany({
         where: {
           householdId: auth.user.householdId,
@@ -111,7 +119,21 @@ export async function POST(request: Request) {
         where: { householdId: auth.user.householdId },
         select: { id: true, pattern: true, vendorName: true, expenseId: true, category: true },
       }),
+      prisma.statementTransaction.findMany({
+        where: {
+          householdId: auth.user.householdId,
+          // Scoped to the same account when known — an identical-looking
+          // transaction on a different account is a coincidence, not a
+          // re-imported duplicate. No date cutoff: a household's lifetime
+          // statement history is small enough to scan in full, and a bounded
+          // window can silently miss a duplicate from an older re-upload.
+          ...(accountId ? { import: { accountId } } : {}),
+        },
+        select: { date: true, amount: true, currency: true, direction: true, normalizedDescription: true },
+      }),
     ]);
+
+    const seenKeys = new Set(priorTransactions.map((t) => duplicateKey(t)));
 
     const statementImport = await prisma.statementImport.create({
       data: {
@@ -132,10 +154,20 @@ export async function POST(request: Request) {
       const direction: StatementTxDirection = r.direction === 'CREDIT' ? 'CREDIT' : 'DEBIT';
       const currency = r.currency || 'EUR';
       const amount = Math.abs(r.amount);
-      const match = matchTransaction(
-        { normalizedDescription, amount, currency, date: r.date, direction },
-        { expenses, transfers, aliases }
-      );
+
+      const key = duplicateKey({ date: r.date, amount, currency, direction, normalizedDescription });
+      const isDuplicate = seenKeys.has(key);
+      // Record it either way so a repeat within this same upload (the same
+      // file dropped in twice, or a genuinely repeated line) is also caught,
+      // not just repeats against a prior import.
+      seenKeys.add(key);
+
+      const match: ImportMatchResult = isDuplicate
+        ? { status: 'DUPLICATE' }
+        : matchTransaction(
+            { normalizedDescription, amount, currency, date: r.date, direction },
+            { expenses, transfers, aliases }
+          );
       return { row: { ...r, rawDescription }, normalizedDescription, direction, currency, amount, match };
     });
 
@@ -161,9 +193,11 @@ export async function POST(request: Request) {
             matchConfidence: p.match.matchConfidence ?? null,
             suggestedCategory: p.match.suggestedCategory ?? null,
             vendorName: p.match.suggestedVendorName ?? null,
-            notes: recurringFlags.has(String(idx))
-              ? 'Appears more than once and looks untracked — worth checking.'
-              : null,
+            notes: p.match.status === 'DUPLICATE'
+              ? 'Matches a transaction already imported from an earlier statement — likely an overlapping date range. Reset if this isn\'t actually a duplicate.'
+              : recurringFlags.has(String(idx))
+                ? 'Appears more than once and looks untracked — worth checking.'
+                : null,
           },
           include: {
             matchedExpense: { select: { id: true, name: true, vendor: true, category: true } },

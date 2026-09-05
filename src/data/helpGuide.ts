@@ -60,12 +60,15 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
       'For CSV, tell Tally which column is the date, description and amount. Pick which Account the statement is from either way — this keeps matching accurate once you have more than one account. No accounts yet? Use "Add your first account" right there on the import screen — no need to leave and come back.',
       'From a PDF or photo, Tally also pulls out the account number, sort code, IBAN, account holder and statement period if they\'re printed on it, and checks the account number/sort code against what\'s saved for the account you picked — flagging a mismatch, or offering to save it in one click if that account has nothing on file yet. If the statement is from an account you haven\'t added, click "Add a new account" and Tally carries the extracted account number and sort code straight over, encrypted.',
       'Tally suggests matches against your existing bills and transfers, but only ever auto-confirms a merchant it\'s seen you personally confirm before — everything else sits in "Needs review" until you click "Confirm match".',
-      'For rows that aren\'t a bill you\'ve tracked, use "Add as expense" to log them with a proper spending category (Tally remembers the category per merchant for next time), or "Log as transfer" for a quick, uncategorized entry.',
+      'For rows that aren\'t a bill you\'ve tracked, use "Add as expense" to log them with a proper spending category (Tally remembers the category per merchant for next time), or "Log as transfer" for a quick, uncategorized entry. Either one has an optional note field — good for something worth remembering the context of, like a car service, without needing to log it manually beforehand.',
+      'Routine small spending (coffee, weekly shopping) doesn\'t need to be logged as you go at all — let it collect on the statement and clear it in a batch when you next reconcile, using "Add all as expense" on repeat merchants (see below).',
+      'Rows that match one you\'ve already imported (same date, amount, direction and merchant) are automatically flagged "Duplicate" and kept out of "Needs review", instead of risking being logged twice — this is what catches two statements overlapping by a few days. Check the "Duplicates" tab to review them, and click "Not a duplicate" if Tally got one wrong.',
       'Click the pencil next to any row\'s description to give that merchant a nickname (e.g. "IEPROS" → "Smyths Toy Shop") — it updates every past and future row from that merchant, not just the one you renamed.',
       'For a merchant with several rows in the same statement (e.g. five Starbucks visits), use "Add all as expense" on that group to pick a category once and log all of them in one go, instead of one at a time.',
       'A suggested match is just a guess — the "Yes, that\'s right" and "No, link a different bill" buttons are equally easy to click, so don\'t worry about picking the wrong one. Correcting a match also improves future suggestions for that merchant.',
       'Rename an imported statement any time from the pencil icon next to its name in the Statements list, or from inside the review screen.',
       'Clicking outside the import dialog never discards anything — only the visible buttons (Back, Import, Done, the X) can close or navigate it.',
+      'If it\'s been 30+ days since your last import (or you\'ve never done one), Overview shows a dismissible reminder nudging you to upload the latest statement — dismissing it snoozes for two weeks.',
     ],
   },
   {
@@ -125,6 +128,14 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
     body: [
       'Click "Share" to invite a partner or family member by email, or copy a shareable link/invite code for them to join your household.',
       'Everyone in the same household sees the same shared ledger.',
+    ],
+  },
+  {
+    id: 'privacy',
+    title: 'Privacy blur',
+    body: [
+      'The whole screen blurs automatically after 90 seconds of inactivity or when the tab loses focus — click "Reveal Tally" to return, or toggle it manually with the eye icon in the top bar.',
+      'A few of the most sensitive figures — "Left after bills" on Overview, and every income amount on the Income tab — carry a second, independent blur on top of that. It stays blurred even when the screen-wide blur above is switched off, and each one only unblurs on its own click — revealing one doesn\'t reveal the others, and it stays revealed for the rest of your session.',
     ],
   },
   {

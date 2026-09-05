@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Edit2,
   Landmark,
+  Copy,
 } from 'lucide-react';
 import type { ExpenseItem, StatementTransactionItem, CurrencyCode, AccountItem, AccountType, ExpenseCategory, CustomCategoryItem } from '../types/expense';
 import { formatCurrency } from '../utils/formatters';
@@ -39,7 +40,7 @@ interface StatementImportModalProps {
 }
 
 type Step = 'upload' | 'map' | 'review';
-type ReviewFilter = 'needs_review' | 'matched' | 'ignored' | 'all';
+type ReviewFilter = 'needs_review' | 'matched' | 'ignored' | 'duplicate' | 'all';
 
 interface PreparedRow {
   date: string;
@@ -58,6 +59,7 @@ const FILTERS: { id: ReviewFilter; label: string }[] = [
   { id: 'needs_review', label: 'Needs review' },
   { id: 'matched', label: 'Matched' },
   { id: 'ignored', label: 'Ignored' },
+  { id: 'duplicate', label: 'Duplicates' },
   { id: 'all', label: 'All' },
 ];
 
@@ -114,6 +116,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
   const [selectedExpenseId, setSelectedExpenseId] = useState<Record<string, string>>({});
   const [categorizingTxId, setCategorizingTxId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Record<string, ExpenseCategory | ''>>({});
+  const [noteInput, setNoteInput] = useState<Record<string, string>>({});
+  const [loggingTransferTxId, setLoggingTransferTxId] = useState<string | null>(null);
   const [renamingTxId, setRenamingTxId] = useState<string | null>(null);
   const [nicknameInput, setNicknameInput] = useState<Record<string, string>>({});
   const [categorizingGroupKey, setCategorizingGroupKey] = useState<string | null>(null);
@@ -167,6 +171,8 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     setSelectedExpenseId({});
     setCategorizingTxId(null);
     setSelectedCategory({});
+    setNoteInput({});
+    setLoggingTransferTxId(null);
     setRenamingTxId(null);
     setNicknameInput({});
     setCategorizingGroupKey(null);
@@ -502,6 +508,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
         setTransactions((prev) => prev.map((t) => (t.id === txId || (action === 'rename_merchant' && t.normalizedDescription === data.transaction.normalizedDescription) ? { ...t, vendorName: data.transaction.vendorName ?? t.vendorName, ...(t.id === txId ? data.transaction : {}) } : t)));
         setLinkingTxId(null);
         setCategorizingTxId(null);
+        setLoggingTransferTxId(null);
         setRenamingTxId(null);
         if (['categorize', 'confirm', 'link_expense', 'log_transfer'].includes(action)) {
           onExpensesChanged?.();
@@ -587,12 +594,14 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     if (reviewFilter === 'all') return true;
     if (reviewFilter === 'matched') return t.status === 'MATCHED';
     if (reviewFilter === 'ignored') return t.status === 'IGNORED';
+    if (reviewFilter === 'duplicate') return t.status === 'DUPLICATE';
     return t.status === 'UNMATCHED';
   });
 
   const needsReviewCount = transactions.filter((t) => t.status === 'UNMATCHED').length;
   const matchedCount = transactions.filter((t) => t.status === 'MATCHED').length;
   const ignoredCount = transactions.filter((t) => t.status === 'IGNORED').length;
+  const duplicateCount = transactions.filter((t) => t.status === 'DUPLICATE').length;
 
   const groupedTransactions: TxGroup[] = (() => {
     const map = new Map<string, StatementTransactionItem[]>();
@@ -1099,7 +1108,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                 <>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     {FILTERS.map((f) => {
-                      const count = f.id === 'needs_review' ? needsReviewCount : f.id === 'matched' ? matchedCount : f.id === 'ignored' ? ignoredCount : transactions.length;
+                      const count = f.id === 'needs_review' ? needsReviewCount : f.id === 'matched' ? matchedCount : f.id === 'ignored' ? ignoredCount : f.id === 'duplicate' ? duplicateCount : transactions.length;
                       const active = reviewFilter === f.id;
                       return (
                         <button
@@ -1258,7 +1267,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                           border: '1px solid var(--ha-line)',
                           borderRadius: 'var(--ha-radius-md)',
                           padding: '0.75rem 0.9rem',
-                          backgroundColor: tx.status === 'MATCHED' ? 'var(--ha-blue-light)' : tx.status === 'IGNORED' ? '#f4f4f2' : isRecurringFlag ? '#fdf2e3' : '#fafaf7',
+                          backgroundColor: tx.status === 'MATCHED' ? 'var(--ha-blue-light)' : tx.status === 'IGNORED' ? '#f4f4f2' : tx.status === 'DUPLICATE' ? '#f3f0fa' : isRecurringFlag ? '#fdf2e3' : '#fafaf7',
                           opacity: isBusy ? 0.6 : 1,
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem' }}>
@@ -1344,6 +1353,23 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                             </div>
                           )}
 
+                          {tx.status === 'DUPLICATE' && (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginTop: '0.5rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: '#6D4FC7', fontWeight: 600 }}>
+                                <Copy size={13} /> Likely duplicate — already imported, skipped automatically
+                              </div>
+                              <button
+                                disabled={isBusy}
+                                onClick={() => resolveTx(tx.id, 'reset')}
+                                className="btn btn-ghost"
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                title="Not actually a duplicate — move back to Needs review"
+                              >
+                                <RotateCcw size={12} /> Not a duplicate
+                              </button>
+                            </div>
+                          )}
+
                           {tx.status === 'UNMATCHED' && (
                             <div style={{ marginTop: '0.6rem' }}>
                               {isRecurringFlag && (
@@ -1394,7 +1420,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                                   </button>
                                 </div>
                               ) : categorizingTxId === tx.id ? (
-                                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                   <CategorySelect
                                     className="ha-input"
                                     style={{ fontSize: '0.78rem', padding: '0.4rem 0.6rem' }}
@@ -1404,20 +1430,58 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                                     onCategoryCreated={(cat) => onCategoryCreated?.(cat)}
                                     placeholderOption="— Choose a category —"
                                   />
-                                  <button
-                                    disabled={!(selectedCategory[tx.id] || tx.suggestedCategory) || isBusy}
-                                    onClick={() => resolveTx(tx.id, 'categorize', {
-                                      category: selectedCategory[tx.id] || tx.suggestedCategory,
-                                      vendorName: tx.vendorName || tx.rawDescription,
-                                    })}
-                                    className="btn btn-primary"
-                                    style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
-                                  >
-                                    {isBusy ? <Loader2 size={12} className="spin" /> : <Tag size={12} />} Log as expense
-                                  </button>
-                                  <button onClick={() => setCategorizingTxId(null)} className="btn btn-ghost" style={{ fontSize: '0.75rem', padding: '0.4rem 0.5rem' }}>
-                                    Cancel
-                                  </button>
+                                  <input
+                                    type="text"
+                                    placeholder="Add a note (optional) — e.g. full brake replacement, follow-up due in 6mo"
+                                    value={noteInput[tx.id] ?? ''}
+                                    onChange={(e) => setNoteInput((prev) => ({ ...prev, [tx.id]: e.target.value }))}
+                                    className="ha-input"
+                                    style={{ fontSize: '0.78rem', padding: '0.4rem 0.6rem' }}
+                                  />
+                                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                    <button
+                                      disabled={!(selectedCategory[tx.id] || tx.suggestedCategory) || isBusy}
+                                      onClick={() => resolveTx(tx.id, 'categorize', {
+                                        category: selectedCategory[tx.id] || tx.suggestedCategory,
+                                        vendorName: tx.vendorName || tx.rawDescription,
+                                        notes: noteInput[tx.id]?.trim() || undefined,
+                                      })}
+                                      className="btn btn-primary"
+                                      style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
+                                    >
+                                      {isBusy ? <Loader2 size={12} className="spin" /> : <Tag size={12} />} Log as expense
+                                    </button>
+                                    <button onClick={() => setCategorizingTxId(null)} className="btn btn-ghost" style={{ fontSize: '0.75rem', padding: '0.4rem 0.5rem' }}>
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : loggingTransferTxId === tx.id ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                  <input
+                                    type="text"
+                                    placeholder="Add a note (optional)"
+                                    value={noteInput[tx.id] ?? ''}
+                                    onChange={(e) => setNoteInput((prev) => ({ ...prev, [tx.id]: e.target.value }))}
+                                    className="ha-input"
+                                    style={{ fontSize: '0.78rem', padding: '0.4rem 0.6rem' }}
+                                  />
+                                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                    <button
+                                      disabled={isBusy}
+                                      onClick={() => resolveTx(tx.id, 'log_transfer', {
+                                        vendorName: tx.vendorName || tx.rawDescription,
+                                        notes: noteInput[tx.id]?.trim() || undefined,
+                                      })}
+                                      className="btn btn-primary"
+                                      style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
+                                    >
+                                      {isBusy ? <Loader2 size={12} className="spin" /> : <PlusCircle size={12} />} Log as transfer
+                                    </button>
+                                    <button onClick={() => setLoggingTransferTxId(null)} className="btn btn-ghost" style={{ fontSize: '0.75rem', padding: '0.4rem 0.5rem' }}>
+                                      Cancel
+                                    </button>
+                                  </div>
                                 </div>
                               ) : (
                                 <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
@@ -1449,7 +1513,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                                   </button>
                                   <button
                                     disabled={isBusy}
-                                    onClick={() => resolveTx(tx.id, 'log_transfer', { vendorName: tx.vendorName || tx.rawDescription })}
+                                    onClick={() => setLoggingTransferTxId(tx.id)}
                                     className="btn btn-ghost"
                                     style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem' }}
                                   >

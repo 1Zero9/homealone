@@ -139,13 +139,14 @@ export async function POST(
 
     if (action === 'log_transfer') {
       const vendorName = typeof body.vendorName === 'string' && body.vendorName.trim() ? sanitizeImportedText(body.vendorName, 120) : tx.vendorName || tx.rawDescription;
+      const customNote = typeof body.notes === 'string' ? sanitizeImportedText(body.notes, 500) : '';
 
       const transfer = await prisma.transfer.create({
         data: {
           amount: tx.amount,
           currency: tx.currency,
           date: tx.date,
-          note: 'Logged from statement import',
+          note: customNote ? `${customNote} (logged from statement import)` : 'Logged from statement import',
           externalLabel: vendorName,
           createdById: auth.user.id,
           householdId: auth.user.householdId,
@@ -182,6 +183,7 @@ export async function POST(
       }
 
       const vendorName = typeof body.vendorName === 'string' && body.vendorName.trim() ? sanitizeImportedText(body.vendorName, 120) : tx.vendorName || tx.rawDescription;
+      const customNote = typeof body.notes === 'string' ? sanitizeImportedText(body.notes, 500) : '';
       const meta = getCategoryMeta(category, customCategoryMatch ? [customCategoryMatch] : undefined);
       const statementImport = await prisma.statementImport.findUnique({ where: { id: tx.importId } });
       const dayOfMonth = new Date(tx.date).getDate();
@@ -202,7 +204,7 @@ export async function POST(
           isPaidThisCycle: true,
           lastPaidAt: new Date(tx.date),
           paymentAccountId: statementImport?.accountId ?? null,
-          notes: 'Logged from statement import',
+          notes: customNote ? `${customNote} (logged from statement import)` : 'Logged from statement import',
           createdById: auth.user.id,
           householdId: auth.user.householdId,
         },

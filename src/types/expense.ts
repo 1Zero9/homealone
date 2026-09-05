@@ -256,7 +256,7 @@ export interface GoalItem {
   updatedAt?: string;
 }
 
-export type StatementTxStatus = 'UNMATCHED' | 'MATCHED' | 'IGNORED';
+export type StatementTxStatus = 'UNMATCHED' | 'MATCHED' | 'IGNORED' | 'DUPLICATE';
 export type StatementTxDirection = 'DEBIT' | 'CREDIT';
 
 export interface StatementTransactionItem {
@@ -296,6 +296,7 @@ export interface StatementImportSummary {
   matched: number;
   unmatched: number;
   ignored: number;
+  duplicate: number;
 }
 
 export interface IncomeSummary {

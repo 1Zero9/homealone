@@ -919,6 +919,7 @@ export default function TallyPage() {
             onViewPlanned={() => setActiveTab('planned')}
             isSensitiveRevealed={isSensitiveRevealed}
             onRevealSensitive={revealSensitive}
+            onOpenStatements={() => setActiveTab('flow')}
           />
         )}
 

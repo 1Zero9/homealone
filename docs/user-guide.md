@@ -52,6 +52,8 @@ Tally uses **passwordless sign-in**: enter your email address and you'll receive
 
 The landing dashboard once you sign in. It shows your household's current-period totals at a glance: money in, money out, and how your budget is tracking. Use this as your starting point before drilling into a specific area.
 
+- If it's been 30+ days since your last statement import (or you've never done one), a dismissible reminder appears here nudging you to import the latest one — dismissing it snoozes the reminder for two weeks rather than turning it off for good.
+
 ## 3. Spending
 
 The **Spending** tab (and its sub-views: **All**, **AI & Tech**, **Utilities**, **Education**, **Mortgage, Loans & Big Purchases**) is your recurring-bill ledger — subscriptions, utilities, household costs, and big-ticket items like mortgage or loan repayments and one-off large purchases.
@@ -109,11 +111,12 @@ Under Flow, **Statement imports** lets you cross-check a real bank or credit-car
 **Reviewing matches**
 - Tally suggests matches against your existing bills and transfers, and flags recurring-but-untracked charges worth checking — but only auto-confirms a merchant you've personally confirmed before. Everything else waits in **Needs review**.
 - A suggested match is only ever a guess: the confirm and correct buttons are equally weighted, and a low-confidence guess shows a reassurance note. Correcting a match also improves future suggestions for that merchant.
-- Not a bill you've tracked? **Add as expense** logs it with a proper spending category (remembered per merchant next time) — or use **Log as transfer** for a quick, uncategorized entry.
+- Not a bill you've tracked? **Add as expense** logs it with a proper spending category (remembered per merchant next time) — or use **Log as transfer** for a quick, uncategorized entry. Either one has an optional note field, so something worth remembering the context of (e.g. a car service, or a large one-off repair) can get proper detail right there — no need to log it manually beforehand just to have somewhere to put a note. Routine small spending (a coffee, weekly shopping) doesn't need this at all — just let it show up here and clear it in a batch when you next reconcile.
+- **Duplicates are caught automatically**: a row that matches one you've already imported (same date, amount, direction and merchant) is flagged **Duplicate** and kept out of Needs review, instead of risking being logged twice — this is what catches the common case of two statements overlapping by a few days. Check the **Duplicates** tab if you want to double-check them; **Not a duplicate** puts a row back in Needs review if Tally got it wrong.
 
 **Tidying up**
 - **Rename a merchant**: click the pencil next to any row's description to turn a cryptic bank description (e.g. "IEPROS") into a friendly nickname (e.g. "Smyths Toy Shop"). It updates every past and future row from that merchant, and groups rows under the nickname.
-- **Add all as expense**: for a merchant with several rows in the same statement, pick a category once on that group and log them all in one go.
+- **Add all as expense**: for a merchant with several rows in the same statement, pick a category once on that group and log them all in one go — this is the fastest way to clear routine repeat spending (coffee, groceries) without touching each row individually.
 - **Rename an import**: click the pencil next to a statement's name in the list, or inside the review screen, to give it a friendlier label than the uploaded filename.
 - Clicking outside the dialog never discards anything — only the visible buttons (Back, Import, Done, the X) close or navigate it.
 
@@ -186,6 +189,7 @@ Click **Export** at any time to download your records as a CSV spreadsheet or a 
 - Passwordless sign-in via one-time 6-digit codes — no passwords stored anywhere.
 - Session tokens live in a secure, httpOnly cookie, valid up to 30 days — but an idle tab automatically signs out after 30 minutes of no activity, independent of that 30-day window.
 - The screen blurs automatically for privacy after 90 seconds of inactivity (or when the tab loses focus) — select **Reveal Tally** to return. Toggle it manually anytime with the eye icon in the top bar.
+- A handful of the most sensitive figures — **Left after bills** on Overview, and every income amount (monthly total and each source) on the Income tab — carry a second, independent blur on top of that. It stays blurred even when the screen-wide privacy blur above is switched off, and each figure only unblurs on its own click (revealing one doesn't reveal the others). Once you click to reveal one, it stays visible for the rest of your session.
 - Sensitive account fields (account numbers, online banking logins, security notes) are encrypted at rest and only decrypted on an explicit "reveal" action — or, for statement imports, an on-the-fly admin-only comparison that returns a match/mismatch signal but never the decrypted value itself.
 - AI features (the Ask box and Money flow analysis) only ever send your own household's data, and only when you actively trigger them — nothing runs automatically in the background.
 - Full details: see the in-app **Privacy** page (footer link) and the **AI transparency** page.

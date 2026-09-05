@@ -72,6 +72,8 @@ Receipt scanning matches against existing bill names to avoid duplicates, but th
 
 **Action:** Add a dedupe check on the tuple of amount, date within a tolerance window, and account, applied at write time across all three routes, with a "possible duplicate" prompt rather than a hard block.
 
+**Partially addressed in v1.38.0**: `POST /api/statements` now checks every incoming row against every `StatementTransaction` already on file for the household (scoped to the same account when known) on the tuple of exact date, amount, currency, direction and normalized description, and auto-assigns a new `DUPLICATE` status (reversible via the same "reset" action as `IGNORED`) instead of leaving it in `UNMATCHED` for the household to catch by eye. This closes the specific case named in the "Action" line above — **re-importing the same or an overlapping statement** — with an exact-match check rather than a tolerance window, since a genuine re-import produces identical rows. It does **not** close the broader finding: a payment entered manually or via receipt scan, then later appearing in an imported statement, is still only caught by `statementMatching.ts`'s heuristic score-and-suggest (a "possible match" the household must confirm), not a hard duplicate check — so the three-entry-route risk described above remains open.
+
 ---
 
 ## 3. Security findings
@@ -316,7 +318,7 @@ A single payment cannot be split across categories, and a bill is assigned to on
 | 14 | Persist exchange rates on records | 2.3 | Medium | Low | Historic figures become reproducible |
 | 15 | Budget entity and caps | 6.1 | Product | Medium | Closes the gap against the stated product promise |
 | 16 | Statement balance reconciliation | 2.4 | Medium | Medium | Proves imports are complete |
-| 17 | Cross-source duplicate guard | 2.5 | Medium | Medium | Protects the integrity of every insight |
+| 17 | Cross-source duplicate guard | 2.5 | Medium | Medium | Protects the integrity of every insight — **partially done in v1.38.0** (exact-match re-import guard within statement imports); cross-route (manual/scan vs. statement) case still open |
 | 18 | Projected balance by date | 6.2 | Product | Medium | Highest-value feature per unit of effort, all data present |
 | 19 | Price creep and missed payment detection | 6.3 | Product | Medium | Inverts matching towards the questions users actually have |
 | 20 | Account deletion and retention policy | 4.5 | Medium | Medium | Needed before any non-family user is onboarded |

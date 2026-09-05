@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.37.0';
+export const APP_VERSION = '1.38.1';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,21 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.38.1',
+    date: '2026-09-05',
+    changes: [
+      'You can now add a note when logging a statement row as an expense or transfer — useful for one-offs worth remembering the context of (e.g. a car service), without needing to log it manually beforehand. Look for the note field next to the category picker under "Add as expense" / "Log as transfer" in statement review.',
+    ],
+  },
+  {
+    version: '1.38.0',
+    date: '2026-09-05',
+    changes: [
+      'Statement import now auto-detects likely duplicates — a row matching one already imported (same date, amount, direction and merchant) is flagged and skipped from review automatically instead of being logged twice, with a one-click "Not a duplicate" undo if it gets it wrong. See the new "Duplicates" tab when reviewing an import.',
+      'Added an in-app reminder on Overview nudging you to import your latest bank/card statement once it\'s been 30+ days since the last one (or none has ever been imported) — dismiss to snooze it for two weeks.',
+    ],
+  },
   {
     version: '1.37.0',
     date: '2026-09-04',

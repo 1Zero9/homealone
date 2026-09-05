@@ -232,6 +232,17 @@ export function stringSimilarity(a: string, b: string): number {
   return overlap / Math.max(ta.size, tb.size);
 }
 
+/**
+ * A stable key identifying "the same real-world transaction" for duplicate
+ * detection — same day, amount, currency, direction and normalized
+ * merchant description. Used to catch the common case of overlapping
+ * statement periods (this month's export includes a few days already
+ * covered by last month's) without needing exact file-level dedup.
+ */
+export function duplicateKey(row: { date: string; amount: number; currency: string; direction: StatementTxDirection; normalizedDescription: string }): string {
+  return [row.date, row.amount.toFixed(2), row.currency, row.direction, row.normalizedDescription].join('|');
+}
+
 // ---------------------------------------------------------------------------
 // Matching pipeline
 // ---------------------------------------------------------------------------
@@ -436,7 +447,7 @@ export function matchTransaction(
  * isn't tracked anywhere yet, worth a closer look.
  */
 export function findRecurringUnmatched(
-  transactions: { id: string; normalizedDescription: string; status: 'MATCHED' | 'UNMATCHED' }[]
+  transactions: { id: string; normalizedDescription: string; status: 'MATCHED' | 'UNMATCHED' | 'DUPLICATE' }[]
 ): Set<string> {
   const groups = new Map<string, string[]>();
   for (const tx of transactions) {

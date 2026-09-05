@@ -53,7 +53,7 @@ Defined in `prisma/schema.prisma`. Every domain model is scoped to a `Household`
 - **Transfer** — a single, dated real money movement ("money journey" ledger). Either side (`fromAccountId`/`toAccountId`) can be null to represent money crossing the household boundary (income landing, a payment going out), with a free-text `externalLabel`. Optionally linked to the recurring `Expense`/`Income` record it corresponds to.
 - **Goal** — a savings target, optionally linked to an `Account` and/or to one or more `Expense`s (for goals that fund a periodic bill, e.g. an annual subscription paid via monthly top-ups).
 - **StatementImport** — a single upload of a bank/card statement, optionally scoped to one `Account` (so matching doesn't cross accounts).
-- **StatementTransaction** — one normalized row from an import: `status` (`UNMATCHED | MATCHED | IGNORED`), `matchConfidence`, optional links to a matched `Expense`/`Transfer`, a learned `suggestedCategory`, and a `vendorName` nickname.
+- **StatementTransaction** — one normalized row from an import: `status` (`UNMATCHED | MATCHED | IGNORED | DUPLICATE`), `matchConfidence`, optional links to a matched `Expense`/`Transfer`, a learned `suggestedCategory`, and a `vendorName` nickname. `DUPLICATE` is assigned at import time, not by the matching pipeline — see §8.
 - **MerchantAlias** — a learned `(householdId, pattern)` → `vendorName`/`category` mapping, built up as the household confirms statement matches, so cryptic bank descriptions ("IEPROS") get recognized and auto-categorized automatically next time. `matchCount` tracks how many times it's been reinforced.
 - **Category** — household-defined custom spending categories (in addition to the fixed built-in set in `src/data/categories.ts`), each with its own icon/colour, unique per household by name.
 - **DatabaseBackup** — a stored full-household JSON export snapshot, created by admins.
@@ -121,9 +121,9 @@ All routes live under `app/api/`, are household-scoped via the guard helpers in 
 | `transfers` | CRUD for the Flow money-movement ledger |
 | `goals` | CRUD for savings goals |
 | `categories`, `categories/[id]` | CRUD for household-defined custom spending categories |
-| `statements`, `statements/[id]` | Statement import CRUD (including rename) |
+| `statements`, `statements/[id]` | Statement import CRUD (including rename); import also runs an exact-match duplicate check against every prior import for the household |
 | `statements/extract` | AI extraction of a PDF/photo statement into transaction rows + account info |
-| `statements/[id]/transactions`, `statements/[id]/transactions/[txId]/resolve` | List/manage statement rows and resolve them (confirm match, add as expense, log as transfer, ignore, rename merchant) |
+| `statements/[id]/transactions`, `statements/[id]/transactions/[txId]/resolve` | List/manage statement rows and resolve them (confirm match, add as expense or transfer with an optional note, ignore, rename merchant) |
 | `insights/summary`, `insights/money-flow` | Rule-based savings-opportunity summary, and on-demand AI money-flow analysis |
 | `assistant/ask`, `assistant/scan-receipt` | AI Q&A and AI receipt/bill scanning |
 | `exchange-rate` | Live currency conversion (ECB daily rates) |
@@ -151,7 +151,7 @@ A structured inventory of user-facing functionality (see [`user-guide.md`](./use
 - **Bills calendar** — a 31-day renewal view with 7-day urgency indicators.
 - **Accounts** — bank accounts, cards, and loans with encrypted sensitive fields (§4), loan amortization fields, and reveal-on-demand.
 - **Flow (money journey ledger)** — a dated, real transfer ledger (income landing, inter-account transfers, outgoing payments), optionally linked to a recurring Expense/Income record.
-- **Statement imports** — CSV, PDF, or photo/screenshot upload; AI extraction of transactions and account details for non-CSV formats; account-number/sort-code cross-checking; inline "add a new account" during import; confidence-scored auto-suggested matching against bills/transfers with a learned `MerchantAlias` system; equal-weighted confirm/correct UI (never nudges toward a wrong "confirm"); merchant renaming (nickname propagates to all past/future rows); bulk "add all as expense" per merchant group; import renaming; non-destructive dialog dismissal.
+- **Statement imports** — CSV, PDF, or photo/screenshot upload; AI extraction of transactions and account details for non-CSV formats; account-number/sort-code cross-checking; inline "add a new account" during import; confidence-scored auto-suggested matching against bills/transfers with a learned `MerchantAlias` system; equal-weighted confirm/correct UI (never nudges toward a wrong "confirm"); merchant renaming (nickname propagates to all past/future rows); bulk "add all as expense" per merchant group; import renaming; non-destructive dialog dismissal; an exact-match duplicate guard against every prior import (own `DUPLICATE` status, reversible); an optional note on "Add as expense"/"Log as transfer"; an Overview reminder banner after 30+ days without an import.
 - **Goals** — savings targets with progress bars, optional account link, optional link to a recurring Expense for goal-funded periodic bills, and an equal-payments split calculator.
 - **Planned expenses** — future/not-yet-required costs that don't affect any totals or insights until explicitly activated; due-soon badges; optional goal linking.
 - **Money Map** — a node-graph visualization of real money flow (actual, from Transfers) or a projected monthly view (from recurring Expenses/Income), filterable by time window.
@@ -159,7 +159,7 @@ A structured inventory of user-facing functionality (see [`user-guide.md`](./use
 - **AI assistant** — plain-English Q&A over the household's own data or the app's own feature set, plus AI bill/receipt scanning with duplicate-bill matching and one-click foreign-currency conversion.
 - **Multi-currency** — EUR-standardized ledger with live conversion for GBP/USD/CAD/AUD/JPY.
 - **Data export & backup** — CSV and full JSON export for any user; full database backup snapshots for admins.
-- **Privacy controls** — auto-blur after inactivity/tab blur with a manual toggle, and the encryption/AI-isolation model described in §4–§5.
+- **Privacy controls** — auto-blur after inactivity/tab blur with a manual toggle, a second independent per-figure blur on the highest-sensitivity amounts (Overview's "Left after bills", every Income figure) that stays blurred regardless of the screen-wide toggle and unblurs one figure at a time (client-side only, resets on reload — see §7's `useSensitiveReveal`), and the encryption/AI-isolation model described in §4–§5.
 
 ## 9. Environment variables
 

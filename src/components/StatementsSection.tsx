@@ -141,6 +141,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({ expenses, 
                         {imp.account && <span style={{ fontWeight: 600, color: 'var(--ha-ink)' }}>{imp.account.name} • </span>}
                         {imp.total} rows • {imp.matched} matched
                         {imp.unmatched > 0 && <span style={{ color: 'var(--ha-red)', fontWeight: 600 }}> • {imp.unmatched} need review</span>}
+                        {imp.duplicate > 0 && <span> • {imp.duplicate} duplicate{imp.duplicate === 1 ? '' : 's'} skipped</span>}
                       </div>
                     </>
                   )}

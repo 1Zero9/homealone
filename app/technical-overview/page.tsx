@@ -68,7 +68,7 @@ export default function TechnicalOverviewPage() {
         <li><strong>Transfer</strong> — a single, dated real money movement (&quot;money journey&quot; ledger). Either side (<code>fromAccountId</code>/<code>toAccountId</code>) can be null to represent money crossing the household boundary, with a free-text <code>externalLabel</code>. Optionally linked to the recurring Expense/Income record it corresponds to.</li>
         <li><strong>Goal</strong> — a savings target, optionally linked to an Account and/or to one or more Expenses (for goals that fund a periodic bill, e.g. an annual subscription paid via monthly top-ups).</li>
         <li><strong>StatementImport</strong> — a single upload of a bank/card statement, optionally scoped to one Account (so matching doesn&apos;t cross accounts).</li>
-        <li><strong>StatementTransaction</strong> — one normalized row from an import: <code>status</code> (UNMATCHED / MATCHED / IGNORED), <code>matchConfidence</code>, optional links to a matched Expense/Transfer, a learned <code>suggestedCategory</code>, and a <code>vendorName</code> nickname.</li>
+        <li><strong>StatementTransaction</strong> — one normalized row from an import: <code>status</code> (UNMATCHED / MATCHED / IGNORED / DUPLICATE), <code>matchConfidence</code>, optional links to a matched Expense/Transfer, a learned <code>suggestedCategory</code>, and a <code>vendorName</code> nickname. <code>DUPLICATE</code> is assigned at import time, not by the matching pipeline — see §8.</li>
         <li><strong>MerchantAlias</strong> — a learned <code>(householdId, pattern)</code> → <code>vendorName</code>/<code>category</code> mapping, built up as the household confirms statement matches, so cryptic bank descriptions (&quot;IEPROS&quot;) get recognized and auto-categorized automatically next time. <code>matchCount</code> tracks how many times it&apos;s been reinforced.</li>
         <li><strong>Category</strong> — household-defined custom spending categories (in addition to the fixed built-in set in <code>src/data/categories.ts</code>), each with its own icon/colour, unique per household by name.</li>
         <li><strong>DatabaseBackup</strong> — a stored full-household JSON export snapshot, created by admins.</li>
@@ -206,9 +206,9 @@ export default function TechnicalOverviewPage() {
           <tr><td><code>transfers</code></td><td>CRUD for the Flow money-movement ledger</td></tr>
           <tr><td><code>goals</code></td><td>CRUD for savings goals</td></tr>
           <tr><td><code>categories</code>, <code>categories/[id]</code></td><td>CRUD for household-defined custom spending categories</td></tr>
-          <tr><td><code>statements</code>, <code>statements/[id]</code></td><td>Statement import CRUD (including rename)</td></tr>
+          <tr><td><code>statements</code>, <code>statements/[id]</code></td><td>Statement import CRUD (including rename); import also runs an exact-match duplicate check against every prior import for the household</td></tr>
           <tr><td><code>statements/extract</code></td><td>AI extraction of a PDF/photo statement into transaction rows + account info</td></tr>
-          <tr><td><code>statements/[id]/transactions</code>, <code>statements/[id]/transactions/[txId]/resolve</code></td><td>List/manage statement rows and resolve them (confirm match, add as expense, log as transfer, ignore, rename merchant)</td></tr>
+          <tr><td><code>statements/[id]/transactions</code>, <code>statements/[id]/transactions/[txId]/resolve</code></td><td>List/manage statement rows and resolve them (confirm match, add as expense or transfer with an optional note, ignore, rename merchant)</td></tr>
           <tr><td><code>insights/summary</code>, <code>insights/money-flow</code></td><td>Rule-based savings-opportunity summary, and on-demand AI money-flow analysis</td></tr>
           <tr><td><code>assistant/ask</code>, <code>assistant/scan-receipt</code></td><td>AI Q&amp;A and AI receipt/bill scanning</td></tr>
           <tr><td><code>exchange-rate</code></td><td>Live currency conversion (ECB daily rates)</td></tr>
@@ -238,7 +238,7 @@ export default function TechnicalOverviewPage() {
         <li><strong>Bills calendar</strong> — a 31-day renewal view with 7-day urgency indicators.</li>
         <li><strong>Accounts</strong> — bank accounts, cards, and loans with encrypted sensitive fields, loan amortization fields, and reveal-on-demand.</li>
         <li><strong>Flow (money journey ledger)</strong> — a dated, real transfer ledger, optionally linked to a recurring Expense/Income record.</li>
-        <li><strong>Statement imports</strong> — CSV, PDF, or photo/screenshot upload; AI extraction for non-CSV formats; account-number/sort-code cross-checking; inline &quot;add a new account&quot;; confidence-scored auto-suggested matching with a learned MerchantAlias system; equal-weighted confirm/correct UI; merchant renaming; bulk &quot;add all as expense&quot;; import renaming; non-destructive dialog dismissal.</li>
+        <li><strong>Statement imports</strong> — CSV, PDF, or photo/screenshot upload; AI extraction for non-CSV formats; account-number/sort-code cross-checking; inline &quot;add a new account&quot;; confidence-scored auto-suggested matching with a learned MerchantAlias system; equal-weighted confirm/correct UI; merchant renaming; bulk &quot;add all as expense&quot;; import renaming; non-destructive dialog dismissal; an exact-match duplicate guard against every prior import (own <code>DUPLICATE</code> status, reversible); an optional note on &quot;Add as expense&quot;/&quot;Log as transfer&quot;; an Overview reminder banner after 30+ days without an import.</li>
         <li><strong>Goals</strong> — savings targets with progress bars, optional account link, optional link to a recurring Expense, and an equal-payments split calculator.</li>
         <li><strong>Planned expenses</strong> — future/not-yet-required costs that don&apos;t affect any totals or insights until explicitly activated; due-soon badges; optional goal linking.</li>
         <li><strong>Money Map</strong> — a node-graph visualization of real money flow or a projected monthly view, filterable by time window.</li>
@@ -246,7 +246,7 @@ export default function TechnicalOverviewPage() {
         <li><strong>AI assistant</strong> — plain-English Q&amp;A over the household&apos;s own data or the app&apos;s own feature set, plus AI bill/receipt scanning with duplicate-bill matching and one-click foreign-currency conversion.</li>
         <li><strong>Multi-currency</strong> — EUR-standardized ledger with live conversion for GBP/USD/CAD/AUD/JPY.</li>
         <li><strong>Data export &amp; backup</strong> — CSV and full JSON export for any user; full database backup snapshots for admins.</li>
-        <li><strong>Privacy controls</strong> — auto-blur after inactivity/tab blur with a manual toggle, and the encryption/AI-isolation model described in §4–§5.</li>
+        <li><strong>Privacy controls</strong> — auto-blur after inactivity/tab blur with a manual toggle, a second independent per-figure blur on the highest-sensitivity amounts (Overview&apos;s &quot;Left after bills&quot;, every Income figure) that stays blurred regardless of the screen-wide toggle and unblurs one figure at a time (client-side only, resets on reload — see §7&apos;s <code>useSensitiveReveal</code>), and the encryption/AI-isolation model described in §4–§5.</li>
       </ul>
 
       <h2>9. Environment variables</h2>
