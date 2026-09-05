@@ -38,51 +38,10 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
-  const auth = await requireAdmin();
-  if ('error' in auth) return auth.error;
-
-  try {
-    const body = await request.json();
-    if (!body.name || !body.email) {
-      return NextResponse.json(
-        { status: 'error', message: 'Name and email are required' },
-        { status: 400 }
-      );
-    }
-
-    const email = body.email.trim().toLowerCase();
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      return NextResponse.json(
-        { status: 'error', message: 'A user with that email already exists.' },
-        { status: 409 }
-      );
-    }
-
-    const role = (body.role as Role) || Role.MEMBER;
-
-    const user = await prisma.user.create({
-      data: {
-        name: body.name.trim(),
-        email,
-        role,
-        householdId: auth.user.householdId,
-      },
-    });
-
-    return NextResponse.json({
-      status: 'ok',
-      user,
-    });
-  } catch (error: unknown) {
-    console.error('Failed to create user:', error);
-    return NextResponse.json(
-      { status: 'error', message: getErrorMessage(error, 'Failed to create user') },
-      { status: 500 }
-    );
-  }
-}
+// Adding a new household member goes through POST /api/workspace/invite
+// instead — it upserts by email (so re-inviting someone doesn't collide),
+// sends the actual invite email when Resend is configured, and refuses to
+// silently move an email that already belongs to a different household.
 
 export async function PUT(request: Request) {
   const auth = await requireAdmin();

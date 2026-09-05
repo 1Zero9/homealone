@@ -36,6 +36,17 @@ export async function POST(request: Request) {
     // Determine default display name if omitted
     const defaultName = name || email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
 
+    // Refuse to silently move someone else's household membership — this
+    // email might belong to a real person already settled in a different
+    // household, not just an unclaimed invite.
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser && existingUser.householdId && existingUser.householdId !== household.id) {
+      return NextResponse.json(
+        { status: 'error', message: 'This email already belongs to a different household.' },
+        { status: 409 }
+      );
+    }
+
     // Upsert or link user
     const user = await prisma.user.upsert({
       where: { email },

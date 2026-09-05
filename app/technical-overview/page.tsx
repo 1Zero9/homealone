@@ -58,7 +58,7 @@ export default function TechnicalOverviewPage() {
         record <code>createdById</code> for attribution.
       </p>
       <ul>
-        <li><strong>Household</strong> — the tenant boundary. Has a unique <code>inviteCode</code> for joining.</li>
+        <li><strong>Household</strong> — the tenant boundary. Has a unique <code>inviteCode</code> column, but self-service joining via it is intentionally disabled (<code>POST /api/workspace/join</code> unconditionally returns 410) — the app is invite-only, and the only way in is an admin inviting a specific email via <code>POST /api/workspace/invite</code>.</li>
         <li><strong>User</strong> — belongs to at most one household; <code>role</code> is <code>ADMIN</code>, <code>MEMBER</code>, or <code>BACKUP_ADMIN</code>.</li>
         <li><strong>Session</strong> — opaque token, <code>expiresAt</code>, sliding expiration (see §3).</li>
         <li><strong>VerificationToken</strong> — short-lived 6-digit login codes with an <code>attempts</code> counter.</li>
@@ -196,8 +196,8 @@ export default function TechnicalOverviewPage() {
         </thead>
         <tbody>
           <tr><td><code>auth/send-code</code>, <code>auth/verify-code</code>, <code>auth/logout</code>, <code>auth/me</code></td><td>Passwordless sign-in flow and current-session lookup</td></tr>
-          <tr><td><code>users</code></td><td>Household member management (admin)</td></tr>
-          <tr><td><code>workspace</code>, <code>workspace/invite</code>, <code>workspace/join</code></td><td>Household workspace info, invites, and joining via link/code</td></tr>
+          <tr><td><code>users</code></td><td>Household member management (admin) — edit role/name, remove; adding a new member goes through <code>workspace/invite</code> instead (single canonical path, used by both the Admin tab and the Share modal)</td></tr>
+          <tr><td><code>workspace</code>, <code>workspace/invite</code>, <code>workspace/join</code></td><td>Household workspace info; <code>invite</code> upserts-by-email (refuses to reassign an email already in a different household) and sends a real email when configured; <code>join</code> is intentionally disabled (410) — invite-only, no self-service join</td></tr>
           <tr><td><code>expenses</code>, <code>expenses/[id]</code></td><td>CRUD for recurring/one-off bills</td></tr>
           <tr><td><code>expenses/[id]/draft-email</code>, <code>expenses/[id]/send-vendor-email</code></td><td>AI vendor-email drafting and sending</td></tr>
           <tr><td><code>income</code></td><td>CRUD for income sources</td></tr>
@@ -234,7 +234,7 @@ export default function TechnicalOverviewPage() {
       <p>A structured inventory of user-facing functionality (see the <a href="/guide">User Guide</a> for the narrative walkthrough):</p>
       <ul>
         <li><strong>Passwordless authentication</strong> — 6-digit email codes, 30-day sliding-expiration sessions, 30-minute idle auto-sign-out.</li>
-        <li><strong>Household workspaces</strong> — shared ledger per household; email invites and shareable invite links/codes; Admin / Member / Backup Admin roles; a household can never be left without at least one Admin.</li>
+        <li><strong>Household workspaces</strong> — shared ledger per household; invite-only via a specific email (no self-service join/shareable link — see the Household model note in §2); Admin / Member / Backup Admin roles; a household can never be left without at least one Admin.</li>
         <li><strong>Spending ledger</strong> — recurring and one-off bills across built-in categories plus household-defined custom categories; one-click Catalog presets; usage-rating-based cancellation candidates; pause/resume; contract-renewal badges and automated 30/14/7-day reminder emails; AI-drafted vendor emails, always human-reviewed before sending.</li>
         <li><strong>Income tracking</strong> — recurring/one-off income with a next pay date that auto-rolls forward, linked to a deposit account.</li>
         <li><strong>Bills calendar</strong> — a 31-day renewal view with 7-day urgency indicators.</li>

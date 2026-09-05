@@ -57,7 +57,6 @@ export async function GET() {
       household = await prisma.household.create({
         data: {
           name: 'Our Household',
-          inviteCode: 'tally-family',
         },
         include: {
           users: {

@@ -43,7 +43,7 @@ Requests flow: **Client component** → `fetch('/api/...')` → **Route Handler*
 
 Defined in `prisma/schema.prisma`. Every domain model is scoped to a `Household` (multi-tenant by household, not by individual user), and most also record `createdById` for attribution.
 
-- **Household** — the tenant boundary. Has a unique `inviteCode` for joining.
+- **Household** — the tenant boundary. Has a unique `inviteCode` column, but self-service joining via it is intentionally disabled (`POST /api/workspace/join` unconditionally returns 410) — the app is invite-only, and the only way in is an admin inviting a specific email via `POST /api/workspace/invite`.
 - **User** — belongs to at most one household; `role` is `ADMIN`, `MEMBER`, or `BACKUP_ADMIN`.
 - **Session** — opaque token, `expiresAt`, sliding expiration (see §3).
 - **VerificationToken** — short-lived 6-digit login codes with an `attempts` counter.
@@ -111,8 +111,8 @@ All routes live under `app/api/`, are household-scoped via the guard helpers in 
 | Route | Purpose |
 |---|---|
 | `auth/send-code`, `auth/verify-code`, `auth/logout`, `auth/me` | Passwordless sign-in flow and current-session lookup |
-| `users` | Household member management (admin) |
-| `workspace`, `workspace/invite`, `workspace/join` | Household workspace info, invites, and joining via link/code |
+| `users` | Household member management (admin) — edit role/name, remove; adding a new member goes through `workspace/invite` instead (single canonical path, used by both the Admin tab and the Share modal) |
+| `workspace`, `workspace/invite`, `workspace/join` | Household workspace info; `invite` upserts-by-email (refuses to reassign an email already in a different household) and sends a real email when configured; `join` is intentionally disabled (410) — invite-only, no self-service join |
 | `expenses`, `expenses/[id]` | CRUD for recurring/one-off bills |
 | `expenses/[id]/draft-email`, `expenses/[id]/send-vendor-email` | AI vendor-email drafting and sending |
 | `income` | CRUD for income sources |
@@ -147,7 +147,7 @@ All routes live under `app/api/`, are household-scoped via the guard helpers in 
 A structured inventory of user-facing functionality (see [`user-guide.md`](./user-guide.md) for the narrative walkthrough):
 
 - **Passwordless authentication** — 6-digit email codes, 30-day sliding-expiration sessions, 30-minute idle auto-sign-out.
-- **Household workspaces** — shared ledger per household; email invites and shareable invite links/codes; `Admin` / `Member` / `Backup Admin` roles; a household can never be left without at least one Admin.
+- **Household workspaces** — shared ledger per household; invite-only via a specific email (no self-service join/shareable link — see the Household model note in §2); `Admin` / `Member` / `Backup Admin` roles; a household can never be left without at least one Admin.
 - **Spending ledger** — recurring and one-off bills across built-in categories (streaming, AI/tech tools, utilities, education, insurance/motor tax, mortgage/loans/big purchases) plus household-defined **custom categories**; one-click **Catalog** presets; usage-rating-based cancellation candidates; pause/resume; contract-renewal badges and automated 30/14/7-day reminder emails; AI-drafted vendor emails (negotiate/cancel/ask), always human-reviewed before sending.
 - **Income tracking** — recurring/one-off income with a `nextPayDate` that auto-rolls forward, linked to a deposit account.
 - **Bills calendar** — a 31-day renewal view with 7-day urgency indicators.

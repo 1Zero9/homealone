@@ -44,7 +44,7 @@ Most budgeting apps show you category totals and ask you to trust them. Tally is
 
 Tally uses **passwordless sign-in**: enter your email address and you'll receive a 6-digit code valid for 15 minutes. Enter the code to sign in — there's no password to remember or leak.
 
-- New to a household? Use **Create Account** on the logon screen, or accept an email invite / shareable link from an existing member (see [Sharing your household workspace](#13-sharing-your-household-workspace)).
+- New to a household? Tally is invite-only — there's no self-service sign-up. An admin invites you by email first (see [Sharing your household workspace](#14-sharing-your-household-workspace)); once invited, just enter that email at sign-in like anyone else.
 - Sessions last up to 30 days and are stored in a secure, httpOnly cookie — nothing you can access from other browser scripts — so you're not asked to log back in every visit.
 - For security, you're automatically signed out after **30 minutes of inactivity** in an open tab (no mouse, keyboard, scroll, or touch activity) — you'll see a note on the login screen explaining why next time you sign back in. Actively using the app resets this timer, so it never interrupts you mid-task.
 - A copy of your basic profile is cached in your browser's local storage purely so the app can greet you instantly on return visits; it is not used for authentication.
@@ -173,10 +173,7 @@ Open via the gear icon in the top bar. Set your preferred display currency (EUR,
 
 ## 14. Sharing your household workspace
 
-Click **Share** to:
-
-- Send a direct email invite to a partner or family member, or
-- Copy a shareable invite link / invite code for them to join.
+Click **Share** to send a direct email invite to a partner or family member — enter their email (and optionally a name and role) and Tally adds them to your household right away. If email sending is configured, they'll also get an email with a link to the app; either way, they can sign in with that email as soon as you've added them. There's no shareable link or code — Tally is invite-only, and only an admin can add someone.
 
 Everyone in the same household sees the same shared ledger — accounts, expenses, income, transfers, and goals are all shared, not per-person.
 

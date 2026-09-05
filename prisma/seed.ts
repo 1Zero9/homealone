@@ -11,7 +11,6 @@ async function main() {
     household = await prisma.household.create({
       data: {
         name: 'Our Household',
-        inviteCode: 'tally-family',
       },
     });
   }

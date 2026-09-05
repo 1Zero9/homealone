@@ -6,7 +6,6 @@ import { X, UserPlus, Users, CheckCircle2, AlertCircle } from 'lucide-react';
 interface WorkspaceInfo {
   id: string;
   name: string;
-  inviteCode: string;
 }
 
 interface ShareWorkspaceModalProps {

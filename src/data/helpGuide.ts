@@ -131,7 +131,7 @@ export const HELP_GUIDE_SECTIONS: HelpGuideSection[] = [
     id: 'sharing',
     title: 'Sharing your workspace',
     body: [
-      'Click "Share" to invite a partner or family member by email, or copy a shareable link/invite code for them to join your household.',
+      'Click "Share" and enter their email to invite a partner or family member — Tally is invite-only, so this is the only way to add someone; there\'s no shareable link or code. They can sign in with that email as soon as you\'ve added them.',
       'Everyone in the same household sees the same shared ledger.',
     ],
   },

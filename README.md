@@ -16,7 +16,7 @@ See [`docs/user-guide.md`](./docs/user-guide.md) for a full walkthrough of every
   - **Admin** (`onezeronine@gmail.com`): Full administrative control over users, workspace sharing, and database backups.
   - **Member** (Normal user/family): Ability to view, log, categorize, and edit household expenses.
   - **Backup Admin**: Disaster recovery and emergency failover role.
-- **Collaborative Sharing**: Shareable workspace invite links and direct email invitations for partners, spouses, or family members.
+- **Collaborative Sharing**: Invite-only workspace — an admin adds a partner, spouse, or family member directly by email; no self-service sign-up or shareable link.
 - **Warm Household Design System**: Custom Tally design tokens (`--ha-*`), friendly system typography, accessible focus states, responsive controls, and tabular figures for financial accuracy.
 - **Money Journey**: Log real transfers between accounts and to/from external payees (Flow), track savings Goals with progress bars (with a quick split-into-instalments calculator), and visualize the actual multi-hop money journey (Money Map).
 - **AI Statement Import**: Cross-check a bank/card statement (CSV, PDF, or a photo/screenshot) against your bills — Tally reads PDFs and photos with AI, auto-matches recognised charges, extracts and verifies the account number/sort code against your saved accounts, flags anything worth a second look, and automatically catches likely duplicates from overlapping statement periods.
@@ -79,9 +79,10 @@ Access the application in your browser at [http://localhost:5174](http://localho
 
 ## Authentication & Account Setup
 
+Tally is invite-only — there's no self-service sign-up or shareable invite link.
+
 1. **Admin Access**: Sign in with `onezeronine@gmail.com` to receive an admin magic code and access the Admin & Users management tab.
-2. **Account Creation**: Click **Create Account** on the logon screen to register a new family/household member account (Role: `MEMBER`).
-3. **Collaborative Invites**: Send an invite link or add members directly from the **Share** button in the top navigation bar.
+2. **Inviting members**: an admin adds a partner or family member by email from the **Share** button in the top navigation bar (Role: `MEMBER` or `ADMIN`). They can then sign in with that same email.
 
 ---
 

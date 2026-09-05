@@ -64,7 +64,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     setErrorMessage(null);
 
     try {
-      const res = await fetch('/api/users', {
+      const res = await fetch('/api/workspace/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -76,7 +76,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
 
       const data = await res.json();
       if (data.status === 'ok') {
-        setStatusMessage(`Added user "${data.user.name}" successfully.`);
+        setStatusMessage(data.message || `Added user "${data.user.name}" successfully.`);
         setNewUserName('');
         setNewUserEmail('');
         setNewUserRole('MEMBER');
