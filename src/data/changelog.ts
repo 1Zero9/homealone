@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.40.0';
+export const APP_VERSION = '1.40.1';
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,13 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.40.1',
+    date: '2026-09-05',
+    changes: [
+      'Statement review: repeat-merchant groups now start collapsed automatically once a statement has several of them, so a large import doesn\'t dump dozens of rows on screen at once. A "Collapse all" / "Expand all" toggle next to Recheck matches lets you switch the whole list either way any time.',
+    ],
+  },
   {
     version: '1.40.0',
     date: '2026-09-05',

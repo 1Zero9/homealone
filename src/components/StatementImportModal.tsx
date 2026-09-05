@@ -18,6 +18,8 @@ import {
   Landmark,
   Copy,
   RefreshCw,
+  ChevronsDownUp,
+  ChevronsUpDown,
 } from 'lucide-react';
 import type { ExpenseItem, StatementTransactionItem, CurrencyCode, AccountItem, AccountType, ExpenseCategory, CustomCategoryItem } from '../types/expense';
 import { formatCurrency } from '../utils/formatters';
@@ -91,6 +93,20 @@ const CYCLE_LABELS: Record<DetectedBillingCycle, string> = {
   quarterly: 'quarterly',
   annual: 'annual',
 };
+
+// A statement with this many repeat-merchant groups is unwieldy to scroll
+// through fully expanded, so those groups start collapsed automatically.
+const AUTO_COLLAPSE_GROUP_THRESHOLD = 4;
+
+/** Keys of every repeat-merchant (multi-row) group among a set of rows. */
+function multiItemGroupKeys(items: StatementTransactionItem[]): string[] {
+  const counts = new Map<string, number>();
+  for (const t of items) {
+    const key = t.normalizedDescription || t.rawDescription;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  return [...counts.entries()].filter(([, count]) => count > 1).map(([key]) => key);
+}
 
 const ACCOUNT_TYPES: { id: AccountType; label: string }[] = [
   { id: 'CHECKING', label: 'Current' },
@@ -245,6 +261,17 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
     handleClose();
   };
 
+  // Sets the loaded rows and, for a large statement (several repeat
+  // merchants), starts those groups collapsed rather than dumping
+  // everything expanded — a manual "Collapse/Expand all" toggle still
+  // overrides this either way.
+  const applyLoadedTransactions = (loaded: StatementTransactionItem[]) => {
+    setTransactions(loaded);
+    const unresolved = loaded.filter((t) => t.status === 'UNMATCHED');
+    const groupKeys = multiItemGroupKeys(unresolved);
+    setCollapsedGroups(groupKeys.length >= AUTO_COLLAPSE_GROUP_THRESHOLD ? new Set(groupKeys) : new Set());
+  };
+
   useEffect(() => {
     if (isOpen && initialImportId && !loadedInitialRef.current) {
       loadedInitialRef.current = true;
@@ -256,7 +283,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
             setImportId(initialImportId);
             setImportLabel(data.import?.label || 'Statement import');
             setImportAccount(data.import?.account || null);
-            setTransactions(data.transactions || []);
+            applyLoadedTransactions(data.transactions || []);
             setStep('review');
           }
         })
@@ -521,7 +548,7 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
       setImportId(data.import.id);
       setImportLabel(data.import.label);
       setImportAccount(accounts.find((a) => a.id === accountId) || null);
-      setTransactions(data.transactions);
+      applyLoadedTransactions(data.transactions);
       setStep('review');
       onImported();
     } catch {
@@ -725,6 +752,9 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
       return { key, label: items[0].vendorName || key, items, detectedCycle };
     });
   })();
+
+  const visibleMultiGroupKeys = groupedTransactions.filter((g) => g.items.length > 1).map((g) => g.key);
+  const allVisibleGroupsCollapsed = visibleMultiGroupKeys.length > 0 && visibleMultiGroupKeys.every((k) => collapsedGroups.has(k));
 
   return (
     <div className="modal-overlay">
@@ -1263,6 +1293,17 @@ export const StatementImportModal: React.FC<StatementImportModalProps> = ({
                       >
                         {isRechecking ? <Loader2 size={13} className="spin" /> : <RefreshCw size={13} />} Recheck matches
                       </button>
+                      {visibleMultiGroupKeys.length > 0 && (
+                        <button
+                          onClick={() => setCollapsedGroups(allVisibleGroupsCollapsed ? new Set() : new Set(visibleMultiGroupKeys))}
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.78rem', padding: '0.35rem 0.6rem', whiteSpace: 'nowrap' }}
+                          title="Collapse or expand every repeat-merchant group in this list — handy on a large statement"
+                        >
+                          {allVisibleGroupsCollapsed ? <ChevronsUpDown size={13} /> : <ChevronsDownUp size={13} />}
+                          {allVisibleGroupsCollapsed ? ' Expand all' : ' Collapse all'}
+                        </button>
+                      )}
                     </div>
                   </div>
 
